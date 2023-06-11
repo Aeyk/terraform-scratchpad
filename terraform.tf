@@ -138,7 +138,7 @@ resource "oci_core_subnet" "public_subnet" {
 }
 
 resource "oci_core_subnet" "private_subnet" {
-    depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
+  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_private_subnet_cidr_block
