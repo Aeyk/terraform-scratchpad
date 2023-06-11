@@ -65,6 +65,7 @@ resource "oci_identity_compartment" "compartment" {
 }
 
 resource "oci_core_vcn" "vcn" {
+  depends_on = [oci_identity_compartment.compartment]
   cidr_blocks    = [var.oci_vcn_cidr_block]
   compartment_id = oci_identity_compartment.compartment.id
   is_ipv6enabled = true
@@ -72,15 +73,14 @@ resource "oci_core_vcn" "vcn" {
 }
 
 resource "oci_core_dhcp_options" "dhcp" {
+  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-dhcp-options"
-
   options {
     type        = "DomainNameServer"
     server_type = "VcnLocalPlusInternet"
   }
-
   options {
     type                = "SearchDomain"
     search_domain_names = ["mksybr.com"]
@@ -88,12 +88,14 @@ resource "oci_core_dhcp_options" "dhcp" {
 }
 
 resource "oci_core_internet_gateway" "igw" {
+  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-igw"
 }
 
 resource "oci_core_route_table" "igw_route_table" {
+  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_internet_gateway.igw]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-igw-route-table"
@@ -106,16 +108,17 @@ resource "oci_core_route_table" "igw_route_table" {
 }
 
 resource "oci_core_nat_gateway" "nat_gateway" {
+  depends_on = [oci_core_vcn.vcn]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-nat-gateway"
 }
 
 resource "oci_core_route_table" "nat_route_table" {
+  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_nat_gateway.nat_gateway]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-nat-route-table"
-
   route_rules {
     destination       = "0.0.0.0/0"
     destination_type  = "CIDR_BLOCK"
@@ -124,24 +127,23 @@ resource "oci_core_route_table" "nat_route_table" {
 }
 
 resource "oci_core_subnet" "public_subnet" {
+  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_nat_gateway.nat_gateway, oci_core_dhcp_options.dhcp]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_public_subnet_cidr_block
   display_name   = "cloud-mksybr-public-subnet"
-
   route_table_id    = oci_core_route_table.igw_route_table.id
   dhcp_options_id   = oci_core_dhcp_options.dhcp.id
   # security_list_ids = [oci_core_security_list.public_security_list.id]
 }
 
 resource "oci_core_subnet" "private_subnet" {
+    depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_private_subnet_cidr_block
   display_name   = "cloud-mksybr-private-subnet"
-
   prohibit_public_ip_on_vnic = true
-
   route_table_id    = oci_core_route_table.igw_route_table.id
   dhcp_options_id   = oci_core_dhcp_options.dhcp.id
   # security_list_ids = [oci_core_security_list.private_security_list.id]
@@ -151,9 +153,19 @@ output "all-availability-domains-in-your-tenancy" {
   value = data.oci_identity_availability_domains.ads.availability_domains
 }
 
+output "vcn_id" {
+  description = "id of vcn that is created"
+  value       = oci_core_vcn.vcn.id
+}
+
+locals {
+  common_tags = {
+    vcn_id = oci_core_vcn.vcn.id
+  }
+}
+
 resource "oci_core_instance" "ubuntu_instance" {
-  count = 2
-  enable_delete = true
+  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
 	agent_config {
 		is_management_disabled = "false"
 		is_monitoring_disabled = "false"
@@ -189,7 +201,7 @@ resource "oci_core_instance" "ubuntu_instance" {
 		assign_public_ip = "true"
 		subnet_id = oci_core_subnet.public_subnet.id
 	}
-	display_name = "ubuntu00${count.index}-cloud-mksybr"
+	display_name = "ubuntu001-cloud-mksybr"
 	instance_options {
 		are_legacy_imds_endpoints_disabled = "false"
 	}
