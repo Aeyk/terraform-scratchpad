@@ -221,6 +221,8 @@ resource "oci_core_instance" "ubuntu_instance" {
 	}
 }
 
+# TODO network security group to allow http(s) traffic
+
 output "compute_public_ip" {
   value = oci_core_instance.ubuntu_instance.public_ip
 }
