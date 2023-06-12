@@ -60,12 +60,6 @@ data "oci_identity_availability_domains" "ads" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
 }
 
-resource "oci_identity_compartment" "compartment" {
-  description = "Compartment for Terraform resources."
-  name = "cloud.mksybr.com"
-  enable_delete = true
-}
-
 resource "oci_core_vcn" "vcn" {
   depends_on = [oci_identity_compartment.compartment]
   cidr_blocks    = [var.oci_vcn_cidr_block]
