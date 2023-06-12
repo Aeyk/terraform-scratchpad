@@ -20,6 +20,7 @@ chown -R thelounge:thelounge /etc/thelounge
 snap install core
 snap refresh core
 snap install --classic certbot
-certbot certonly --nginx --email mksybr@gmail.com --agree-tos --no-eff-email --staging  -d chat.mksybr.com --dry-run 
+certbot certonly --nginx --email mksybr@gmail.com --agree-tos --no-eff-email --staging  -d chat.mksybr.com --dry-run
+systemctl restart nginx
       INSTALL
 end
