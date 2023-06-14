@@ -29,7 +29,7 @@ snap refresh core
 snap install --classic certbot
 certbot --nginx --email mksybr@gmail.com --agree-tos --no-eff-email -d chat.mksybr.com
 
-cat <<EOF > /etc/systemd/system/identd@.service
+cat <<'EOF' > /etc/systemd/system/identd@.service
 [Unit]
 Description=per connection null identd
  
@@ -40,7 +40,7 @@ StandardInput=socket
 StandardOutput=socket
 EOF
 
-cat <<EOF > /etc/systemd/system/ident.socket
+cat <<'EOF' > /etc/systemd/system/ident.socket
 [Unit]
 Description=socket for ident
  
@@ -52,7 +52,7 @@ Accept=yes
 WantedBy=sockets.target
 EOF
 
-cat <<EOT > /etc/nginx/sites-available/irc.conf
+cat <<'EOT' > /etc/nginx/sites-available/irc.conf
 server {
 	listen [::]:443 ssl ipv6only=on; # managed by Certbot
 	listen 443 ssl; # managed by Certbot
