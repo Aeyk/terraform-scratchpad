@@ -70,8 +70,7 @@ EOT
 sudo ln -s /etc/nginx/sites-available/irc.conf /etc/nginx/sites-enabled/irc.conf
 systemctl restart nginx
 PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
-echo $PASS
-sudo -u thelounge sh -c 'PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
 printf "password: %s\n" "$PASS"
-echo $PASS | thelounge add me
+sudo -u thelounge sh -c 'PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
+echo "$PASS" | thelounge add me
 PASS=""'
