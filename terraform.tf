@@ -55,7 +55,7 @@ provider "oci" {
   fingerprint = data.keepass_entry.oci_fingerprint.password
   region = "us-ashburn-1"
 }
- 
+
 data "oci_identity_availability_domains" "ads" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
 }
@@ -126,7 +126,8 @@ resource "oci_core_route_table" "nat_route_table" {
 }
 
 resource "oci_core_subnet" "public_subnet" {
-  depends_on = [oci_core_vcn.vcn, oci_core_nat_gateway.nat_gateway, oci_core_dhcp_options.dhcp]
+  depends_on = [oci_core_vcn.vcn, oci_core_nat_gateway.nat_gateway,
+                oci_core_dhcp_options.dhcp]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_public_subnet_cidr_block
@@ -137,7 +138,8 @@ resource "oci_core_subnet" "public_subnet" {
 }
 
 resource "oci_core_subnet" "private_subnet" {
-  depends_on = [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
+  depends_on = [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                oci_core_dhcp_options.dhcp]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_private_subnet_cidr_block
@@ -163,47 +165,160 @@ locals {
   }
 }
 
-resource "oci_core_network_security_group" "http_security_group" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
-  display_name = "cloud-mksybr-network-security-group-http-ingress"
+resource "oci_core_network_security_group" "net_security_group" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  display_name = "cloud-mksybr-network-security-group"
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id = oci_core_vcn.vcn.id
 }
 
-resource "oci_core_network_security_group_security_rule" "ipv4_https_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.http_security_group.id
+resource "oci_core_network_security_group_security_rule" "ipv4_http_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
+  stateless = "false"
   tcp_options {
-    source_port_range {
+    destination_port_range {
       min = 80
       max = 80
     }
   }   
 }
 
-resource "oci_core_network_security_group_security_rule" "ipv6_https_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.http_security_group.id
+
+resource "oci_core_network_security_group_security_rule" "ipv6_http_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
+  stateless = "false"
   tcp_options {
-    source_port_range {
+    destination_port_range {
       min = 80
       max = 80
     }
   }
 }
 
+resource "oci_core_network_security_group_security_rule" "ipv4_https_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "false"
+  tcp_options {
+    destination_port_range {
+      min = 443
+      max = 443
+    }
+  }   
+}
+
+resource "oci_core_network_security_group_security_rule" "ipv6_https_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "::/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "false"
+  tcp_options {
+    destination_port_range {
+      min = 443
+      max = 443
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "icmp_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  protocol = 1 # ICMP
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+}
+
+resource "oci_core_network_security_group_security_rule" "icmpv6_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  protocol = 58 # ICMPv6
+  direction = "INGRESS"
+  source = "::/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+}
+
+resource "oci_core_network_security_group_security_rule" "identd_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  protocol = 6 # ICMPv6
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "false"
+  tcp_options {
+    destination_port_range {
+      min = 113
+      max = 113
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  protocol = 6 # ICMPv6
+  direction = "INGRESS"
+  source = "::/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "false"
+  tcp_options {
+    destination_port_range {
+      min = 113
+      max = 113
+    }
+  }
+}
+
 resource "oci_core_instance" "ubuntu_instance" {
-  depends_on = [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp, oci_core_network_security_group.http_security_group]
+  depends_on = [
+    tls_private_key.target_key,
+    oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+    oci_core_dhcp_options.dhcp,
+    oci_core_network_security_group.net_security_group,
+
+    oci_core_network_security_group_security_rule.ipv4_http_ingress,
+    oci_core_network_security_group_security_rule.ipv6_http_ingress,
+    
+    oci_core_network_security_group_security_rule.ipv4_https_ingress,
+    oci_core_network_security_group_security_rule.ipv6_https_ingress,
+
+    oci_core_network_security_group_security_rule.icmp_ingress,
+    oci_core_network_security_group_security_rule.icmpv6_ingress,
+
+    oci_core_network_security_group_security_rule.identd_ingress,
+    oci_core_network_security_group_security_rule.identdv6_ingress,     
+
+  ]
+  display_name = "ubuntu000-cloud-mksybr"
 	agent_config {
 		is_management_disabled = "false"
 		is_monitoring_disabled = "false"
@@ -238,15 +353,14 @@ resource "oci_core_instance" "ubuntu_instance" {
 		assign_private_dns_record = "false"
 		assign_public_ip = "true"
 		subnet_id = oci_core_subnet.public_subnet.id
-		nsg_ids = [oci_core_network_security_group_security_rule.ipv6_https_ingress, oci_core_network_security_group_security_rule.ipv4_https_ingress]
+		nsg_ids = [oci_core_network_security_group.net_security_group.id]
 	}
-	display_name = "ubuntu001-cloud-mksybr"
 	instance_options {
 		are_legacy_imds_endpoints_disabled = "false"
 	}
 	is_pv_encryption_in_transit_enabled = "true"
 	metadata = {
-		"ssh_authorized_keys" = file("/home/me/.ssh/id_rsa.pub")
+		"ssh_authorized_keys" = file(var.public_ssh_key)
 	}
   # Always-Free includes : 2 VM.Standard.E2.1.Micro
 	shape = "VM.Standard.E2.1.Micro"
