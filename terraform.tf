@@ -174,7 +174,7 @@ locals {
   }
 }
 
-resource "oci_core_network_security_group" "net_security_group" {
+resource "oci_core_network_security_group" "cloud_net_security_group" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
   display_name = "cloud-mksybr-network-security-group"
@@ -182,10 +182,19 @@ resource "oci_core_network_security_group" "net_security_group" {
   vcn_id = oci_core_vcn.vcn.id
 }
 
+resource "oci_core_network_security_group" "me_net_security_group" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  display_name = "me-mksybr-network-security-group"
+  compartment_id = data.keepass_entry.oci_compartment_id.password
+  vcn_id = oci_core_vcn.vcn.id
+}
+
+
 resource "oci_core_network_security_group_security_rule" "ipv4_http_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
   source = "0.0.0.0/0"
@@ -203,7 +212,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_http_ingress" {
 resource "oci_core_network_security_group_security_rule" "ipv6_http_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
   source = "::/0"
@@ -220,7 +229,7 @@ resource "oci_core_network_security_group_security_rule" "ipv6_http_ingress" {
 resource "oci_core_network_security_group_security_rule" "ipv4_https_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
   source = "0.0.0.0/0"
@@ -237,7 +246,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_https_ingress" {
 resource "oci_core_network_security_group_security_rule" "ipv6_https_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
   source = "::/0"
@@ -254,7 +263,7 @@ resource "oci_core_network_security_group_security_rule" "ipv6_https_ingress" {
 resource "oci_core_network_security_group_security_rule" "icmp_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 1 # ICMP
   direction = "INGRESS"
   source = "0.0.0.0/0"
@@ -265,7 +274,7 @@ resource "oci_core_network_security_group_security_rule" "icmp_ingress" {
 resource "oci_core_network_security_group_security_rule" "icmpv6_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 58 # ICMPv6
   direction = "INGRESS"
   source = "::/0"
@@ -276,7 +285,7 @@ resource "oci_core_network_security_group_security_rule" "icmpv6_ingress" {
 resource "oci_core_network_security_group_security_rule" "identd_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # ICMPv6
   direction = "INGRESS"
   source = "0.0.0.0/0"
@@ -293,7 +302,7 @@ resource "oci_core_network_security_group_security_rule" "identd_ingress" {
 resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.net_security_group.id
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # ICMPv6
   direction = "INGRESS"
   source = "::/0"
@@ -307,12 +316,47 @@ resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
   }
 }
 
+
+resource "oci_core_network_security_group_security_rule" "rdp_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.me_net_security_group.id
+  protocol = 6 # ICMPv6
+  direction = "INGRESS"
+  source = "172.58.0.0/16"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "false"
+  tcp_options {
+    destination_port_range {
+      min = 3389
+      max = 3389
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "rdpv6_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.me_net_security_group.id
+  protocol = 6 # ICMPv6
+  direction = "INGRESS"
+  source = "2607:fb91:180d::/48"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "false"
+  tcp_options {
+    destination_port_range {
+      min = 3389
+      max = 3389
+    }
+  }
+}
+
 resource "oci_core_instance" "ubuntu_instance" {
   depends_on = [
     tls_private_key.target_key,
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
     oci_core_dhcp_options.dhcp,
-    oci_core_network_security_group.net_security_group,
+    oci_core_network_security_group.cloud_net_security_group,
 
     oci_core_network_security_group_security_rule.ipv4_http_ingress,
     oci_core_network_security_group_security_rule.ipv6_http_ingress,
@@ -361,7 +405,7 @@ resource "oci_core_instance" "ubuntu_instance" {
 		assign_private_dns_record = "false"
 		assign_public_ip = "true"
 		subnet_id = oci_core_subnet.public_subnet.id
-		nsg_ids = [oci_core_network_security_group.net_security_group.id]
+		nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
 	}
 	instance_options {
 		are_legacy_imds_endpoints_disabled = "false"
@@ -378,24 +422,14 @@ resource "oci_core_instance" "ubuntu_instance" {
 	}
 }
 
-resource "oci_core_instance" "amp_instance" {
+resource "oci_core_instance" "arm_instance" {
   depends_on = [
     tls_private_key.target_key,
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
     oci_core_dhcp_options.dhcp,
-    oci_core_network_security_group.net_security_group,
-
-    oci_core_network_security_group_security_rule.ipv4_http_ingress,
-    oci_core_network_security_group_security_rule.ipv6_http_ingress,
-    
-    oci_core_network_security_group_security_rule.ipv4_https_ingress,
-    oci_core_network_security_group_security_rule.ipv6_https_ingress,
-
-    oci_core_network_security_group_security_rule.icmp_ingress,
-    oci_core_network_security_group_security_rule.icmpv6_ingress,
-
-    oci_core_network_security_group_security_rule.identd_ingress,
-    oci_core_network_security_group_security_rule.identdv6_ingress,
+    oci_core_network_security_group.me_net_security_group,   
+    oci_core_network_security_group_security_rule.rdp_ingress,
+    oci_core_network_security_group_security_rule.rdpv6_ingress
   ]
   display_name = "ubuntu001-cloud-mksybr"
 	agent_config {
@@ -432,7 +466,7 @@ resource "oci_core_instance" "amp_instance" {
 		assign_private_dns_record = "false"
 		assign_public_ip = "true"
 		subnet_id = oci_core_subnet.public_subnet.id
-		nsg_ids = [oci_core_network_security_group.net_security_group.id]
+		nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
 	}
 	instance_options {
 		are_legacy_imds_endpoints_disabled = "false"
@@ -447,8 +481,8 @@ resource "oci_core_instance" "amp_instance" {
   shape = "VM.Standard.A1.Flex"
 	shape_config {
 		baseline_ocpu_utilization = "BASELINE_1_1"
-		memory_in_gbs = "24"
-		ocpus = "4"
+		memory_in_gbs = "1"
+		ocpus = "1"
 	}
 	source_details {
 		source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq"
@@ -456,8 +490,12 @@ resource "oci_core_instance" "amp_instance" {
 	}
 }
 
-output "compute_public_ip" {
+output "ubuntu_public_ip" {
   value = oci_core_instance.ubuntu_instance.public_ip
+}
+
+output "arm_public_ip" {
+  value = oci_core_instance.arm_instance.public_ip
 }
 
 resource "digitalocean_record" "chat-mksybr-com-dns-record" {
@@ -470,10 +508,10 @@ resource "digitalocean_record" "chat-mksybr-com-dns-record" {
 }
 
 resource "digitalocean_record" "me-mksybr-com-dns-record" {
-  depends_on = [oci_core_instance.amp_instance]
+  depends_on = [oci_core_instance.arm_instance]
   name = "me"
   domain = "mksybr.com"
   type   = "A"
-  value  = oci_core_instance.ubuntu_instance.public_ip
+  value  = oci_core_instance.arm_instance.public_ip
   ttl = "30"
 }
