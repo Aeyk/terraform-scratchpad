@@ -1,0 +1,20 @@
+- become: yes
+  hosts: all
+  name: thelounge-install
+  tasks:
+    - name: Add the user 'thelounge'
+      user:
+        name: thelounge
+    - name: Wait for apt to unlock
+      become: yes
+      shell:  while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;      
+    - name: Install nginx
+      apt:        
+        name: nginx
+        update_cache: yes
+        state: latest        
+  handlers:
+    - name: Restart nginx
+      service:
+      name: nginx
+      state: restarted  
