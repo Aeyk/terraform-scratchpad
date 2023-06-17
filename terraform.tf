@@ -6,19 +6,6 @@ variable "oci_vcn_cidr_block" {}
 variable "oci_vcn_public_subnet_cidr_block" {}
 variable "oci_vcn_private_subnet_cidr_block" {}
 
-variable "pvt_key" {
-  default = "./id_rsa"
-}
-
-variable "pub_key" {
-  default = "./id_rsa.pub"
-}
-
-resource "tls_private_key" "target_key" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
 variable "public_ssh_key" {
   default = "/home/me/.ssh/id_rsa.pub"
 }
@@ -361,7 +348,6 @@ resource "oci_core_network_security_group_security_rule" "rdpv6_ingress" {
 
 resource "oci_core_instance" "ubuntu_instance" {
   depends_on = [
-    tls_private_key.target_key,
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
     oci_core_dhcp_options.dhcp,
     oci_core_network_security_group.cloud_net_security_group,
@@ -432,7 +418,6 @@ resource "oci_core_instance" "ubuntu_instance" {
 
 resource "oci_core_instance" "arm_instance" {
   depends_on = [
-    tls_private_key.target_key,
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
     oci_core_dhcp_options.dhcp,
     oci_core_network_security_group.me_net_security_group,   
@@ -489,8 +474,8 @@ resource "oci_core_instance" "arm_instance" {
   shape = "VM.Standard.A1.Flex"
 	shape_config {
 		baseline_ocpu_utilization = "BASELINE_1_1"
-		memory_in_gbs = "1"
-		ocpus = "1"
+		memory_in_gbs = "24"
+		ocpus = "4"
 	}
 	source_details {
 		source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq"
