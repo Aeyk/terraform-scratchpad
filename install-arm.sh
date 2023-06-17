@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 if test "$UID" -ne 0; then
-		printf "FATAL: this script require root"
-    sleep 10
+		printf "FATAL: this script require root" && \
+    sleep 10 && \
     exit
 fi
 
