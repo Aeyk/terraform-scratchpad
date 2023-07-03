@@ -20,11 +20,18 @@ provider "keepass" {
 
 data "keepass_entry" "phone_public_ssh_key_contents" {
   path = "Root/Phone Key"
+
 }
 
-output "phone_public_ssh_key" {
-  value = data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key
-  sensitive = true
+variable "public_ssh_key" {
+  default = "/home/me/.ssh/id_rsa.pub"
+}
+
+
+locals {
+  ssh = {
+    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}"
+  }
 }
 #+end_src
 #+begin_src sh :dir examples
