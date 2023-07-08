@@ -52,22 +52,32 @@ Accept=yes
 WantedBy=sockets.target
 EOF
 
+cat <<'EOT' > /etc/nginx/conf.d/chat.mksybr.com.conf
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+	root /dev/null;
+	server_name chat.mksybr.com;
+	ssl_certificate /etc/letsencrypt/live/chat.mksybr.com/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/chat.mksybr.com/privkey.pem;
+	include /etc/letsencrypt/options-ssl-nginx.conf;
+
+	# Redirect non-https traffic to https
+	if ($scheme != "https") {
+		return 301 https://$host$request_uri;
+	} # managed by Certbot
+}
+EOT
+
 cat <<'EOT' > /etc/nginx/sites-available/irc.conf
 server {
-	location / {
-		root /dev/null;
-	}
-	location ^~ /irc {
+	location ^~ /irc/ {
 		proxy_pass http://127.0.0.1:9000/;
 		proxy_http_version 1.1;
 		proxy_set_header Connection "upgrade";
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header X-Forwarded-For $remote_addr;
 		proxy_set_header X-Forwarded-Proto $scheme;
-		proxy_set_header X-Real-IP $remote_addr;
-		proxy_set_header Host $http_host;
-		proxy_set_header X-NginX-Proxy false;
-		# by default nginx times out connections in one minute
 		proxy_read_timeout 1d;
 	}
 }
