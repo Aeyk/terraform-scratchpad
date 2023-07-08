@@ -427,6 +427,12 @@ resource "oci_core_instance" "ubuntu_instance" {
     source = "${oci_core_instance.ubuntu_instance.display_name}-installer.sh"
     destination = "/tmp/installer.sh"
   }
+    provisioner "remote-exec" {
+      inline = [
+        "chmod +x /tmp/installer"
+        "/tmp/installer"
+      ]
+    }
 }
 
 resource "oci_core_instance" "arm_instance" {
@@ -498,6 +504,19 @@ resource "oci_core_instance" "arm_instance" {
     source = "${oci_core_instance.ubuntu_instance.display_name}-installer.sh"
     destination = "/tmp/installer.sh"
   }
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/installer"
+      "/tmp/installer"
+    ]
+  }
+    provisioner "remote-exec" {
+      inline = [
+        "chmod +x /tmp/installer"
+        "/tmp/installer"
+      ]
+    }
+
 }
 
 output "ubuntu_public_ip" {
