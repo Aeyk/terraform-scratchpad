@@ -16,11 +16,11 @@ done
 netfilter-persistent save
 iptables -L --line-numbers # make sure accept 80,443 rules addes
 ip6tables -L --line-numbers
-apt-get update
+apt-get update -y
 apt-get install -y curl nginx certbot python3-certbot-nginx net-tools nullidentd
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 
 curl -sL https://github.com/thelounge/thelounge-deb/releases/download/v4.4.0/thelounge_4.4.0_all.deb -o thelounge.deb
-apt-get update; apt-get install -qq -y nodejs
+apt-get update -y; apt-get install -qq -y nodejs
 dpkg -i thelounge.deb
 usermod thelounge -s /bin/bash
 chown -R thelounge:thelounge /etc/thelounge
@@ -56,16 +56,8 @@ cat <<'EOT' > /etc/nginx/conf.d/chat.mksybr.com.conf
 server {
 	listen 80 default_server;
 	listen [::]:80 default_server;
-	root /dev/null;
+	root /var/www/html;
 	server_name chat.mksybr.com;
-	ssl_certificate /etc/letsencrypt/live/chat.mksybr.com/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/chat.mksybr.com/privkey.pem;
-	include /etc/letsencrypt/options-ssl-nginx.conf;
-
-	# Redirect non-https traffic to https
-	if ($scheme != "https") {
-		return 301 https://$host$request_uri;
-	} # managed by Certbot
 }
 EOT
 
@@ -83,9 +75,9 @@ server {
 }
 EOT
 rm /etc/nginx/sites-enabled/default
-sed -ie 's\reverseProxy: false\reverseProxy: true\' /etc/thelounge/config.js
 sudo ln -s /etc/nginx/sites-available/irc.conf /etc/nginx/sites-enabled/irc.conf
 systemctl restart nginx
+sed -ie 's\reverseProxy: false\reverseProxy: true\' /etc/thelounge/config.js
 systemctl restart thelounge
 sudo -u thelounge sh -c '
 PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
