@@ -74,9 +74,10 @@ server {
 	}
 }
 EOT
+
 rm /etc/nginx/sites-enabled/default
 sudo ln -s /etc/nginx/sites-available/irc.conf /etc/nginx/sites-enabled/irc.conf
-systemctl restart nginx
+systemctl start nginx
 sed -ie 's\reverseProxy: false\reverseProxy: true\' /etc/thelounge/config.js
 systemctl restart thelounge
 sudo -u thelounge sh -c '
