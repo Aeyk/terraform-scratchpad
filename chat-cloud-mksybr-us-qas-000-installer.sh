@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 if test "$UID" -ne 0; then
-		printf "FATAL: this script require root"
+    printf "FATAL: this script require root"
     sleep 10
     exit
 fi
@@ -11,7 +11,7 @@ cp /etc/iptables/rules.v{4,6} /tmp # backup incase of havok
 iptables -L --line-numbers # get line numbers
 ip6tables -L --line-numbers
 for port in 80 113 443 6667 ; do
-		iptables -I INPUT 6 -m state --state NEW -p tcp --dport $port -j ACCEPT
+    iptables -I INPUT 15 -m state --state NEW -p tcp --dport $port -j ACCEPT
 done
 netfilter-persistent save
 iptables -L --line-numbers # make sure accept 80,443 rules addes

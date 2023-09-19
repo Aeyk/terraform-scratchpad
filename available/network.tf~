@@ -225,36 +225,36 @@ resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
 }
 
 
-resource "oci_core_network_security_group_security_rule" "rdp_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.me_net_security_group.id
-  protocol = 6 # ICMPv6
-  direction = "INGRESS"
-  source = "172.56.0.0/16"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
-  tcp_options {
-    destination_port_range {
-      min = 3389
-      max = 3389
-    }
-  }
-}
+# resource "oci_core_network_security_group_security_rule" "rdp_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.me_net_security_group.id
+#   protocol = 6 # ICMPv6
+#   direction = "INGRESS"
+#   source = "172.56.0.0/16"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "false"
+#   tcp_options {
+#     destination_port_range {
+#       min = 3389
+#       max = 3389
+#     }
+#   }
+# }
 
-resource "oci_core_network_security_group_security_rule" "rdpv6_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.me_net_security_group.id
-  protocol = 6 # ICMPv6
-  direction = "INGRESS"
-  source = "2607:fb90:e210::/48"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
-  tcp_options {
-    destination_port_range {
-      min = 3389
-      max = 3389
-    }
-  }
-}
+# resource "oci_core_network_security_group_security_rule" "rdpv6_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.me_net_security_group.id
+#   protocol = 6 # ICMPv6
+#   direction = "INGRESS"
+#   source = "2607:fb90:e210::/48"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "false"
+#   tcp_options {
+#     destination_port_range {
+#       min = 3389
+#       max = 3389
+#     }
+#   }
+# }

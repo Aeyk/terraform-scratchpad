@@ -14,12 +14,11 @@ variable "private_ssh_key" {
   default = "/home/me/.ssh/id_rsa"
 }
 
-
 terraform {
   required_providers {
     oci = {     
       source  = "oracle/oci"
-      version = "5.0.0"
+      version = "5.1.0"
     }
     digitalocean = {
       source = "digitalocean/digitalocean"
@@ -33,7 +32,7 @@ terraform {
 }
 
 provider "keepass" {
-  database = "./Cloud Tokens.kdbx"
+  database = "../Cloud Tokens.kdbx"
   password = var.database_password
 }
 
@@ -69,7 +68,7 @@ locals {
 provider "oci" {
   tenancy_ocid = data.keepass_entry.oci_tenancy_id.password
   user_ocid = data.keepass_entry.oci_user_id.password
-  private_key_path = "/home/me/.config/oci/oracle_free.pem"
+  private_key_path = "/home/me/.oci/cloud_mksybr.pem"
   fingerprint = data.keepass_entry.oci_fingerprint.password
   region = "us-ashburn-1"
 }
@@ -92,6 +91,10 @@ locals {
   }
 }
 
+variable "ubuntu_instance_count" {
+  default = 2
+}
+
 resource "oci_core_instance" "ubuntu_instance" {
   depends_on = [
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
@@ -110,7 +113,8 @@ resource "oci_core_instance" "ubuntu_instance" {
     oci_core_network_security_group_security_rule.identd_ingress,
     oci_core_network_security_group_security_rule.identdv6_ingress,
   ]
-  display_name = "chat-cloud-mksybr-us-qas-000"
+  count = var.ubuntu_instance_count
+  display_name = "chat-cloud-mksybr-us-qas-00${count.index}"
   agent_config {
 	is_management_disabled = "false"
 	is_monitoring_disabled = "false"
@@ -144,6 +148,7 @@ resource "oci_core_instance" "ubuntu_instance" {
   create_vnic_details {
 	assign_private_dns_record = "false"
 	assign_public_ip = "true"
+        # assign_ipv6ip = "true"
 	subnet_id = oci_core_subnet.public_subnet.id
 	nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
   }
@@ -174,19 +179,50 @@ resource "oci_core_instance" "ubuntu_instance" {
     type     = "ssh"
     user     = "ubuntu"
     private_key = "${file(var.private_ssh_key)}"
-    host     = "${oci_core_instance.ubuntu_instance.public_ip}"
+    host     = "${self.public_ip}"
   }
 }
 
-output "ubuntu_public_ip" {
-  value = oci_core_instance.ubuntu_instance.public_ip
+output "ubuntu_public_ips" {
+  value = [for u in oci_core_instance.ubuntu_instance : u.public_ip[*]]
 }
 
-resource "digitalocean_record" "chat-mksybr-com-dns-record" {
+resource "digitalocean_record" "chat-mksybr-com-a-dns-record" {
   depends_on = [oci_core_instance.ubuntu_instance]
+  count = var.ubuntu_instance_count
   name = "chat"
   domain = "mksybr.com"
   type   = "A"
-  value  = oci_core_instance.ubuntu_instance.public_ip
+  value  = oci_core_instance.ubuntu_instance[count.index].public_ip
   ttl = "30"
 }
+
+resource "digitalocean_record" "wildcard-chat-mksybr-com-a-dns-record" {
+  count = var.ubuntu_instance_count
+  depends_on = [oci_core_instance.ubuntu_instance]
+  name = "*.chat"
+  domain = "mksybr.com"
+  type   = "A"
+  value  = oci_core_instance.ubuntu_instance[count.index].public_ip
+  ttl = "30"
+}
+
+
+
+# resource "digitalocean_record" "chat-mksybr-com-aaaa-dns-record" {
+#   depends_on = [oci_core_instance.ubuntu_instance]
+#   name = "chat"
+#   domain = "mksybr.com"
+#   type   = "AAAA"
+#   value  = oci_core_instance.ubuntu_instance.public_ipv6
+#   ttl = "30"
+# }
+
+# resource "digitalocean_record" "wildcard-chat-mksybr-com-dns-record" {
+#   depends_on = [oci_core_instance.ubuntu_instance]
+#   name = "*.chat"
+#   domain = "mksybr.com"
+#   type   = "AAAA"
+#   value  = oci_core_instance.ubuntu_instance.public_ipv6
+#   ttl = "30"
+# }
