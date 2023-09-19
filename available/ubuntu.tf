@@ -1,6 +1,6 @@
 # -*- mode: ruby; -*-
-variable "database_password" {
-  sensitive = true
+variable "database_password" { 
+ sensitive = true
 }
 variable "oci_vcn_cidr_block" {}
 variable "oci_vcn_public_subnet_cidr_block" {}
@@ -59,12 +59,6 @@ provider "digitalocean" {
   token = data.keepass_entry.digitalocean_token.password
 }
 
-locals {
-  ssh = {
-    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}"
-  }
-}
-
 provider "oci" {
   tenancy_ocid = data.keepass_entry.oci_tenancy_id.password
   user_ocid = data.keepass_entry.oci_user_id.password
@@ -91,11 +85,11 @@ locals {
   }
 }
 
-variable "ubuntu_instance_count" {
+variable "amd64_instance_count" {
   default = 2
 }
 
-resource "oci_core_instance" "ubuntu_instance" {
+resource "oci_core_instance" "amd64_instance" {
   depends_on = [
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
     oci_core_dhcp_options.dhcp,
@@ -113,8 +107,8 @@ resource "oci_core_instance" "ubuntu_instance" {
     oci_core_network_security_group_security_rule.identd_ingress,
     oci_core_network_security_group_security_rule.identdv6_ingress,
   ]
-  count = var.ubuntu_instance_count
-  display_name = "chat-cloud-mksybr-us-qas-00${count.index}"
+  count = var.amd64_instance_count
+  display_name = "mksybr-us-qas-00${count.index}"
   agent_config {
 	is_management_disabled = "false"
 	is_monitoring_disabled = "false"
@@ -166,7 +160,7 @@ resource "oci_core_instance" "ubuntu_instance" {
 	source_type = "image"
   }
   # provisioner "file" {
-  #   source = "${oci_core_instance.ubuntu_instance.display_name}-installer.sh"
+  #   source = "${oci_core_instance.amd64_instance.display_name}-installer.sh"
   #   destination = "/tmp/installer.sh"
   # }
   # provisioner "remote-exec" {
@@ -184,45 +178,45 @@ resource "oci_core_instance" "ubuntu_instance" {
 }
 
 output "ubuntu_public_ips" {
-  value = [for u in oci_core_instance.ubuntu_instance : u.public_ip[*]]
+  value = [for u in oci_core_instance.amd64_instance : u.public_ip[*]]
 }
 
-resource "digitalocean_record" "chat-mksybr-com-a-dns-record" {
-  depends_on = [oci_core_instance.ubuntu_instance]
-  count = var.ubuntu_instance_count
-  name = "chat"
+resource "digitalocean_record" "x-mksybr-com-a-dns-record" {
+  depends_on = [oci_core_instance.amd64_instance]
+  count = var.amd64_instance_count
+  name = "x"
   domain = "mksybr.com"
   type   = "A"
-  value  = oci_core_instance.ubuntu_instance[count.index].public_ip
+  value  = oci_core_instance.amd64_instance[count.index].public_ip
   ttl = "30"
 }
 
-resource "digitalocean_record" "wildcard-chat-mksybr-com-a-dns-record" {
-  count = var.ubuntu_instance_count
-  depends_on = [oci_core_instance.ubuntu_instance]
-  name = "*.chat"
+resource "digitalocean_record" "wildcard-x-mksybr-com-a-dns-record" {
+  count = var.amd64_instance_count
+  depends_on = [oci_core_instance.amd64_instance]
+  name = "*.x"
   domain = "mksybr.com"
   type   = "A"
-  value  = oci_core_instance.ubuntu_instance[count.index].public_ip
+  value  = oci_core_instance.amd64_instance[count.index].public_ip
   ttl = "30"
 }
 
 
 
 # resource "digitalocean_record" "chat-mksybr-com-aaaa-dns-record" {
-#   depends_on = [oci_core_instance.ubuntu_instance]
+#   depends_on = [oci_core_instance.amd64_instance]
 #   name = "chat"
 #   domain = "mksybr.com"
 #   type   = "AAAA"
-#   value  = oci_core_instance.ubuntu_instance.public_ipv6
+#   value  = oci_core_instance.amd64_instance.public_ipv6
 #   ttl = "30"
 # }
 
 # resource "digitalocean_record" "wildcard-chat-mksybr-com-dns-record" {
-#   depends_on = [oci_core_instance.ubuntu_instance]
+#   depends_on = [oci_core_instance.amd64_instance]
 #   name = "*.chat"
 #   domain = "mksybr.com"
 #   type   = "AAAA"
-#   value  = oci_core_instance.ubuntu_instance.public_ipv6
+#   value  = oci_core_instance.amd64_instance.public_ipv6
 #   ttl = "30"
 # }
