@@ -2,33 +2,23 @@
 variable "database_password" { 
  sensitive = true
 }
-variable "oci_vcn_cidr_block" {}
-variable "oci_vcn_public_subnet_cidr_block" {}
-variable "oci_vcn_private_subnet_cidr_block" {}
+
+variable "oci_vcn_cidr_block" {
+  default = "10.0.0.0/24"
+}
+variable "oci_vcn_public_subnet_cidr_block" {
+  default = "10.0.1.0/24"
+}
+variable "oci_vcn_private_subnet_cidr_block" {
+  default = "10.0.2.0/24"
+}
 
 variable "public_ssh_key" {
-  default = "/home/me/.ssh/id_rsa.pub"
+  default = "/home/malik/.ssh/id_rsa.pub"
 }
 
 variable "private_ssh_key" {
-  default = "/home/me/.ssh/id_rsa"
-}
-
-terraform {
-  required_providers {
-    oci = {     
-      source  = "oracle/oci"
-      version = "5.1.0"
-    }
-    digitalocean = {
-      source = "digitalocean/digitalocean"
-      version = "2.28.1"
-    }
-    keepass = {
-      source = "iSchluff/keepass"
-      version = "0.2.1"
-    }
-  }
+  default = "/home/malik/.ssh/id_rsa"
 }
 
 provider "keepass" {
