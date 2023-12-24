@@ -1,1 +1,0 @@
-/home/me/Workspace/terraform-scratchpad/enabled/../available/ubuntu.tf
