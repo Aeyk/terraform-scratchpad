@@ -1,7 +1,8 @@
 
 resource "oci_core_vcn" "vcn" {
+  depends_on = [data.keepass_entry.oci_compartment_id]
   cidr_blocks    = [var.oci_vcn_cidr_block]
-  compartment_id = data.oci_identity_compartment.compartment.id
+  compartment_id = data.keepass_entry.oci_compartment_id.password
   is_ipv6enabled = true
   display_name   = "cloud-mksybr-vcn"
 }
