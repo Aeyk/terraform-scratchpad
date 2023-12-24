@@ -8,9 +8,9 @@ if test -z "$1"; then
 fi
 
 oci_nuke(){
-    read -r -s -p "Cloud Tokens.kdbx password: " PASSWORD
-    oci_tenancy_id=$(echo "$PASSWORD" | keepassxc-cli show -sa password -q "$1" 'Oracle Tenancy ID')
-    oci_compartment_id=$(echo "$PASSWORD" | keepassxc-cli show -sa password -q "$1" 'Oracle Compartment ID')
+    read -r -s -p "Cloud Tokens.kdbx password: " password
+    oci_tenancy_id=$(echo "$password" | keepassxc-cli show -sa password -q "$1" 'Oracle Tenancy ID')
+    oci_compartment_id=$(echo "$password" | keepassxc-cli show -sa password -q "$1" 'Oracle Compartment ID')
     oci_compartment_name=$(oci iam compartment get -c "${oci_compartment_id}" | jq  '.data.name')
     # list of region codes where cmpt resources exists
     declare -a region_codes=(
