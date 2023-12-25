@@ -5,8 +5,14 @@ variable "oci_vcn_cidr_block" {
 variable "oci_vcn_public_subnet_cidr_block" {
   default = "10.0.0.0/28"
 }
+variable "oci_vcn_public_subnet_ipv6_cidr_block" {
+  default = "2603:c020:4014:2b00:0000:0000:0000:0000/64"
+}
 variable "oci_vcn_private_subnet_cidr_block" {
   default = "10.0.0.16/28"
+}
+variable "oci_vcn_private_subnet_ipv6_cidr_block" {
+  default = "2603:c020:4014:2b01:0000:0000:0000:0000/64"
 }
 
 resource "oci_core_vcn" "vcn" {
@@ -78,6 +84,7 @@ resource "oci_core_subnet" "public_subnet" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_public_subnet_cidr_block
+  ipv6cidr_block = var.oci_vcn_public_subnet_ipv6_cidr_block
   display_name   = "cloud-mksybr-public-subnet"
   route_table_id    = oci_core_route_table.igw_route_table.id
   dhcp_options_id   = oci_core_dhcp_options.dhcp.id
@@ -90,6 +97,7 @@ resource "oci_core_subnet" "private_subnet" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_private_subnet_cidr_block
+  ipv6cidr_block = var.oci_vcn_private_subnet_ipv6_cidr_block
   display_name   = "cloud-mksybr-private-subnet"
   prohibit_public_ip_on_vnic = true
   route_table_id    = oci_core_route_table.igw_route_table.id
