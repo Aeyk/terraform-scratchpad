@@ -5,15 +5,15 @@ variable "oci_vcn_cidr_block" {
 variable "oci_vcn_public_subnet_cidr_block" {
   default = "10.0.0.0/28"
 }
-variable "oci_vcn_public_subnet_ipv6_cidr_block" {
-  default = "2603:c020:4014:2b00:0000:0000:0000:0000/64"
-}
+#variable "oci_vcn_public_subnet_ipv6_cidr_block" {
+#  default = "2603:c020:4014:dc00::/56"
+#}
 variable "oci_vcn_private_subnet_cidr_block" {
   default = "10.0.0.16/28"
 }
-variable "oci_vcn_private_subnet_ipv6_cidr_block" {
-  default = "2603:c020:4014:2b01:0000:0000:0000:0000/64"
-}
+#variable "oci_vcn_private_subnet_ipv6_cidr_block" {
+#  default = "2603:c020:4014:dc00::/56"
+#}
 
 resource "oci_core_vcn" "vcn" {
   depends_on = [data.keepass_entry.oci_compartment_id]
@@ -97,7 +97,7 @@ resource "oci_core_subnet" "public_subnet" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_public_subnet_cidr_block
-  ipv6cidr_block = var.oci_vcn_public_subnet_ipv6_cidr_block
+  # ipv6cidr_block = var.oci_vcn_public_subnet_ipv6_cidr_block
   display_name   = "cloud-mksybr-public-subnet"
   route_table_id    = oci_core_route_table.igw_route_table.id
   dhcp_options_id   = oci_core_dhcp_options.dhcp.id
@@ -110,7 +110,7 @@ resource "oci_core_subnet" "private_subnet" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_private_subnet_cidr_block
-  ipv6cidr_block = var.oci_vcn_private_subnet_ipv6_cidr_block
+  # ipv6cidr_block = var.oci_vcn_private_subnet_ipv6_cidr_block
   display_name   = "cloud-mksybr-private-subnet"
   prohibit_public_ip_on_vnic = true
   route_table_id    = oci_core_route_table.igw_route_table.id
@@ -579,3 +579,38 @@ resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
 #     }
 #   }
 # }
+
+resource "oci_core_network_security_group_security_rule" "ipv4_kubernetes_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "false"
+  tcp_options {
+    destination_port_range {
+      min = 6443
+      max = 6443
+    }
+  }   
+}
+
+
+resource "oci_core_network_security_group_security_rule" "ipv6_kubernetes_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "::/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "false"
+  tcp_options {
+    destination_port_range {
+      min = 6443
+      max = 6443
+    }
+  }
+}
