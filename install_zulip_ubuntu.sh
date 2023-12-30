@@ -19,3 +19,8 @@ tar -xf zulip-server-latest.tar.gz
 
 sudo ./zulip-server-*/scripts/setup/install $CERT_OPTS \
     --email=$EMAIL --hostname=$DOMAIN
+
+sudo su zulip -c '/home/zulip/deployments/current/manage.py generate_realm_creation_link'
+
+# TODO(Malik): terraform aws ses, setup, get dns txt records
+# TODO(Malik): terraform digital ocean dns record a & txt
