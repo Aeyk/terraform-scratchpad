@@ -1,0 +1,11 @@
+- name: Hello World Play
+  hosts: oracle
+  tasks:
+    - name: ping
+      ansible.builtin.ping:
+
+    - name: hello world
+      ansible.builtin.debug:
+        msg: Hello World
+
+
