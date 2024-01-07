@@ -1,0 +1,15 @@
+upstream keycloak-backend {
+  %{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
+  ${ ip }:8080;
+  %{ endfor ~}
+}
+
+server {
+  listen 80; #listen on port 80
+  server_name keycloak.mksybr.com;
+  location / {
+    proxy_read_timeout 300s;
+    proxy_pass http://keycloak-backend; 
+    health_check;
+  }
+}

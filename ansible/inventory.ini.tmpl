@@ -1,8 +1,8 @@
-[oracle]
-%{ for ip in public_ipv4 ~}
+[oracle_arm]
+%{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
 ${ ip }
 %{ endfor ~}
 
-[oracle:vars]
+[all:vars]
 ansible_connection=ssh
 ansible_user=ubuntu

@@ -1,68 +1,68 @@
-    resource "oci_core_network_security_group" "me_net_security_group" {
-      depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                     oci_core_dhcp_options.dhcp]
-      display_name = "me-mksybr-network-security-group"
-      compartment_id = data.keepass_entry.oci_compartment_id.password
-      vcn_id = oci_core_vcn.vcn.id
-    }
+resource "oci_core_network_security_group" "me_net_security_group" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                  oci_core_dhcp_options.dhcp]
+  display_name = "me-mksybr-network-security-group"
+  compartment_id = data.keepass_entry.oci_compartment_id.password
+  vcn_id = oci_core_vcn.vcn.id
+}
 
-    variable "arm-1vcpu-6gb-us-qas_count" {
-      default = 4
-    }
+variable "arm-1vcpu-6gb-us-qas_count" {
+  default = 4
+}
 
-    resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
-      depends_on = [
-        oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-        oci_core_dhcp_options.dhcp,
-        oci_core_network_security_group.me_net_security_group,
-        oci_core_subnet.public_subnet,
-        oci_core_subnet.private_subnet
-        # oci_core_network_security_group_security_rule.rdp_ingress,
-        # oci_core_network_security_group_security_rule.rdpv6_ingress
-      ]
-      count = var.arm-1vcpu-6gb-us-qas_count
-      display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
-      agent_config {
-        is_management_disabled = "false"
-        is_monitoring_disabled = "false"
-        plugins_config {
-          desired_state = "DISABLED"
-          name = "Vulnerability Scanning"
-        }
-        plugins_config {
-          desired_state = "ENABLED"
-          name = "Management Agent"
-        }
-        plugins_config {
-          desired_state = "ENABLED"
-          name = "Custom Logs Monitoring"
-        }
-        plugins_config {
-          desired_state = "ENABLED"
-          name = "Compute Instance Monitoring"
-        }
-        plugins_config {
-          desired_state = "DISABLED"
-          name = "Bastion"
-        }
-      }
-      availability_config {
-        is_live_migration_preferred = "true"
-        recovery_action = "RESTORE_INSTANCE"
-      }
-      availability_domain = "onUG:US-ASHBURN-AD-2"
-      compartment_id = data.keepass_entry.oci_compartment_id.password
-      create_vnic_details {
-        assign_private_dns_record = "false"
-        assign_public_ip = "true"
-        subnet_id = oci_core_subnet.public_subnet.id
-        nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
-        # assign_ipv6ip = "true"
-      }
-      instance_options {
-        are_legacy_imds_endpoints_disabled = "false"
-      }
-      is_pv_encryption_in_transit_enabled = "true"
+resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
+  depends_on = [
+    oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+    oci_core_dhcp_options.dhcp,
+    oci_core_network_security_group.me_net_security_group,
+    oci_core_subnet.public_subnet,
+    oci_core_subnet.private_subnet
+    # oci_core_network_security_group_security_rule.rdp_ingress,
+    # oci_core_network_security_group_security_rule.rdpv6_ingress
+  ]
+  count = var.arm-1vcpu-6gb-us-qas_count
+  display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
+  agent_config {
+    is_management_disabled = "false"
+    is_monitoring_disabled = "false"
+    plugins_config {
+      desired_state = "DISABLED"
+      name = "Vulnerability Scanning"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name = "Management Agent"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name = "Custom Logs Monitoring"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name = "Compute Instance Monitoring"
+    }
+    plugins_config {
+      desired_state = "DISABLED"
+      name = "Bastion"
+    }
+  }
+  availability_config {
+    is_live_migration_preferred = "true"
+    recovery_action = "RESTORE_INSTANCE"
+  }
+  availability_domain = "onUG:US-ASHBURN-AD-2"
+  compartment_id = data.keepass_entry.oci_compartment_id.password
+  create_vnic_details {
+    assign_private_dns_record = "false"
+    assign_public_ip = "true"
+    subnet_id = oci_core_subnet.public_subnet.id
+    nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+    # assign_ipv6ip = "true"
+  }
+  instance_options {
+    are_legacy_imds_endpoints_disabled = "false"
+  }
+  is_pv_encryption_in_transit_enabled = "true"
   metadata = {
     "ssh_authorized_keys" = local.ssh.authorized_keys
   }
@@ -118,6 +118,16 @@ resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
   ttl = "30"
 }
 
+resource "digitalocean_record" "keycloak-arm-1vcpu-6gb-us-qas-a-dns-record" {
+  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+  count = var.arm-1vcpu-6gb-us-qas_count
+  name = "keycloak"
+  domain = "mksybr.com"
+  type   = "A"
+  value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
+  ttl = "30"
+}
+
 # resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-aaaa-dns-record" {
 #   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
 #   count = var.arm-1vcpu-6gb-us-qas_count
@@ -129,10 +139,22 @@ resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
 #   ttl = "30"
 # }
 
-resource "local_file" "ansible_inventory" {
-    content = templatefile("../ansible/inventory.ini.tmpl", {
-        display_name = oci_core_instance.arm-1vcpu-6gb-us-qas.*.display_name
-        public_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
-    })
-    filename = "../ansible/inventory.ini"
-}
+
+# resource "aws_ses_domain_identity" "zulip_domain" {
+#   domain = "zulip.mksybr.com"
+# }
+# 
+# resource "aws_ses_domain_identity_verification" "zulip_domain_verification" {
+#   domain = aws_ses_domain_identity.zulip_domain.id
+#   depends_on = [aws_ses_domain_identity.zulip_domain]
+# }
+# 
+
+# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-cname-dns-record" {
+#   depends_on = [aws_ses_domain_identity.zulip_domain]
+#   name = "cname"
+#   domain = "zulip.mksybr.com"
+#   type   = "CNAME"
+#   value  = aws_ses_domain_identity.zulip_domain.verification_token
+#   ttl = "30"
+# }

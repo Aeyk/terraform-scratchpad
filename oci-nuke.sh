@@ -3,7 +3,7 @@ usage_string="Usage: oci-nuke.sh keepassxc-database
 Destroy everything in Oracle inside of ASHBURN-AD-1 and specified tenancy and compartment, searches for the two entries in keepassxc-database under the names 'Oracle Tenancy ID' and 'Oracle Compartment ID'"
 
 
-if test -z "$DEBUG"; then
+if ! test -z "$DEBUG"; then
     debug_oci_string=--debug
 fi
 
@@ -31,8 +31,8 @@ oci_nuke(){
             --display-name "Stack_${unique_stack_id}_${region_code}" --description "Stack From Compartment ${oci_compartment_name} for region ${region_code}" --wait-for-state SUCCEEDED --query "data.resources[0].identifier" --raw-output $debug_oci_string)
         echo "$ocid_compartment_stack"
         # twice since it fails sometimes and is idempotent
-        oci resource-manager job create-destroy-job  --execution-plan-strategy 'AUTO_APPROVED'  --stack-id "${ocid_compartment_stack}" --wait-for-state SUCCEEDED --max-wait-seconds 30 $debug_oci_string
-        oci resource-manager job create-destroy-job  --execution-plan-strategy 'AUTO_APPROVED'  --stack-id "${ocid_compartment_stack}" --wait-for-state SUCCEEDED --max-wait-seconds 60 $debug_oci_string
+	oci resource-manager job create-destroy-job  --execution-plan-strategy 'AUTO_APPROVED'  --stack-id "${ocid_compartment_stack}" --wait-for-state SUCCEEDED --max-wait-seconds 300 $debug_oci_string
+       	oci resource-manager job create-destroy-job  --execution-plan-strategy 'AUTO_APPROVED'  --stack-id "${ocid_compartment_stack}" --wait-for-state SUCCEEDED --max-wait-seconds 600 $debug_oci_string
         oci resource-manager stack delete --stack-id "${ocid_compartment_stack}" --force --wait-for-state DELETED $debug_oci_string
     done            
     oci iam compartment delete -c "${oci_compartment_id}" --force --wait-for-state SUCCEEDED $debug_oci_string
