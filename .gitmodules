@@ -1,0 +1,3 @@
+[submodule "ansible/postgresql"]
+	path = ansible/postgresql
+	url = https://github.com/vitabaks/postgresql_cluster.git
