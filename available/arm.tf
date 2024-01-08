@@ -128,17 +128,7 @@ resource "digitalocean_record" "keycloak-arm-1vcpu-6gb-us-qas-a-dns-record" {
   ttl = "30"
 }
 
-# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-aaaa-dns-record" {
-#   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
-#   count = var.arm-1vcpu-6gb-us-qas_count
-#   name = "a"
-#   domain = "mksybr.com"
-#   type   = "AAAA"
-#   value  =  data.oci_core_ipv6s.arm-1vcpu-6gb-us-qas-ipv6.ipv6s
-#   # value  =  [for u in data.oci_core_ipv6s.arm-1vcpu-6gb-us-qas-ipv6.ipv6s : u[*].ip_address]
-#   ttl = "30"
-# }
-
+# i
 
 # resource "aws_ses_domain_identity" "zulip_domain" {
 #   domain = "zulip.mksybr.com"
