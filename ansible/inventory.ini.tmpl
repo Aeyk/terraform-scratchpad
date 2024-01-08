@@ -5,7 +5,7 @@ ${ ip }
 
 [postgres_cluster]
 %{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
-${ ip } postgresql_exists='true'
+${ ip } postgresql_exists='false'
 %{ endfor ~}
 
 # Please specify the ip addresses and connection settings for your environment
@@ -41,11 +41,11 @@ ${ ip }
 
 # PostgreSQL nodes
 [master]
-${arm-1vcpu-6gb-us-qas-public_ipv4[0]} hostname=pgnode01 postgresql_exists=false
+${arm-1vcpu-6gb-us-qas-public_ipv4[0]} postgresql_exists=false
 
 [replica]
 %{ for ip in slice(arm-1vcpu-6gb-us-qas-public_ipv4, 1, 3) ~}
-${ ip }  hostname=pgnode0${index(slice(arm-1vcpu-6gb-us-qas-public_ipv4, 1, 3), ip)} postgresql_exists=false
+${ ip } postgresql_exists=false
 %{ endfor ~}
 
 [postgres_cluster:children]
