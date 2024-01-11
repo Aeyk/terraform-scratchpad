@@ -1,3 +1,17 @@
+terraform {
+  required_version = "~> 1.6"
+  required_providers {
+    oci = {     
+      source  = "oracle/oci"
+      version = "~> 5"
+    }
+    keepass = {
+      source = "iSchluff/keepass"
+      version = "~> 0"
+    }
+  }
+}
+
 resource "oci_core_vcn" "vcn" {
   depends_on = [data.keepass_entry.oci_compartment_id]
   cidr_blocks    = [var.oci_vcn_cidr_block]

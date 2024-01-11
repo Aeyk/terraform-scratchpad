@@ -56,3 +56,13 @@ resource "oci_identity_compartment" "cloud-mksybr" {
 #     namespace = "IAD"
 #     object = var.object_object
 # }
+
+
+module "network" {
+  source = "./network"
+}
+
+module "compute" {
+  source     = "./compute"
+  depends_on = [module.network]
+}
