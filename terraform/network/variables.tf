@@ -1,0 +1,20 @@
+
+variable "oci_vcn_cidr_block" {
+  default = "10.0.0.0/24"
+}
+
+variable "oci_vcn_public_subnet_cidr_block" {
+  default = "10.0.0.0/28"
+}
+
+variable "oci_vcn_public_subnet_ipv6_cidr_block" {
+  default = "2603:c020:4014:dc00::/56"
+}
+
+variable "oci_vcn_private_subnet_cidr_block" {
+  default = "10.0.0.16/28"
+}
+
+variable "oci_vcn_private_subnet_ipv6_cidr_block" {
+  default = "2603:c020:4014:dc00::/56"
+}
