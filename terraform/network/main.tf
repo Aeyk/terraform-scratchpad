@@ -12,6 +12,16 @@ terraform {
   }
 }
 
+provider "keepass" {
+  database = "../Cloud Tokens.kdbx"
+  password = var.keepass_database_password
+}
+
+module "secrets" {
+  source = "../secrets"
+  keepass_database_password = var.keepass_database_password
+}
+
 resource "oci_core_vcn" "vcn" {
   depends_on = [data.keepass_entry.oci_compartment_id]
   cidr_blocks    = [var.oci_vcn_cidr_block]
