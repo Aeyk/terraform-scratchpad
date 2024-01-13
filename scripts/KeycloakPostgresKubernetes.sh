@@ -173,7 +173,7 @@ spec:
           class: nginx
 EOF
 
-kubectl patch ingress keycloak --patch "$(cat <<EOF
+cat <<'EOF' | kubectl patch ingress keycloak --patch "$(cat -)"
 metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -184,7 +184,6 @@ spec:
     - keycloak.mksybr.com
     secretName: keycloak-tls
 EOF
-)"
 
 cat << EOF | kubectl apply -f -
 apiVersion: stackgres.io/v1
@@ -356,6 +355,32 @@ spec:
           ports:
             - name: prometheus
               containerPort: 10254
+EOF
+
+cat << 'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archivebox
+  namespace: default
+  labels:
+    k8s-app: archivebox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: archivebox
+  template:
+    metadata:
+      name: archivebox
+      labels:
+        k8s-app: archivebox
+    spec:
+      containers:
+        - name: archivebox
+          image: archivebox/archivebox
+          securityContext:
+            privileged: false
 EOF
 
 popd
