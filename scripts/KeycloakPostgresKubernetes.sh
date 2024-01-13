@@ -5,6 +5,7 @@ set -o xtrace
 pushd .
 
 ## TODO(Malik): Check if not UBUNTU
+## TODO(Malik): seperate applications to different namespaces 
 
 ## Generate and add ssh key to authorized users
 chmod 700 ~/.ssh
@@ -44,6 +45,33 @@ sed -i 's/ingress_nginx_enabled: false/ingress_nginx_enabled: true/g' inventory/
 sed -i 's/cert_manager_enabled: false/cert_manager_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
 sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cluster-admin-user
+  namespace: kubernetes-dashboard
+EOF
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: cluster-admin-user
+  namespace: kubernetes-dashboard
+EOF
+
+kubectl -n kubernetes-dashboard create token cluster-admin-user
 
 # TODO CA certificate
 
@@ -293,5 +321,41 @@ echo ""
 wget -q -O - https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak-ingress.yaml | \
 sed "s/KEYCLOAK_HOST/keycloak.mksybr.com/" | \
 kubectl create -f -
+
+cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus; cd kube-prometheus
+
+kubectl apply --server-side -f manifests/setup
+kubectl wait \
+	--for condition=Established \
+	--all CustomResourceDefinition \
+	--namespace=monitoring
+kubectl apply -f manifests/
+
+## kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
+kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/prometheus/
+kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/grafana/
+
+cat << 'EOF' | kubectl patch service -n ingress-nginx prometheus-server --patch "$(cat -)"
+spec:
+  ports:
+    - name: prometheus
+      port: 10254
+      targetPort: prometheus
+EOF
+
+cat << EOF | kubectl patch deployment -n ingress-nginx prometheus-server --patch "$(cat -)"
+spec:
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10254"
+    spec:
+      containers:
+        - name: controller
+          ports:
+            - name: prometheus
+              containerPort: 10254
+EOF
 
 popd
