@@ -236,6 +236,8 @@ data:
     db-password=***REMOVED*** # TODO fix permission to run as keycloak
     db-url=jdbc:postgresql://postgres-cluster-primary/keycloak
 
+    http-max-queued-requests=10
+
     # Observability
     # If the server should expose healthcheck endpoints.
     #health-enabled=true
@@ -261,57 +263,14 @@ metadata:
   name: keycloak-configmap
 EOF
 
-# kubectl create -f https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak.yaml
-cat << 'EOF' | kubectl apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  name: keycloak
-  labels:
-    app: keycloak
+kubectl create -f https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak.yaml
+cat <<EOF | kubectl patch deployment keycloak --patch "$(cat -)" 
 spec:
-  ports:
-    - name: http
-      port: 8080
-      targetPort: 8080
-  selector:
-    app: keycloak
-  type: LoadBalancer
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: keycloak
-  labels:
-    app: keycloak
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: keycloak
   template:
-    metadata:
-      labels:
-        app: keycloak
     spec:
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:23.0.4
-          args: ["start-dev"]
-          env:
-            - name: KEYCLOAK_ADMIN
-              value: "admin"
-            - name: KEYCLOAK_ADMIN_PASSWORD
-              value: "admin"
-            - name: KC_PROXY
-              value: "edge"
-          ports:
-            - name: http
-              containerPort: 8080
-          readinessProbe:
-            httpGet:
-              path: /realms/master
-              port: 8080
+          args: ["start"]
           volumeMounts:
           - mountPath: /opt/keycloak/conf/keycloak.conf
             subPath: keycloak.conf
