@@ -73,3 +73,11 @@ resource "azurerm_linux_virtual_machine" "main" {
     storage_account_uri = azurerm_storage_account.main.primary_blob_endpoint
   }
 }
+
+resource "digitalocean_record" "main" {
+  name = "*"
+  domain = "mksybr.com"
+  type   = "A"
+  value  = azurerm_linux_virtual_machine.main.public_ip_address
+  ttl = "30"
+}
