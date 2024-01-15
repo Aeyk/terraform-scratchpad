@@ -66,7 +66,7 @@ ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root clust
 
 mkdir -p "$HOME"/.kube
 sudo cp -fv /etc/kubernetes/admin.conf "$HOME"/.kube/config
-sudo chown $(id -u):$(id -g) "$HOME"/.kube/config
+sudo chown "$(id -u):$(id -g)" "$HOME"/.kube/config
 
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
 
@@ -106,7 +106,7 @@ kubectl create -f https://stackgres.io/downloads/stackgres-k8s/stackgres/1.7.0/s
 kubectl wait -n stackgres deployment -l group=stackgres.io --for=condition=Available
 kubectl get pods -n stackgres -l group=stackgres.io
 
-# kubectl wait pods postgres-cluster-0 --for=condition=Available 
+kubectl wait pods postgres-cluster-0 --for=condition=Available 
 
 cat << 'EOF' | kubectl create -f -
 apiVersion: stackgres.io/v1
@@ -133,7 +133,7 @@ kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "
 "CREATE USER keycloak WITH PASSWORD 'password' CREATEDB;
  GRANT ALL on schema public TO keycloak;"
 
-kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql postgres://keycloak:password@postgres-cluster-primary/keycloak
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql postgres://keycloak:password@postgres-cluster/keycloak # todo create secret for keycloak database connection user
 
 kubectl get secret -n stackgres stackgres-restapi-admin --template '{{ printf "username = %s\npassword = %s\n" (.data.k8sUsername | base64decode) ( .data.clearPassword | base64decode) }}'
 
@@ -193,8 +193,15 @@ spec:
           class: nginx
 EOF
 
-cat << 'EOF' | kubectl patch ingress keycloak --patch "$(cat -)"
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
+  ingressClassName: "nginx"
   rules:
   - host: keycloak.mksybr.com
     http:
@@ -203,13 +210,39 @@ spec:
           service:
             name: keycloak
             port:
-              number: 8080
+                number: 8000
         path: /
         pathType: Prefix
   tls:
   - hosts:
     - keycloak.mksybr.com
-    secretName: keycloak-tls
+    secretName: letsencrypt-prod
+EOF
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: archivebox
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: archivebox.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+              name: archivebox
+              port:
+                number: 8000
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - archivebox.mksybr.com
+    secretName: letsencrypt-prod
 EOF
 
 cat << EOF | kubectl apply -f -
@@ -370,6 +403,19 @@ kubectl create -f -
 #### [io.quarkus.vertx.http.runtime.VertxHttpRecorder] (main) The X-Forwarded-* and Forwarded headers will be considered when determining the proxy address. This configuration can cause a security issue as clients can forge requests and send a forwarded header that is not overwritten by the proxy. Please consider use one of these headers just to forward the proxy address in requests.
 
 
+cat << EOF | kubectl patch ingress/keycloak --patch "$(cat -)"
+metadata:
+  name: keycloak
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - keycloak.mksybr.com
+    secretName: letsencrypt-prod
+EOF
+
 cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus || true; cd kube-prometheus
 
 kubectl apply --server-side -f manifests/setup
@@ -528,6 +574,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: archivebox
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
   - host: archivebox.mksybr.com
@@ -543,6 +592,7 @@ spec:
   tls:
   - hosts:
     - archivebox.mksybr.com
+    secretName: letsencrypt-prod
 EOF
 
 popd
