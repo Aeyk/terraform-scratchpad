@@ -1136,6 +1136,161 @@ spec:
     secretName: gitea-letsencrypt-prod
 EOF
 ## Gitea END
+
+##  Drone CI BEGIN
+sudo sysctl -w fs.inotify.max_user_watches=2099999999
+sudo sysctl -w fs.inotify.max_user_instances=2099999999
+sudo sysctl -w fs.inotify.max_queued_events=2099999999
+
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: drone-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: drone-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+cat << EOF | kubectl apply -f -
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: default
+  name: drone
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - get
+  - create
+  - delete
+  - list
+  - watch
+  - update
+EOF
+cat <<'EOF' | kubectl apply -f -
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: drone
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+roleRef:
+  kind: Role
+  name: drone
+  apiGroup: rbac.authorization.k8s.io
+EOF
+cat <<'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drone
+  labels:
+    app.kubernetes.io/name: drone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: drone
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: drone
+    spec:
+      containers:
+      - name: drone
+        image: drone/drone:latest
+        ports:
+        - containerPort: 80
+          hostPort: 3002
+        env:
+        - name: DRONE_RPC_HOST
+          value: drone.mksybr.com
+        - name: DRONE_RPC_PROTO
+          value: http
+        - name: DRONE_RPC_SECRET
+          value: super-duper-secret
+        - name: DRONE_GITEA_SERVER
+          value: https://gitea.mksybr.com
+        - name: DRONE_GITEA_CLIENT_ID
+          value: 3a2a
+        - name: DRONE_GITEA_CLIENT_SECRET
+          value: 8ad9
+        - name: DRONE_RUNNER_CAPACITY
+          value: "1"
+        - name: DRONE_SERVER_HOST
+          value: https://drone.mksybr.com
+        - name: DRONE_SERVER_PROTO
+          value: http
+EOF
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: drone
+  namespace: default
+spec:
+  ports:
+  - name: https
+    port: 3002
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: drone
+  sessionAffinity: None
+  type: LoadBalancer
+EOF
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: drone
+  annotations:
+    cert-manager.io/cluster-issuer: "drone-letsencrypt-prod"
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: drone.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+              name: drone
+              port:
+                number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - drone.mksybr.com
+    secretName: drone-letsencrypt-prod
+EOF
+##  Drone CI END
 popd
 
 
@@ -1147,5 +1302,7 @@ popd
 # Wire up Keycloak for authentication for ELK, ArchiveBox
 # Jenkins/Drone
 # ArgoCD?
-# Gitea -- initContainer, Postgres, Keycloak
+# Gitea 
+#### initContainer, Postgres, Keycloak
 # OpenEBS/Ceph/NFS
+# Explicit versions for each image
