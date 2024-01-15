@@ -27,9 +27,9 @@ pip3 install ansible==7.6.0 ruamel_yaml netaddr jmespath==0.9.5
 echo 'export PATH=${PATH:+${PATH}:}$HOME/.local/bin/' >> "$HOME"/.bashrc && source "$HOME"/.bashrc
 
 ## Install kubespray
-cd /tmp
-git clone https://github.com/kubernetes-sigs/kubespray
-cd kubespray
+cd /tmp || exit
+git clone https://github.com/kubernetes-sigs/kubespray || true
+cd kubespray || exit
 git checkout release-2.23
 
 # Copy ``inventory/sample`` as ``inventory/mycluster``
@@ -324,7 +324,7 @@ wget -q -O - https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/lat
 sed "s/KEYCLOAK_HOST/keycloak.mksybr.com/" | \
 kubectl create -f -
 
-cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus; cd kube-prometheus
+cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus || true; cd kube-prometheus
 
 kubectl apply --server-side -f manifests/setup
 kubectl wait \
