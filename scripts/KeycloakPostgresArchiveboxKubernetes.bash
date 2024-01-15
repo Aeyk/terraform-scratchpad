@@ -222,6 +222,28 @@ spec:
           class: nginx
 EOF
 
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: prometheus-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: prometheus-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+
 
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
@@ -475,35 +497,88 @@ kubectl create -f -
 #### [io.quarkus.vertx.http.runtime.VertxHttpRecorder] (main) The X-Forwarded-* and Forwarded headers will be considered when determining the proxy address. This configuration can cause a security issue as clients can forge requests and send a forwarded header that is not overwritten by the proxy. Please consider use one of these headers just to forward the proxy address in requests.
 
 
-cat << EOF | kubectl patch ingress/keycloak --patch "$(cat -)"
+
+cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus || true; cd kube-prometheus
+
+kubectl apply --server-side -f manifests/setup
+kubectl wait \
+	--for condition=Established \
+	--all CustomResourceDefinition \
+	--namespace=monitoring
+kubectl apply -f manifests/
+
+## kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
+kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/prometheus/
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
 metadata:
-  name: keycloak
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: ingress-nginx
+  name: prometheus-server
+  namespace: ingress-nginx
 spec:
-  ingressClassName: "nginx"
-  tls:
-  - hosts:
-    - keycloak.mksybr.com
-    secretName: letsencrypt-prod
-    
+  ports:
+  - port: 9090
+    protocol: TCP
+    targetPort: 9090
+  selector:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: ingress-nginx
+  type: LoadBalancer
 EOF
 
-# cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus || true; cd kube-prometheus
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: ingress-nginx
+  name: prometheus
+  namespace: ingress-nginx
+spec:
+  ports:
+  - port: 9090 
+    protocol: TCP
+    targetPort: 9090 
+  selector:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: ingress-nginx
+  sessionAffinity: None
+  type: LoadBalancer
+EOF
 
-# kubectl apply --server-side -f manifests/setup
-# kubectl wait \
-# 	--for condition=Established \
-# 	--all CustomResourceDefinition \
-# 	--namespace=monitoring
-# kubectl apply -f manifests/
-
-# ## kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
-# kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/prometheus/
-# kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/grafana/
-
-# #TODO bufix error server is invalid
-# #The Service "prometheus-server" is invalid: spec.ports[1].name: Required value
+## TODO why no lets encrypt?
+cat << EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-prometheus.io/cluster-issuer: letsencrypt-prod
+  name: prometheus
+  namespace: ingress-nginx
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: prometheus.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: prometheus
+            port:
+              number: 9090
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - prometheus.mksybr.com
+    secretName: prometheus-letsencrypt-prod
+EOF
 # cat << 'EOF' | kubectl patch service -n ingress-nginx prometheus-server --patch "$(cat -)"
 # spec:
 #   ports:
