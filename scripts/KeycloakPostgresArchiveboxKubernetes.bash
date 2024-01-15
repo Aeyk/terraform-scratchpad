@@ -74,9 +74,18 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 kubectl get storageclass | grep "local-path (default)"
 
+# cat << EOF | kubectl apply -f -
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: local-storage
+# provisioner: kubernetes.io/no-provisioner
+# volumeBindingMode: Immediate
+# EOF
+
+## Kubernetes Dashboard BEGIN
 # TODO lets encrypt certificate error
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
-
 cat <<'EOF' | kubectl apply -f -
 apiVersion: v1
 kind: ServiceAccount
@@ -84,7 +93,6 @@ metadata:
   name: cluster-admin-user
   namespace: kubernetes-dashboard
 EOF
-
 cat <<'EOF' | kubectl apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -99,13 +107,14 @@ subjects:
   name: cluster-admin-user
   namespace: kubernetes-dashboard
 EOF
-
 kubectl -n kubernetes-dashboard create token cluster-admin-user
+## Kubernetes Dashboard END
 
+
+## StackGres BEGIN
 kubectl create -f https://stackgres.io/downloads/stackgres-k8s/stackgres/1.7.0/stackgres-operator-demo.yml
 kubectl wait -n stackgres deployment -l group=stackgres.io --for=condition=Available
 kubectl get pods -n stackgres -l group=stackgres.io
-
 cat << 'EOF' | kubectl create -f -
 apiVersion: stackgres.io/v1
 kind: SGCluster
@@ -119,207 +128,7 @@ spec:
     persistentVolume: 
       size: '10Gi'
 EOF
-
 POD_NAME=$(kubectl get pods --namespace stackgres -l "stackgres.io/restapi=true" -o jsonpath="{.items[0].metadata.name}")
-# kubectl port-forward "$POD_NAME" 8443:9443 --namespace stackgres # TODO replace with deployment
-
-cat << EOF | kubectl patch configmap -n ingress-nginx ingress-nginx --patch "$(cat -)"
-metadata:
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-data:
-  hsts: "false"
-EOF
-
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
- name: letsencrypt-staging
- namespace: cert-manager
-spec:
- acme:
-   # The ACME server URL
-   server: https://acme-staging-v02.api.letsencrypt.org/directory
-   # Email address used for ACME registration
-   email: mksybr@gmail.com
-   # Name of a secret used to store the ACME account private key
-   privateKeySecretRef:
-     name: letsencrypt-staging
-   # Enable the HTTP-01 challenge provider
-   solvers:
-   - http01:
-       ingress:
-         class:  nginx
-EOF
-
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
-
-
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: keycloak-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: keycloak-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
-
-
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: archivebox-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: archivebox-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
-
-
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: grafana-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: grafana-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
-
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: prometheus-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: prometheus-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
-
-
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: keycloak
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    kubernetes.io/ingress.class: "nginx"
-spec:
-  rules:
-  - host: keycloak.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: keycloak
-              port:
-                number: 8080
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - keycloak.mksybr.com
-    secretName: keycloak-letsencrypt-prod
-EOF
-
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: archivebox
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    kubernetes.io/ingress.class: "nginx"
-spec:
-  rules:
-  - host: archivebox.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: archivebox
-              port:
-                number: 8000
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - archivebox.mksybr.com
-    secretName: letsencrypt-prod
-EOF
-
 cat << EOF | kubectl apply -f -
 apiVersion: stackgres.io/v1
 kind: SGInstanceProfile
@@ -330,7 +139,6 @@ spec:
   cpu: "1"
   memory: "10Gi"
 EOF
-
 cat << EOF | kubectl apply -f -
 apiVersion: stackgres.io/v1
 kind: SGPostgresConfig
@@ -345,7 +153,6 @@ spec:
     password_encryption: 'scram-sha-256'
     log_checkpoints: 'on'
 EOF
-
 cat << EOF | kubectl apply -f -
 apiVersion: stackgres.io/v1
 kind: SGPoolingConfig
@@ -360,7 +167,6 @@ spec:
         max_client_conn: '1000'
         default_pool_size: '80'
 EOF
-
 cat << EOF | kubectl apply -f -
 apiVersion: stackgres.io/v1
 kind: SGCluster
@@ -386,29 +192,99 @@ spec:
     scripts:
     - sgScript: cluster-scripts
 EOF
-
 cat << EOF | kubectl patch statefulsets/postgres-cluster --patch "$(cat -)"
 spec:
   replicas: 1
 EOF
-
-
 while ! kubectl get secret postgres-cluster; do echo "Waiting for my secret. CTRL-C to exit."; sleep 1; done
-
-# POSTGRES_PASSWORD=$(kubectl get secret postgres-cluster --template '{{ printf "%s" (index .data "superuser-password" | base64decode) }}')
-
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
 "CREATE DATABASE keycloak;"
-
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
 "CREATE USER keycloak WITH PASSWORD 'password' CREATEDB;
  GRANT ALL on schema public TO keycloak;"
-
 kubectl get secret -n stackgres stackgres-restapi-admin --template '{{ printf "username = %s\npassword = %s\n" (.data.k8sUsername | base64decode) ( .data.clearPassword | base64decode) }}'
-
 POSTGRES_PASSWORD=$(kubectl get secret postgres-cluster --template '{{ printf "%s" (index .data "superuser-password" | base64decode) }}')
+## StackGres END
 
-#TODO fix error maybe wait?
+
+## Let's Encrypt BEGIN
+cat << EOF | kubectl patch configmap -n ingress-nginx ingress-nginx --patch "$(cat -)"
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+data:
+  hsts: "false"
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+ name: letsencrypt-staging
+ namespace: cert-manager
+spec:
+ acme:
+   # The ACME server URL
+   server: https://acme-staging-v02.api.letsencrypt.org/directory
+   # Email address used for ACME registration
+   email: mksybr@gmail.com
+   # Name of a secret used to store the ACME account private key
+   privateKeySecretRef:
+     name: letsencrypt-staging
+   # Enable the HTTP-01 challenge provider
+   solvers:
+   - http01:
+       ingress:
+         class:  nginx
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+## Let's Encrypt END
+
+
+## Keycloak BEGIN
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: keycloak-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: keycloak-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+## TODO X-Forwarded- and Forwarded headers
+#### [io.quarkus.vertx.http.runtime.VertxHttpRecorder] (main) The X-Forwarded-* and Forwarded headers will be considered when determining the proxy address. This configuration can cause a security issue as clients can forge requests and send a forwarded header that is not overwritten by the proxy. Please consider use one of these headers just to forward the proxy address in requests.
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 data:
@@ -453,7 +329,6 @@ kind: ConfigMap
 metadata:
   name: keycloak-configmap
 EOF
-
 kubectl create -f https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak.yaml
 kubectl scale deployment keycloak --replicas=0
 kubectl scale deployment keycloak --replicas=1
@@ -477,17 +352,26 @@ spec:
           configMap:
             name: keycloak-configmap
 EOF
-
-
+echo ""
+KEYCLOAK_URL=https://keycloak.mksybr.com &&
+echo "" &&
+echo "Keycloak:                 $KEYCLOAK_URL" &&
+echo "Keycloak Admin Console:   $KEYCLOAK_URL/admin" &&
+echo "Keycloak Account Console: $KEYCLOAK_URL/realms/myrealm/account" &&
+echo ""
+# NOTE: do I even need this commented block now?
+# wget -q -O - https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak-ingress.yaml | \
+#     sed "s/KEYCLOAK_HOST/keycloak.mksybr.com/" | \
+#     kubectl create -f -
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: keycloak
   annotations:
-    cert-manager.io/cluster-issuer: "keycloak-letsencrypt-prod"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "nginx"
 spec:
-  ingressClassName: "nginx"
   rules:
   - host: keycloak.mksybr.com
     http:
@@ -496,7 +380,7 @@ spec:
           service:
               name: keycloak
               port:
-                number: 8000
+                number: 8080
         path: /
         pathType: Prefix
   tls:
@@ -504,47 +388,66 @@ spec:
     - keycloak.mksybr.com
     secretName: keycloak-letsencrypt-prod
 EOF
-
-echo ""
-KEYCLOAK_URL=https://keycloak.mksybr.com &&
-echo "" &&
-echo "Keycloak:                 $KEYCLOAK_URL" &&
-echo "Keycloak Admin Console:   $KEYCLOAK_URL/admin" &&
-echo "Keycloak Account Console: $KEYCLOAK_URL/realms/myrealm/account" &&
-echo ""
-
-wget -q -O - https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak-ingress.yaml | \
-sed "s/KEYCLOAK_HOST/keycloak.mksybr.com/" | \
-kubectl create -f -
-## TODO X-Forwarded- and Forwarded headers
-#### [io.quarkus.vertx.http.runtime.VertxHttpRecorder] (main) The X-Forwarded-* and Forwarded headers will be considered when determining the proxy address. This configuration can cause a security issue as clients can forge requests and send a forwarded header that is not overwritten by the proxy. Please consider use one of these headers just to forward the proxy address in requests.
+## Keycloak END
 
 
-# cat << EOF | kubectl patch ingress/keycloak --patch "$(cat -)"
-# metadata:
-#   name: keycloak
-#   annotations:
-#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-# spec:
-#   ingressClassName: "nginx"
-#   tls:
-#   - hosts:
-#     - keycloak.mksybr.com
-#     secretName: letsencrypt-prod
-# EOF
-
+## Prometheus & Grafana Initialization BEGIN
 cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus || true; cd kube-prometheus
-
 kubectl apply --server-side -f manifests/setup
 kubectl wait \
 	--for condition=Established \
 	--all CustomResourceDefinition \
 	--namespace=monitoring
 kubectl apply -f manifests/
+## Prometheus & Grafana Initialization END
 
-## kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
+
+## Prometheus BEGIN
+## UNDO:
+#### cd /tmp/kube-prometheus; kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
 kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/prometheus/
-
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: prometheus-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: prometheus-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: grafana-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: grafana-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
@@ -565,28 +468,6 @@ spec:
     app.kubernetes.io/part-of: ingress-nginx
   type: LoadBalancer
 EOF
-
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app.kubernetes.io/name: prometheus
-    app.kubernetes.io/part-of: ingress-nginx
-  name: prometheus
-  namespace: ingress-nginx
-spec:
-  ports:
-  - port: 9090 
-    protocol: TCP
-    targetPort: 9090 
-  selector:
-    app.kubernetes.io/name: prometheus
-    app.kubernetes.io/part-of: ingress-nginx
-  sessionAffinity: None
-  type: LoadBalancer
-EOF
-
 ## TODO why no lets encrypt?
 cat << EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
@@ -614,9 +495,13 @@ spec:
     - prometheus.mksybr.com
     secretName: prometheus-letsencrypt-prod
 EOF
+## Prometheus END
 
+
+## Grafana BEGIN
+## UNDO:
+#### cd /tmp/kube-prometheus; kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
 kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/grafana/
-
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
@@ -636,7 +521,6 @@ spec:
     app.kubernetes.io/part-of: ingress-nginx
   type: LoadBalancer
 EOF
-
 cat << EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -663,43 +547,31 @@ spec:
     - grafana.mksybr.com
     secretName: grafana-letsencrypt-prod
 EOF
+## Grafana END
 
-# # TODO bufix error server is invalid
-# # The Service "prometheus-server" is invalid: spec.ports[1].name: Required value
-# cat << 'EOF' | kubectl patch service -n ingress-nginx prometheus-server --patch "$(cat -)"
-# spec:
-#   ports:
-#     - name: prometheus-server
-#       port: 10254
-#       targetPort: prometheus
-# EOF
 
-# # TODO bufix error server is invalid
-# # The Service "prometheus-server" is invalid: spec.ports[1].name: Required value
-# cat << EOF | kubectl patch deployment -n ingress-nginx prometheus-server --patch "$(cat -)"
-# spec:
-#   template:
-#     metadata:
-#       annotations:
-#         prometheus.io/scrape: "true"
-#         prometheus.io/port: "10254"
-#     spec:
-#       containers:
-#         - name: controller
-#           ports:
-#             - name: prometheus
-#               containerPort: 10254
-# EOF
-
+## ArchiveBox BEGIN
 cat << EOF | kubectl apply -f -
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
 metadata:
-  name: local-storage
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: Immediate
+  name: archivebox-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: archivebox-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
 EOF
-
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -714,7 +586,6 @@ spec:
   accessModes:
     - ReadWriteMany
 EOF
-
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolume
@@ -742,7 +613,6 @@ spec:
           values:
           - node1
 EOF
-
 cat << 'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -788,8 +658,6 @@ spec:
           persistentVolumeClaim:
             claimName: archivebox
 EOF
-
-
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
@@ -805,7 +673,6 @@ spec:
       port: 8000
   type: LoadBalancer
 EOF
-
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -831,5 +698,6 @@ spec:
     - archivebox.mksybr.com
     secretName: archivebox-letsencrypt-prod
 EOF
+## ArchiveBox END
 
 popd
