@@ -138,7 +138,16 @@ kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql p
 kubectl get secret -n stackgres stackgres-restapi-admin --template '{{ printf "username = %s\npassword = %s\n" (.data.k8sUsername | base64decode) ( .data.clearPassword | base64decode) }}'
 
 POD_NAME=$(kubectl get pods --namespace stackgres -l "stackgres.io/restapi=true" -o jsonpath="{.items[0].metadata.name}")
-kubectl port-forward "$POD_NAME" 8443:9443 --namespace stackgres
+# kubectl port-forward "$POD_NAME" 8443:9443 --namespace stackgres # TODO replace with deployment
+
+cat << EOF | kubectl patch configmap -n ingress-nginx ingress-nginx --patch "$(cat -)"
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+data:
+  hsts: "false"
+EOF
 
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
@@ -184,12 +193,19 @@ spec:
           class: nginx
 EOF
 
-cat <<'EOF' | kubectl patch ingress keycloak --patch "$(cat -)"
-metadata:
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    kubernetes.io/ingress.class: nginx
+cat << 'EOF' | kubectl patch ingress keycloak --patch "$(cat -)"
 spec:
+  rules:
+  - host: keycloak.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: keycloak
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix
   tls:
   - hosts:
     - keycloak.mksybr.com
@@ -263,7 +279,15 @@ spec:
     - sgScript: cluster-scripts
 EOF
 
-cat << 'EOF' | kubectl apply -f -
+cat << EOF | kubectl patch statefulsets/postgres-cluster --patch "$(cat -)"
+spec:
+  replicas: 1
+EOF
+
+POSTGRES_PASSWORD=$(kubectl get secret postgres-cluster --template '{{ printf "%s" (index .data "superuser-password" | base64decode) }}')
+
+#TODO fix error maybe wait?
+cat << EOF | kubectl apply -f -
 apiVersion: v1
 data:
   keycloak.conf: |
@@ -271,8 +295,9 @@ data:
     # Database
     db=postgres
     db-username=postgres           # TODO fix permission to run as keycloak
-    db-password=9bb2-9ac4-4f70-9d9 # TODO fix permission to run as keycloak
-    db-url=jdbc:postgresql://postgres-cluster-primary/keycloak
+    db-password=$POSTGRES_PASSWORD # TODO fix permission to run as keycloak
+    db-url-host=postgres-cluster.default.svc.cluster.local
+    # db-url=jdbc:postgresql://postgres-cluster.default.svc.cluster.local/keycloak
 
     http-max-queued-requests=10
 
@@ -284,9 +309,9 @@ data:
 
     # HTTP
     # The file path to a server certificate or certificate chain in PEM format.
-    #https-certificate-file=${kc.home.dir}conf/server.crt.pem
+    #https-certificate-file=\${kc.home.dir}conf/server.crt.pem
     # The file path to a private key in PEM format.
-    #https-certificate-key-file=${kc.home.dir}conf/server.key.pem
+    #https-certificate-key-file=\${kc.home.dir}conf/server.key.pem
     # The proxy address forwarding mode if the server is behind a reverse proxy.
     #proxy=reencrypt
 
@@ -294,7 +319,14 @@ data:
     #spi-sticky-session-encoder-infinispan-should-attach-route=false
 
     # Hostname for the Keycloak server.
-    hostname=keycloak.mksybr.com
+    # hostname=keycloak.mksybr.com
+    # hostname-path=/keycloak
+    # http-relative-path=/keycloak
+    hostname-url=https://keycloak.mksybr.com:443/keycloak
+    hostname-admin-url=https://keycloak.mksybr.com:443/keycloak
+    proxy=edge
+
+    quarkus.transaction-manager.enable-recovery=true
 
 kind: ConfigMap
 metadata:
@@ -302,18 +334,21 @@ metadata:
 EOF
 
 kubectl create -f https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak.yaml
+kubectl scale deployment keycloak --replicas=1
 cat <<EOF | kubectl patch deployment keycloak --patch "$(cat -)" 
 spec:
+  replicas: 1
   template:
     spec:
       containers:
         - name: keycloak
-          args: ["start"]
+          args: ["start-dev"]
           volumeMounts:
           - mountPath: /opt/keycloak/conf/keycloak.conf
             subPath: keycloak.conf
             name: keycloak-config-file
             readOnly: true
+          env: []
       volumes:
         - name: keycloak-config-file
           configMap:
@@ -331,6 +366,9 @@ echo ""
 wget -q -O - https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak-ingress.yaml | \
 sed "s/KEYCLOAK_HOST/keycloak.mksybr.com/" | \
 kubectl create -f -
+## TODO X-Forwarded- and Forwarded headers
+#### [io.quarkus.vertx.http.runtime.VertxHttpRecorder] (main) The X-Forwarded-* and Forwarded headers will be considered when determining the proxy address. This configuration can cause a security issue as clients can forge requests and send a forwarded header that is not overwritten by the proxy. Please consider use one of these headers just to forward the proxy address in requests.
+
 
 cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus || true; cd kube-prometheus
 
@@ -345,14 +383,18 @@ kubectl apply -f manifests/
 kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/prometheus/
 kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/grafana/
 
+# TODO bufix error server is invalid
+# The Service "prometheus-server" is invalid: spec.ports[1].name: Required value
 cat << 'EOF' | kubectl patch service -n ingress-nginx prometheus-server --patch "$(cat -)"
 spec:
   ports:
-    - name: prometheus
+    - name: prometheus-server
       port: 10254
       targetPort: prometheus
 EOF
 
+# TODO bufix error server is invalid
+# The Service "prometheus-server" is invalid: spec.ports[1].name: Required value
 cat << EOF | kubectl patch deployment -n ingress-nginx prometheus-server --patch "$(cat -)"
 spec:
   template:
@@ -368,30 +410,139 @@ spec:
               containerPort: 10254
 EOF
 
+# cat << EOF | kubectl apply -f -
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: local-storage
+# provisioner: kubernetes.io/no-provisioner
+# volumeBindingMode: Immediate
+# EOF
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: archivebox
+spec:
+  storageClassName: "local-path"
+  volumeName: archivebox
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+EOF
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: archivebox
+  labels:
+    type:
+      local
+spec:
+  local:
+    path:
+      /data/archivebox
+  capacity: 
+    storage:
+      10Gi
+  storageClassName: "local-path"
+  accessModes:
+    - ReadWriteMany
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+EOF
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: archivebox
+spec:
+  selector:
+    app.kubernetes.io/name: archivebox
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      targetPort: 8000
+      port: 8000
+EOF
+
 cat << 'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: archivebox
-  namespace: default
-  labels:
-    k8s-app: archivebox
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      k8s-app: archivebox
+      app: archivebox
+  replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
-      name: archivebox
       labels:
-        k8s-app: archivebox
+        app: archivebox
     spec:
+      initContainers:
+        - name: init-archivebox
+          image: archivebox/archivebox
+          args: ['init']
+          volumeMounts:
+            - mountPath: /data
+              name: archivebox
       containers:
         - name: archivebox
-          image: archivebox/archivebox
-          securityContext:
-            privileged: false
+          args: ["server", "--debug", "--reload"]
+          image: archivebox/archivebox:dev
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+              name: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+          volumeMounts:
+            - mountPath: /data
+              name: archivebox
+      restartPolicy: Always
+      volumes:
+        - name: archivebox
+          persistentVolumeClaim:
+            claimName: archivebox
+EOF
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: archivebox
+spec:
+  rules:
+  - host: archivebox.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+              name: archivebox
+              port:
+                number: 8000
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - archivebox.mksybr.com
 EOF
 
 popd
