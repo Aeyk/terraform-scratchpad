@@ -49,6 +49,32 @@ sed -i 's/cert_manager_enabled: false/cert_manager_enabled: true/g' inventory/ma
 sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
 sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 
+# TODO CA certificate
+
+# Clean up old Kubernetes cluster with Ansible Playbook - run the playbook as root
+# The option `--become` is required, as for example cleaning up SSL keys in /etc/,
+# uninstalling old packages and interacting with various systemd daemons.
+# Without --become the playbook will fail to run!
+# And be mind it will remove the current kubernetes cluster (if it's running)!
+ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root reset.yml -e reset_confirmation=true
+
+# Deploy Kubespray with Ansible Playbook - run the playbook as root
+# The option `--become` is required, as for example writing SSL keys in /etc/,
+# installing packages and interacting with various systemd daemons.
+# Without --become the playbook will fail to run!
+ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root cluster.yml
+
+mkdir -p "$HOME"/.kube
+sudo cp -fv /etc/kubernetes/admin.conf "$HOME"/.kube/config
+sudo chown $(id -u):$(id -g) "$HOME"/.kube/config
+
+# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+kubectl get storageclass | grep "local-path (default)"
+
+# TODO lets encrypt certificate error
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
 
 cat <<'EOF' | kubectl apply -f -
@@ -75,31 +101,6 @@ subjects:
 EOF
 
 kubectl -n kubernetes-dashboard create token cluster-admin-user
-
-# TODO CA certificate
-
-# Clean up old Kubernetes cluster with Ansible Playbook - run the playbook as root
-# The option `--become` is required, as for example cleaning up SSL keys in /etc/,
-# uninstalling old packages and interacting with various systemd daemons.
-# Without --become the playbook will fail to run!
-# And be mind it will remove the current kubernetes cluster (if it's running)!
-ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root reset.yml -e reset_confirmation=true
-
-# Deploy Kubespray with Ansible Playbook - run the playbook as root
-# The option `--become` is required, as for example writing SSL keys in /etc/,
-# installing packages and interacting with various systemd daemons.
-# Without --become the playbook will fail to run!
-ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root cluster.yml
-
-mkdir $HOME/.kube
-sudo cp -fv /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
-# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
-kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-kubectl get storageclass | grep "local path (default)"
 
 kubectl create -f https://stackgres.io/downloads/stackgres-k8s/stackgres/1.7.0/stackgres-operator-demo.yml
 kubectl wait -n stackgres deployment -l group=stackgres.io --for=condition=Available && kubectl get pods -n stackgres -l group=stackgres.io
