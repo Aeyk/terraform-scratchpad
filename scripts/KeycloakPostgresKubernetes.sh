@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 set -o xtrace
+set -o errexit
+set -o errtrace
+set -o pipefail
 
 pushd .
 
