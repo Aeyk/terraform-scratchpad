@@ -14,8 +14,8 @@ pushd .
 chmod 700 ~/.ssh
 touch ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
-test -e $HOME/.ssh/id_rsa || ssh-keygen -f $HOME/.ssh/id_rsa -P ""
-cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+test -e "$HOME"/.ssh/id_rsa || ssh-keygen -f "$HOME"/.ssh/id_rsa -P ""
+cat "$HOME"/.ssh/id_rsa.pub >> "$HOME"/.ssh/authorized_keys
 
 ## Install ansible
 sudo apt update
@@ -24,7 +24,7 @@ sudo apt update
 sudo apt install python-is-python3 python3-pip -y
 pip3 install ansible==7.6.0 ruamel_yaml netaddr jmespath==0.9.5
 
-echo 'export PATH=${PATH:+${PATH}:}$HOME/.local/bin/' >> $HOME/.bashrc && source $HOME/.bashrc
+echo 'export PATH=${PATH:+${PATH}:}$HOME/.local/bin/' >> "$HOME"/.bashrc && source "$HOME"/.bashrc
 
 ## Install kubespray
 cd /tmp
@@ -37,7 +37,7 @@ cp -rfp inventory/sample inventory/main
 
 # Update Ansible inventory file with inventory builder
 declare -a IPS=(10.0.0.4)
-CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
+CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py "${IPS[@]}"
 
 # Review and change parameters under ``inventory/main/group_vars``
 # cat inventory/main/group_vars/all/all.yml
