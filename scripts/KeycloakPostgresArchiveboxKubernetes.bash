@@ -838,4 +838,159 @@ spec:
 EOF
 ## ElasticSearch END
 
+## Kibana BEGIN
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    common.k8s.elastic.co/type: kibana
+    kibana.k8s.elastic.co/name: quickstart
+  name: quickstart-kb-http
+  namespace: default
+spec:
+  ports:
+  - name: https
+    port: 5601
+    protocol: TCP
+    targetPort: 5601
+  selector:
+    common.k8s.elastic.co/type: kibana
+    kibana.k8s.elastic.co/name: quickstart
+  sessionAffinity: None
+  type: LoadBalancer
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: kibana-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: kibana-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kibana
+spec:
+  storageClassName: "local-path"
+  volumeName: kibana
+  resources:
+    requests:
+      storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kibana
+  labels:
+    type:
+      local
+spec:
+  local:
+    path:
+      /data/kibana
+  capacity: 
+    storage:
+      10Gi
+  storageClassName: "local-path"
+  accessModes:
+    - ReadWriteMany
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+EOF
+cat <<EOF | kubectl apply -f -
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: quickstart
+spec:
+  version: 8.11.4
+  count: 1
+  elasticsearchRef:
+    name: quickstart
+EOF
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana
+  annotations:
+    cert-manager.io/cluster-issuer: "kibana-letsencrypt-prod"
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: kibana.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+              name: quickstart-kb-http
+              port:
+                number: 5601
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - kibana.mksybr.com
+    secretName: kibana-letsencrypt-prod
+EOF
+cat << 'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+spec:
+  selector:
+    matchLabels:
+      app: kibana
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: kibana/kibana
+          ports:
+            - containerPort: 5601
+              protocol: TCP
+              name: http
+          volumeMounts:
+            - mountPath: /usr/share/kibana/data
+              name: kibana
+      restartPolicy: Always
+      volumes:
+        - name: kibana
+          persistentVolumeClaim:
+            claimName: kibana
+EOF
+## Kibana END
+
 popd
