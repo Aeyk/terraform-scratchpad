@@ -103,7 +103,10 @@ EOF
 kubectl -n kubernetes-dashboard create token cluster-admin-user
 
 kubectl create -f https://stackgres.io/downloads/stackgres-k8s/stackgres/1.7.0/stackgres-operator-demo.yml
-kubectl wait -n stackgres deployment -l group=stackgres.io --for=condition=Available && kubectl get pods -n stackgres -l group=stackgres.io
+kubectl wait -n stackgres deployment -l group=stackgres.io --for=condition=Available
+kubectl get pods -n stackgres -l group=stackgres.io
+
+# kubectl wait pods postgres-cluster-0 --for=condition=Available 
 
 cat << 'EOF' | kubectl create -f -
 apiVersion: stackgres.io/v1
@@ -119,11 +122,15 @@ spec:
       size: '5Gi'
 EOF
 
-kubectl get secret postgres-cluster --template '{{ printf "%s" (index .data "superuser-password" | base64decode) }}'
+while ! kubectl get secret postgres-cluster; do echo "Waiting for my secret. CTRL-C to exit."; sleep 1; done
 
-kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster-primary -c \
+# POSTGRES_PASSWORD=$(kubectl get secret postgres-cluster --template '{{ printf "%s" (index .data "superuser-password" | base64decode) }}')
+
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE DATABASE keycloak;"
+
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
 "CREATE USER keycloak WITH PASSWORD 'password' CREATEDB;
- CREATE DATABASE keycloak;
  GRANT ALL on schema public TO keycloak;"
 
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql postgres://keycloak:password@postgres-cluster-primary/keycloak
