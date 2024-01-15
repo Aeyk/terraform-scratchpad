@@ -520,6 +520,18 @@ kubectl create -f -
 #### [io.quarkus.vertx.http.runtime.VertxHttpRecorder] (main) The X-Forwarded-* and Forwarded headers will be considered when determining the proxy address. This configuration can cause a security issue as clients can forge requests and send a forwarded header that is not overwritten by the proxy. Please consider use one of these headers just to forward the proxy address in requests.
 
 
+# cat << EOF | kubectl patch ingress/keycloak --patch "$(cat -)"
+# metadata:
+#   name: keycloak
+#   annotations:
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   tls:
+#   - hosts:
+#     - keycloak.mksybr.com
+#     secretName: letsencrypt-prod
+# EOF
 
 cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus || true; cd kube-prometheus
 
