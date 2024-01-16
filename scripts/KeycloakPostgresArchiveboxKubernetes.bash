@@ -370,6 +370,10 @@ spec:
               subPath: gitea.json
               name: keycloak-gitea-realm-file
               readOnly: true
+            - mountPath: /opt/keycloak/realm/
+              subPath: grafana.json
+              name: keycloak-grafana-realm-file
+              readOnly: true              
       volumes:
         - name: keycloak-config-file
           configMap:
@@ -377,6 +381,9 @@ spec:
         - name: keycloak-gitea-realm-file
           configMap:
             name: keycloak-gitea-realm
+        - name: keycloak-grafana-realm-file
+          configMap:
+            name: keycloak-grafana-realm            
 EOF
 echo ""
 KEYCLOAK_URL=https://keycloak.mksybr.com &&
@@ -527,7 +534,23 @@ EOF
 ## Grafana BEGIN
 ## UNDO:
 #### cd /tmp/kube-prometheus; kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
-kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/grafana/
+kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/grafana/ # TODO(Malik): volume & volumeMount for Grafana Deployment
+cat << EOF | kubectl create secret generic grafana-config-file --from-file=/dev/stdin
+[auth.generic_oauth]
+enabled = true
+name = Keycloak-OAuth
+allow_sign_up = true
+client_id = grafana
+client_secret = 4jqNOuWD7ZAHxksEL9McEUZbYaSzBuXC
+scopes = openid email profile offline_access roles
+email_attribute_path = email
+login_attribute_path = username
+name_attribute_path = full_name
+auth_url = https://keycloak.mksybr.com//realms/grafana/protocol/openid-connect/auth
+token_url = https://keycloak.mksybr.com//realms/grafana/protocol/openid-connect/token
+api_url = https://keycloak.mksybr.com//realms/grafana/protocol/openid-connect/userinfo
+role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
