@@ -1,0 +1,42 @@
+# Kubectl
+## Create Random Secret
+head /dev/urandom | \
+    tr -dc A-Za-z0-9 | head -c 8 | \
+    kubectl create secret generic xxx \
+    --from-file=password=/dev/stdin -o json
+
+## Read Secret
+kubectl get secret xxx -o jsonpath='{.data.password}' | base64 -d
+
+
+# Postgres
+## Delete user
+DROP OWNED BY keycloak ;
+DROP USER keycloak ;
+
+## Delete Databse
+DROP DATABASE keycloak;
+
+## Drop all other connection
+SELECT 
+    pg_terminate_backend(pid) 
+FROM 
+    pg_stat_activity 
+WHERE 
+    -- don't kill my own connection!
+    pid <> pg_backend_pid()
+    -- don't kill the connections to other databases
+    AND datname = 'keycloak'
+    ;
+
+# Keycloak
+## nginx and keycloak don't load admin console
+https://github.com/keycloak/keycloak/issues/14666
+```
+Do not follow the documentation!
+https://www.keycloak.org/server/all-config
+
+hostname-url
+Set the base URL for frontend URLs, including scheme, host, port and path.
+```
+Setting this or hostname-admin-url parameters to include port makes the admin login page not load, spin forever
