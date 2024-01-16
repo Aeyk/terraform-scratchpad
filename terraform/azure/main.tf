@@ -55,8 +55,8 @@ module "compute" {
 
 resource "azurerm_resource_group" "main" {
   location = "eastus2"
-  name     = "azure_k8s_eastus2"
-  lifecycle {
-    prevent_destroy = true
-  }
+  name     = "azure_resource_group"
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
