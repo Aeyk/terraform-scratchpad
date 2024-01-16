@@ -259,6 +259,7 @@ EOF
 
 
 ## Keycloak BEGIN
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic keycloak-admin-user     --from-file=password=/dev/stdin -o json
 head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-keycloak-user     --from-file=password=/dev/stdin -o json
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
 "CREATE DATABASE keycloak;"
@@ -342,7 +343,11 @@ spec:
             subPath: keycloak.conf
             name: keycloak-config-file
             readOnly: true
-          env: []
+          env: # TODO(Malik): alternative / more secure secret injection?
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "$(kubectl get secrets keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d)"
       volumes:
         - name: keycloak-config-file
           configMap:
@@ -1337,6 +1342,7 @@ spec:
 EOF
 ## Datasette END
 
+
 ## Paperless-NGX BEGIN
 helm repo add k8s-at-home https://k8s-at-home.com/charts/
 helm repo update
@@ -1354,14 +1360,12 @@ popd
 # Jenkins/Drone
 ## Drone <-> Gitea automatic secret creation and sync
 # ArgoCD?
-# Gitea 
 #### initContainer, Postgres, Keycloak
-# OpenEBS/Ceph/NFS
 # Explicit versions for each image
 # Paperless-NGX
 # SyncThing + Tailscale/WireGuard
 # Velero
-# OpenEBS vs Ceph vs Minio vs 
+# OpenEBS vs Ceph vs Minio vs NFS
 # Redis
 # HAProxy vs Nginx?
 # BugZilla?
