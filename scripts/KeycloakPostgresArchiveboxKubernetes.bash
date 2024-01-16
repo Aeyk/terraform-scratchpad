@@ -259,6 +259,7 @@ EOF
 
 
 ## Keycloak BEGIN
+### TODO(Malik): make single realm w/ multiple OIDC clients
 head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic keycloak-admin-user     --from-file=password=/dev/stdin -o json
 head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-keycloak-user     --from-file=password=/dev/stdin -o json
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
@@ -353,8 +354,8 @@ spec:
           configMap:
             name: keycloak-configmap
         - name: keycloak-gitea-realm-file
-          configMap:
-            name: keycloak-gitea-realm
+          secret:
+            secretName: keycloak-gitea-realm
 EOF
 cat << EOF | kubectl patch deployment/keycloak --patch "$(cat -)"
 spec:
@@ -366,11 +367,11 @@ spec:
           # command: ['/opt/keycloak/bin/kc.sh]
           # args: ["import", "--file", "/opt/keycloak/realm/gitea.json"]
           volumeMounts:
-            - mountPath: /opt/keycloak/realm/
+            - mountPath: /opt/keycloak/realm/gitea.json
               subPath: gitea.json
               name: keycloak-gitea-realm-file
               readOnly: true
-            - mountPath: /opt/keycloak/realm/
+            - mountPath: /opt/keycloak/realm/grafana.json
               subPath: grafana.json
               name: keycloak-grafana-realm-file
               readOnly: true              
@@ -379,11 +380,11 @@ spec:
           configMap:
             name: keycloak-configmap
         - name: keycloak-gitea-realm-file
-          configMap:
-            name: keycloak-gitea-realm
+          secret:
+            secretName: keycloak-gitea-realm
         - name: keycloak-grafana-realm-file
-          configMap:
-            name: keycloak-grafana-realm            
+          secret:
+            secretName: keycloak-grafana-realm            
 EOF
 echo ""
 KEYCLOAK_URL=https://keycloak.mksybr.com &&
@@ -461,27 +462,6 @@ spec:
           class: nginx
 EOF
 cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: grafana-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: grafana-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
-cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
 metadata:
@@ -501,6 +481,7 @@ spec:
     app.kubernetes.io/part-of: ingress-nginx
   type: LoadBalancer
 EOF
+
 ## TODO why no lets encrypt?
 cat << EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
@@ -535,21 +516,70 @@ EOF
 ## UNDO:
 #### cd /tmp/kube-prometheus; kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
 kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/grafana/ # TODO(Malik): volume & volumeMount for Grafana Deployment
-cat << EOF | kubectl create secret generic grafana-config-file --from-file=/dev/stdin
+
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: grafana-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: grafana-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+# [server]
+# domain = grafana.mksybr.com
+# http_port = 443
+# [date_formats]
+# default_timezone = UTC
+
+cat << EOF | kubectl create secret generic -n ingress-nginx grafana-config --from-file=grafana.ini=/dev/stdin
+[server]
+root_url = https://grafana.mksybr.com
 [auth.generic_oauth]
 enabled = true
 name = Keycloak-OAuth
 allow_sign_up = true
 client_id = grafana
-client_secret = 4jqNOuWD7ZAHxksEL9McEUZbYaSzBuXC
+client_secret = 4jqNOuWD7ZAHxksEL9McEUZbYaSzBuXC ; TODO(Malik): replace with secret
 scopes = openid email profile offline_access roles
 email_attribute_path = email
 login_attribute_path = username
 name_attribute_path = full_name
-auth_url = https://keycloak.mksybr.com//realms/grafana/protocol/openid-connect/auth
-token_url = https://keycloak.mksybr.com//realms/grafana/protocol/openid-connect/token
-api_url = https://keycloak.mksybr.com//realms/grafana/protocol/openid-connect/userinfo
+auth_url = https://keycloak.mksybr.com/realms/grafana/protocol/openid-connect/auth
+token_url = https://keycloak.mksybr.com/realms/grafana/protocol/openid-connect/token
+api_url = https://keycloak.mksybr.com/realms/grafana/protocol/openid-connect/userinfo
 role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+EOF
+# TODO(Malik): fix ro mount error 
+cat << EOF | kubectl patch deployments -n ingress-nginx grafana --patch="$(cat -)"
+spec:
+  template:
+    spec:
+      containers:
+        - name: grafana
+          volumeMounts:
+            - name: grafana-config-file 
+              mountPath: /etc/grafana/grafana.ini 
+              subPath: grafana.ini
+      volumes:
+        - name: grafana-config-file
+          secret:
+            secretName: grafana-config
+            items:
+              - key: grafana.ini
+                path: grafana.ini
 EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
@@ -557,14 +587,13 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/name: grafana
-    app.kubernetes.io/part-of: ingress-nginx
   name: grafana
   namespace: ingress-nginx
 spec:
   ports:
   - port: 3000
     protocol: TCP
-    targetPort: 3000
+    targetPort: 3002
   selector:
     app.kubernetes.io/name: grafana
     app.kubernetes.io/part-of: ingress-nginx
