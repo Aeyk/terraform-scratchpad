@@ -1359,4 +1359,20 @@ popd
 #### initContainer, Postgres, Keycloak
 # OpenEBS/Ceph/NFS
 # Explicit versions for each image
+# Paperless-NGX
+# SyncThing + Tailscale/WireGuard
+# Velero
+# OpenEBS vs Ceph vs Minio vs 
+# Redis
+# HAProxy vs Nginx?
+# BugZilla?
+# Zulip
 # Screego
+# Jitsi Meet
+# Statping (better kubernetes alternative?), Gotify
+# Datasette connect to PostgresQL
+# Pi-Hole
+# Asciinema
+# Dokku vs OpenFaaS vs LocalStack Lambda vs Kubero
+# rsyslog
+# Searxng
