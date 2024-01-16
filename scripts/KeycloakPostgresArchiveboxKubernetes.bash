@@ -260,11 +260,16 @@ EOF
 
 
 ## Keycloak BEGIN
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-keycloak-user     --from-file=password=/dev/stdin -o json
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
 "CREATE DATABASE keycloak;"
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
-"CREATE USER keycloak WITH PASSWORD 'password' CREATEDB;
- GRANT ALL on schema public TO keycloak;"
+"CREATE USER keycloak WITH ENCRYPTED PASSWORD '$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)' CREATEDB;
+GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster/keycloak" -c \
+"GRANT ALL on schema public TO keycloak;"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://keycloak:$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)@postgres-cluster/keycloak" -c \
+"GRANT ALL on schema public TO keycloak;"
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -295,11 +300,11 @@ data:
     # Basic settings for running in production. Change accordingly before deploying the server.
     # Database
     db=postgres
-    db-username=postgres           # TODO fix permission to run as keycloak
-    db-password=$POSTGRES_PASSWORD # TODO fix permission to run as keycloak
+    db-username=keycloak
+    db-password=$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)
     db-url-host=postgres-cluster.default.svc.cluster.local
-    # db-url-host=postgres-cluster-primary
-    # db-url=jdbc:postgres://postgres:$POSTGRES_PASSWORD@postgres-cluster-primary/postgres
+    # db-url-host=postgres-cluster
+    # db-url=jdbc:postgres://keycloak:$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)@postgres-cluster/keycloak
     db-pool-initial-size=10
     
 
@@ -343,7 +348,7 @@ spec:
       containers:
         - name: keycloak
           # why does thiese args work but the keycloak config map doesnt?
-          args: ["--verbose", "start-dev", "--db-url-host", "postgres-cluster-primary", "--db-username", "postgres", "--db-password", "$POSTGRES_PASSWORD"] 
+          args: ["--verbose", "start", "--db-url-host", "postgres-cluster-primary", "--db-username", "keycloak", "--db-password", "$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)"] 
           volumeMounts:
           - mountPath: /opt/keycloak/conf/keycloak.conf
             subPath: keycloak.conf
