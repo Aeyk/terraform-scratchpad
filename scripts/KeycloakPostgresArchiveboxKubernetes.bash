@@ -109,6 +109,7 @@ subjects:
   name: cluster-admin-user
   namespace: kubernetes-dashboard
 EOF
+# TODO service and deployment to access cluster dashboard
 kubectl -n kubernetes-dashboard create token cluster-admin-user
 ## Kubernetes Dashboard END
 
