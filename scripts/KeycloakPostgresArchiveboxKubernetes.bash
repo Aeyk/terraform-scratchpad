@@ -353,9 +353,9 @@ spec:
         - name: keycloak-config-file
           configMap:
             name: keycloak-configmap
-        - name: keycloak-gitea-realm-file
+        - name: keycloak-realm-file
           secret:
-            secretName: keycloak-gitea-realm
+            secretName: keycloak-realm
 EOF
 cat << EOF | kubectl patch deployment/keycloak --patch "$(cat -)"
 spec:
@@ -365,33 +365,25 @@ spec:
         - name: import-gitea-real
           image: quay.io/keycloak/keycloak:23.0.4
           # command: ['/opt/keycloak/bin/kc.sh]
-          # args: ["import", "--file", "/opt/keycloak/realm/gitea.json"]
+          # args: ["import", "--file", "/opt/keycloak/realm/dev.json"]
           volumeMounts:
-            - mountPath: /opt/keycloak/realm/gitea.json
-              subPath: gitea.json
-              name: keycloak-gitea-realm-file
-              readOnly: true
-            - mountPath: /opt/keycloak/realm/grafana.json
-              subPath: grafana.json
-              name: keycloak-grafana-realm-file
-              readOnly: true              
+            - mountPath: /opt/keycloak/realm/dev.json
+              subPath: dev.json
+              name: keycloak-realm-file
+              readOnly: true          
       volumes:
         - name: keycloak-config-file
           configMap:
             name: keycloak-configmap
-        - name: keycloak-gitea-realm-file
+        - name: keycloak-realm-file
           secret:
-            secretName: keycloak-gitea-realm
-        - name: keycloak-grafana-realm-file
-          secret:
-            secretName: keycloak-grafana-realm            
-EOF
+            secretName: keycloak-realm
 echo ""
 KEYCLOAK_URL=https://keycloak.mksybr.com &&
 echo "" &&
 echo "Keycloak:                 $KEYCLOAK_URL" &&
 echo "Keycloak Admin Console:   $KEYCLOAK_URL/admin" &&
-echo "Keycloak Account Console: $KEYCLOAK_URL/realms/myrealm/account" &&
+echo "Keycloak Account Console: $KEYCLOAK_URL/realms/dev/account" &&
 echo ""
 # NOTE: do I even need this commented block now?
 # wget -q -O - https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak-ingress.yaml | \
@@ -528,7 +520,7 @@ spec:
     # The ACME server URL
     server: https://acme-v02.api.letsencrypt.org/directory
     # Email address used for ACME registration
-    email: mksybr@gmail.com
+    email: mksybr@gmail.comf
     # Name of a secret used to store the ACME account private key
     privateKeySecretRef:
       name: grafana-letsencrypt-prod
@@ -557,9 +549,9 @@ scopes = openid email profile offline_access roles
 email_attribute_path = email
 login_attribute_path = username
 name_attribute_path = full_name
-auth_url = https://keycloak.mksybr.com/realms/grafana/protocol/openid-connect/auth
-token_url = https://keycloak.mksybr.com/realms/grafana/protocol/openid-connect/token
-api_url = https://keycloak.mksybr.com/realms/grafana/protocol/openid-connect/userinfo
+auth_url = https://keycloak.mksybr.com/realms/dev/protocol/openid-connect/auth
+token_url = https://keycloak.mksybr.com/realms/dev/protocol/openid-connect/token
+api_url = https://keycloak.mksybr.com/realms/dev/protocol/openid-connect/userinfo
 role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 EOF
 # TODO(Malik): fix ro mount error 
