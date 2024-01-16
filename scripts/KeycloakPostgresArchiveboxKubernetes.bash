@@ -1099,6 +1099,7 @@ data:
     APP_NAME = Gitea
     RUN_USER = git
     RUN_MODE = prod
+    WORK_PATH = /data/gitea/
 
     [security]
     INTERNAL_TOKEN     = $(kubectl get secrets gitea-internal-token -o jsonpath='{.data.password}' | base64 -d)
@@ -1156,6 +1157,10 @@ data:
     ENABLE_OPENID_SIGNIN = true
     ENABLE_OPENID_SIGNUP = true
 
+    [oauth2_client]
+    ENABLE_AUTO_REGISTRATION = true
+    USERNAME = email
+
     [session]
     PROVIDER = db # TODO(Malik): redis/redis-cluster
 
@@ -1164,6 +1169,22 @@ data:
     LEVEL     = info
     ROOT_PATH = /data/gitea/log
     ROUTER    = console
+
+    [cors]
+    ENABLED   = false
+
+    [api]
+    ENABLE_SWAGGER = false
+
+    [metrics]
+    # ENABLED    = true
+    # TOKEN      = create and get prometheus secret
+
+    [cron]
+    ENABLED      = true
+
+    [cache]
+    # ADAPTER    = redis # TODO(Malik): redis
 
 kind: ConfigMap
 metadata:
