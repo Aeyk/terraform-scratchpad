@@ -1232,6 +1232,15 @@ spec:
     secretName: drone-letsencrypt-prod
 EOF
 ##  Drone CI END
+
+
+## OpenEBS BEGIN
+helm repo add openebs https://openebs.github.io/charts
+helm repo update
+helm install openebs --namespace openebs openebs/openebs --create-namespace
+## OpenEBS BEGIN
+
+
 ## Datasette BEGIN
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
