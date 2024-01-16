@@ -37,7 +37,7 @@ module "network" {
 resource "azurerm_storage_account" "main" {
   name                     = "hnrwdw5q3qsay"
   location                 = "eastus2"
-  resource_group_name      = "azure_k8s_eastus2"
+  resource_group_name      = "azure_resource_group"
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
@@ -46,7 +46,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   computer_name         = "azure-amd64-ubuntu-usirc"
   name                  = "azure_amd64_ubuntu_usirc"
   location              = "eastus2"
-  resource_group_name   = "azure_k8s_eastus2"
+  resource_group_name   = "azure_resource_group"
   network_interface_ids = [module.network.azure_vnic.id]
   size                  = "Standard_D4s_v3"
 
@@ -77,4 +77,12 @@ resource "azurerm_linux_virtual_machine" "main" {
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.main.primary_blob_endpoint
   }
+}
+
+resource "digitalocean_record" "main" {
+  name = "*"
+  domain = "mksybr.com"
+  type   = "A"
+  value  = azurerm_linux_virtual_machine.main.public_ip_address
+  ttl = "30"
 }

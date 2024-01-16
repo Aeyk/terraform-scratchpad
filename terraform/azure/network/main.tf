@@ -33,12 +33,12 @@ resource "azurerm_virtual_network" "main" {
   name                = "azure_vnet"
   address_space       = ["10.0.0.0/16"]
   location            = "eastus2"
-  resource_group_name = "azure_k8s_eastus2"
+  resource_group_name = "azure_resource_group"
 }
 
 resource "azurerm_subnet" "main" {
   name                 = "azure_private_subnet"
-  resource_group_name  = "azure_k8s_eastus2"
+  resource_group_name  = "azure_resource_group"
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.0.0/24"]
 }
@@ -46,14 +46,14 @@ resource "azurerm_subnet" "main" {
 resource "azurerm_public_ip" "main" {
   name                = "azure_public_ip"
   location            = "eastus2"
-  resource_group_name = "azure_k8s_eastus2"
+  resource_group_name = "azure_resource_group"
   allocation_method   = "Dynamic"
 }
 
 resource "azurerm_network_security_group" "azure_inbound_ssh_nsg" {
   name                = "azure_network_security_group"
   location            = "eastus2"
-  resource_group_name = "azure_k8s_eastus2"
+  resource_group_name = "azure_resource_group"
 
   security_rule {
     name                       = "SSH"
@@ -71,7 +71,7 @@ resource "azurerm_network_security_group" "azure_inbound_ssh_nsg" {
 resource "azurerm_network_interface" "main" {
   name                = "azure_vnic"
   location            = "eastus2"
-  resource_group_name = "azure_k8s_eastus2"
+  resource_group_name = "azure_resource_group"
 
   ip_configuration {
     name                          = "azure_vnic_configuration"
