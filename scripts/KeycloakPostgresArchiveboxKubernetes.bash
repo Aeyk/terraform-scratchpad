@@ -1132,7 +1132,7 @@ data:
     ENABLE_OPENID_SIGNUP = true
 
     [session]
-    PROVIDER = file
+    PROVIDER = db # TODO(Malik): redis/redis-cluster
 
     [log]
     MODE      = console
