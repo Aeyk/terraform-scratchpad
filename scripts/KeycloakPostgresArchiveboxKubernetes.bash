@@ -544,7 +544,7 @@ enabled = true
 name = Keycloak-OAuth
 allow_sign_up = true
 client_id = grafana
-client_secret = 4jqNOuWD7ZAHxksEL9McEUZbYaSzBuXC ; TODO(Malik): replace with secret
+client_secret = $(kubectl get secrets -n ingress-nginx keycloak-grafana-client-secret -o jsonpath='{.data.client-secret}' | base64 -d)
 scopes = openid email profile offline_access roles
 email_attribute_path = email
 login_attribute_path = username
