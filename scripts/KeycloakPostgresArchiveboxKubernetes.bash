@@ -362,10 +362,10 @@ spec:
   template:
     spec:
       initContainers:
-        - name: import-gitea-real
+        - name: import-realm
           image: quay.io/keycloak/keycloak:23.0.4
-          # command: ['/opt/keycloak/bin/kc.sh]
-          # args: ["import", "--file", "/opt/keycloak/realm/dev.json"]
+          command: ["/opt/keycloak/bin/kc.sh"]
+          args: ["import", "--file", "/opt/keycloak/realm/dev.json"]
           volumeMounts:
             - mountPath: /opt/keycloak/realm/dev.json
               subPath: dev.json
@@ -378,6 +378,8 @@ spec:
         - name: keycloak-realm-file
           secret:
             secretName: keycloak-realm
+EOF
+# TODO(Malik): automatic realm backups
 echo ""
 KEYCLOAK_URL=https://keycloak.mksybr.com &&
 echo "" &&
