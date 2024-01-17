@@ -543,7 +543,7 @@ cat << EOF | kubectl create secret generic -n ingress-nginx grafana-config --fro
 root_url = https://grafana.mksybr.com
 [auth.generic_oauth]
 enabled = true
-name = Keycloak-OAuth
+name = Keycloak
 allow_sign_up = true
 client_id = grafana
 client_secret = $(kubectl get secrets -n ingress-nginx keycloak-grafana-client-secret -o jsonpath='{.data.client-secret}' | base64 -d)
