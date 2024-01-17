@@ -1225,7 +1225,8 @@ data:
 
     [repository]
     ROOT = /data/gitea/gitea-repositories
-
+    ENABLE_PUSH_CREATE_USER = true
+    
     [server]
     SSH_DOMAIN       = gitea.mksybr.com
     DOMAIN           = gitea.mksybr.com
