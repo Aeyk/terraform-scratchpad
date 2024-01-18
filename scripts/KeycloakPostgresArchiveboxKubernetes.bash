@@ -1284,8 +1284,8 @@ data:
     ENABLE_SWAGGER = false
 
     [metrics]
-    # ENABLED    = true
-    # TOKEN      = create and get prometheus secret
+    ENABLED    = true
+    ;; TOKEN      = create and get prometheus secret
 
     [cron]
     ENABLED      = true
