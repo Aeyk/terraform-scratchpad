@@ -1954,6 +1954,17 @@ spec:
 EOF
 
 
+## ArgoCD BEGIN
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+## ArgoCD END
+
+
+kubectl create ingress argocd -n argocd \
+    --rule=argocd.mksybr.com/*=argocd-server:80 \
+    --rule=argocd.mksybr.com/*=argocd-server:443 \
+    --class=nginx
+
 popd
 
 
