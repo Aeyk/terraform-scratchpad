@@ -1858,6 +1858,21 @@ EOF
 
 
 ## Statping-NG BEGIN
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-statping-user     --from-file=password=/dev/stdin -o json
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE USER statping WITH ENCRYPTED PASSWORD '$(kubectl get secrets postgres-statping-user -o jsonpath='{.data.password}' | base64 -d)' CREATEDB;
+GRANT ALL PRIVILEGES ON DATABASE statping TO statping;"
+
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE DATABASE statping WITH OWNER statping TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';"
+
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster/statping" -c \
+"GRANT ALL on schema public TO statping;"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://statping:$(kubectl get secrets postgres-statping-user -o jsonpath='{.data.password}' | base64 -d)@postgres-cluster/statping" -c \
+"GRANT ALL on schema public TO statping;"
+
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic statping-admin-user     --from-file=password=/dev/stdin -o json
+
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1902,48 +1917,8 @@ spec:
           persistentVolumeClaim:
             claimName: statping
 EOF
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: statping
-  name: statping
-spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
-  selector:
-    app: statping
-status:
-  loadBalancer: {}
-EOF
-cat << EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: statping
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: statping.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: staping
-              port:
-                number: 80
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - statping.mksybr.com
-    secretName: statping-letsencrypt-prod
-EOF
+kubectl create svc loadbalancer statping --tcp=80:8080
+kubectl create ingress statping --rule=statping.mksybr.com/*=statping:80 --rule=statping.mksybr.com/*=statping:443
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -1965,6 +1940,7 @@ spec:
         ingress:
           class: nginx
 EOF
+
 ## Statping-NG END
 
 
@@ -1997,3 +1973,4 @@ popd
 # Dokku vs OpenFaaS vs LocalStack Lambda vs Kubero
 # rsyslog
 # Searxng
+# merge all ingress
