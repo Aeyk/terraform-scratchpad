@@ -1918,7 +1918,7 @@ spec:
             claimName: statping
 EOF
 kubectl create svc loadbalancer statping --tcp=80:8080
-
+# TODO secret from /app/config.yml
 ## Statping-NG END
 
 kubectl create ingress homelab \
