@@ -271,27 +271,27 @@ kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "
 "GRANT ALL on schema public TO keycloak;"
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://keycloak:$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)@postgres-cluster/keycloak" -c \
 "GRANT ALL on schema public TO keycloak;"
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: keycloak-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: keycloak-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: keycloak-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: keycloak-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 ## TODO X-Forwarded- and Forwarded headers
 #### [io.quarkus.vertx.http.runtime.VertxHttpRecorder] (main) The X-Forwarded-* and Forwarded headers will be considered when determining the proxy address. This configuration can cause a security issue as clients can forge requests and send a forwarded header that is not overwritten by the proxy. Please consider use one of these headers just to forward the proxy address in requests.
 cat << EOF | kubectl apply -f -
@@ -391,33 +391,32 @@ echo ""
 # wget -q -O - https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/kubernetes/keycloak-ingress.yaml | \
 #     sed "s/KEYCLOAK_HOST/keycloak.mksybr.com/" | \
 #     kubectl create -f -
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: keycloak
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: keycloak.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: keycloak
-              port:
-                number: 8080
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - keycloak.mksybr.com
-    secretName: keycloak-letsencrypt-prod
-EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: keycloak
+#   annotations:
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: keycloak.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: keycloak
+#               port:
+#                 number: 8080
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - keycloak.mksybr.com
+#     secretName: keycloak-letsencrypt-prod
+# EOF
 ## Keycloak END
-
 
 ## Prometheus & Grafana Initialization BEGIN
 cd /tmp/; git clone https://github.com/prometheus-operator/kube-prometheus || true; cd kube-prometheus
@@ -497,27 +496,27 @@ EOF
 #             name: prometheus-configmap
 # EOF
 kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/prometheus/
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: prometheus-letsencrypt-prod
-  namespace: ingress-nginx
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: prometheus-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: prometheus-letsencrypt-prod
+#   namespace: ingress-nginx
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: prometheus-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
@@ -538,32 +537,32 @@ spec:
     app.kubernetes.io/part-of: ingress-nginx
   type: LoadBalancer
 EOF
-cat << EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-  name: prometheus
-  namespace: ingress-nginx
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: prometheus.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-            name: prometheus
-            port:
-              number: 9090
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - prometheus.mksybr.com
-    secretName: prometheus-letsencrypt-prod
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+#   name: prometheus
+#   namespace: ingress-nginx
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: prometheus.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#             name: prometheus
+#             port:
+#               number: 9090
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - prometheus.mksybr.com
+#     secretName: prometheus-letsencrypt-prod
+# EOF
 ## Prometheus END
 
 
@@ -683,27 +682,27 @@ EOF
 
 
 ## ArchiveBox BEGIN
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: archivebox-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: archivebox-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: archivebox-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: archivebox-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -805,55 +804,55 @@ spec:
       port: 8000
   type: LoadBalancer
 EOF
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: archivebox
-  annotations:
-    cert-manager.io/cluster-issuer: "archivebox-letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: archivebox.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: archivebox
-              port:
-                number: 8000
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - archivebox.mksybr.com
-    secretName: archivebox-letsencrypt-prod
-EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: archivebox
+#   annotations:
+#     cert-manager.io/cluster-issuer: "archivebox-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: archivebox.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: archivebox
+#               port:
+#                 number: 8000
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - archivebox.mksybr.com
+#     secretName: archivebox-letsencrypt-prod
+# EOF
 ## ArchiveBox END
 
 ## ElasticSearch BEGIN
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: elasticsearch-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: elasticsearch-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: elasticsearch-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: elasticsearch-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -910,31 +909,31 @@ spec:
     config:
       node.store.allow_mmap: false
 EOF
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: elasticsearch
-  annotations:
-    cert-manager.io/cluster-issuer: "elasticsearch-letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: elasticsearch.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: elasticsearch
-              port:
-                number: 9200
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - elasticsearch.mksybr.com
-    secretName: elasticsearch-letsencrypt-prod
-EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: elasticsearch
+#   annotations:
+#     cert-manager.io/cluster-issuer: "elasticsearch-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: elasticsearch.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: elasticsearch
+#               port:
+#                 number: 9200
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - elasticsearch.mksybr.com
+#     secretName: elasticsearch-letsencrypt-prod
+# EOF
 cat << 'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -990,27 +989,27 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
 EOF
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: kibana-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: kibana-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: kibana-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: kibana-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1063,31 +1062,31 @@ spec:
   elasticsearchRef:
     name: kibana
 EOF
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: kibana
-  annotations:
-    cert-manager.io/cluster-issuer: "kibana-letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: kibana.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: kibana
-              port:
-                number: 5601
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - kibana.mksybr.com
-    secretName: kibana-letsencrypt-prod
-EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: kibana
+#   annotations:
+#     cert-manager.io/cluster-issuer: "kibana-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: kibana.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: kibana
+#               port:
+#                 number: 5601
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - kibana.mksybr.com
+#     secretName: kibana-letsencrypt-prod
+# EOF
 cat << 'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -1134,27 +1133,27 @@ kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
  "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gitea;"
 
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: gitea-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: gitea-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: gitea-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: gitea-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1370,31 +1369,31 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
 EOF
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: gitea
-  annotations:
-    cert-manager.io/cluster-issuer: "gitea-letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: gitea.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: gitea
-              port:
-                number: 3000
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - gitea.mksybr.com
-    secretName: gitea-letsencrypt-prod
-EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: gitea
+#   annotations:
+#     cert-manager.io/cluster-issuer: "gitea-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: gitea.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: gitea
+#               port:
+#                 number: 3000
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - gitea.mksybr.com
+#     secretName: gitea-letsencrypt-prod
+# EOF
 ## Gitea END
 
 ##  Drone CI BEGIN
@@ -1402,27 +1401,27 @@ sudo sysctl -w fs.inotify.max_user_watches=2099999999
 sudo sysctl -w fs.inotify.max_user_instances=2099999999
 sudo sysctl -w fs.inotify.max_queued_events=2099999999
 
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: drone-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: drone-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: drone-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: drone-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 helm repo add drone https://charts.drone.io
 cat << EOF |  helm install --namespace drone drone drone/drone -f -
 env:
@@ -1446,32 +1445,32 @@ env:
   DRONE_GITEA_CLIENT_SECRET: QcJnN7XQ8cy18W6gwCqTaPtjYCnmlWZRtuiGsOPXkfdc
   DRONE_GITEA_SERVER: https://gitea.mksybr.com
 EOF
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: drone
-  namespace: drone
-  annotations:
-    cert-manager.io/cluster-issuer: "drone-letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: drone.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: drone
-              port:
-                number: 8080
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - drone.mksybr.com
-    secretName: drone-letsencrypt-prod
-EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: drone
+#   namespace: drone
+#   annotations:
+#     cert-manager.io/cluster-issuer: "drone-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: drone.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: drone
+#               port:
+#                 number: 8080
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - drone.mksybr.com
+#     secretName: drone-letsencrypt-prod
+# EOF
 ##  Drone CI END
 
 
@@ -1483,27 +1482,27 @@ helm install openebs --namespace openebs openebs/openebs --create-namespace
 
 
 ## Datasette BEGIN
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: datasette-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: datasette-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: datasette-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: datasette-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 cat << EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -1557,31 +1556,31 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
 EOF
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: datasette
-  annotations:
-    cert-manager.io/cluster-issuer: "datasette-letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: datasette.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: datasette
-              port:
-                number: 8001
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - datasette.mksybr.com
-    secretName: datasette-letsencrypt-prod
-EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: datasette
+#   annotations:
+#     cert-manager.io/cluster-issuer: "datasette-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: datasette.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: datasette
+#               port:
+#                 number: 8001
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - datasette.mksybr.com
+#     secretName: datasette-letsencrypt-prod
+# EOF
 ## Datasette END
 
 
@@ -1809,50 +1808,50 @@ spec:
   type: LoadBalancer
 status:
   loadBalancer: {}
----
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: paperless-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: paperless-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: paperless
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-spec:
-  ingressClassName: "nginx"
-  rules:
-  - host: paperless.mksybr.com
-    http:
-      paths:
-      - backend:
-          service:
-              name: paperless-webserver
-              port:
-                number: 8003
-        path: /
-        pathType: Prefix
-  tls:
-  - hosts:
-    - paperless.mksybr.com
-    secretName: paperless-letsencrypt-prod
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: paperless-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: paperless-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: paperless
+#   annotations:
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: paperless.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: paperless-webserver
+#               port:
+#                 number: 8003
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - paperless.mksybr.com
+#     secretName: paperless-letsencrypt-prod
 EOF
 ## Paperless-NGX END
 
@@ -1887,7 +1886,8 @@ spec:
     requests:
       storage: 100Mi
 EOF
-cat << EOF | kubectl apply -f -
+# kubectl create deployment statping --image hunterlong/statping:v0.80.51 --port 8080
+cat  << EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1918,30 +1918,40 @@ spec:
             claimName: statping
 EOF
 kubectl create svc loadbalancer statping --tcp=80:8080
-kubectl create ingress statping --rule=statping.mksybr.com/*=statping:80 --rule=statping.mksybr.com/*=statping:443
-cat << EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: statping-letsencrypt-prod
-  namespace: cert-manager
-spec:
-  acme:
-    # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    # Email address used for ACME registration
-    email: mksybr@gmail.com
-    # Name of a secret used to store the ACME account private key
-    privateKeySecretRef:
-      name: statping-letsencrypt-prod
-    # Enable the HTTP-01 challenge provider
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
 
 ## Statping-NG END
+
+kubectl create ingress homelab \
+    --rule=statping.mksybr.com/*=statping:80 \
+    --rule=statping.mksybr.com/*=statping:443 \
+    --rule=archivebox.mksybr.com/*=archivebox:80 \
+    --rule=archivebox.mksybr.com/*=archivebox:443 \
+    --rule=drone.mksybr.com/*=drone:80 \
+    --rule=drone.mksybr.com/*=drone:443 \
+    --rule=gitea.mksybr.com/*=gitea:80 \
+    --rule=gitea.mksybr.com/*=gitea:443 \
+    --rule=paperless.mksybr.com/*=paperless:80 \
+    --rule=paperless.mksybr.com/*=paperless:443 \
+    --class=nginx
+
+cat << EOF | kubectl patch ingress homelab --patch="$(cat -)"
+metadata:
+  name: homelab
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: "nginx"
+  tls:
+  - hosts:
+    - archivebook.mksybr.com
+    - datasette.mksybr.com
+    - drone.mksybr.com
+    - gitea.mksybr.com
+    - keycloak.mksybr.com
+    - paperless.mksybr.com
+    - statping.mksybr.com  
+    secretName: letsencrypt-prod
+EOF
 
 
 popd
