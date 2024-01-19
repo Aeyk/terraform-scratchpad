@@ -3884,6 +3884,22 @@ head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generi
 #     secretName: letsencrypt-prod
 # EOF
 
+# https://developer.hashicorp.com/vault/tutorials/kubernetes/kubernetes-secret-store-driver#set-a-secret-in-vault
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm install vault hashicorp/vault \
+    --set "server.dev.enabled=true" \
+    --set "injector.enabled=false" \
+    --set "csi.enabled=true" \
+    --namespace=vault
+
+helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system --set-string=syncSecret.enabled=true 
+
+vault policy write internal-app - <<EOF
+path "secret/data/db-pass" {
+  capabilities = ["read"]
+}
+EOF
 
 popd
 
