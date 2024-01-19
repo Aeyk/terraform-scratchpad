@@ -1,6 +1,38 @@
 # gitea.yml
 ---
 apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: psql
+  name: psql
+spec:
+  containers:
+  - args:
+    - psql
+    - postgres://postgres:$(POSTGRES_SUPERUSER_PASSWORD)@postgres-cluster
+    - -c
+    - CREATE USER IF NOT EXISTS gitea WITH PASSWORD 'password' CREATEDB;
+    image: ongres/postgres-util
+    name: psql
+    env:
+    - name: POSTGRES_SUPERUSER_PASSWORD
+      valueFrom: 
+        secretKeyRef:
+          name: postgres-cluster 
+          key: superuser-password
+    - name: POSTGRES_GITEA_PASSWORD
+      valueFrom: 
+        secretKeyRef:
+          name: postgres-gitea-user
+          key: password
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: gitea
