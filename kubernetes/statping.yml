@@ -1,0 +1,98 @@
+# statping.yml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: psql
+  name: psql
+spec:
+  containers:
+  - args:
+    - psql
+    - postgres://postgres:$(POSTGRES_ADMIN_PASSWORD)@postgres-cluster
+    - -c
+    - |-
+      CREATE USER statping WITH ENCRYPTED PASSWORD '$(POSTGRES_STATPING_USER)' CREATEDB;
+      GRANT ALL PRIVILEGES ON DATABASE statping TO statping;
+      CREATE DATABASE statping WITH OWNER statping TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';
+      GRANT ALL on schema public TO statping;
+    image: ongres/postgres-util
+    name: create-statping-database-user
+    env:
+    - name: KEYCLOAK_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-admin-user
+          key: password
+    - name: POSTGRES_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: postgres-cluster
+          key: superuser-password
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: statping
+  labels:
+    app: statping
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: statping
+  labels:
+    app: statping
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: statping
+  template:
+    metadata:
+      labels:
+        app: statping
+    spec:
+      containers:
+      - name: statping
+        image:  hunterlong/statping:v0.80.51
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+          - mountPath: /app
+            name: statping-config
+      volumes:
+        - name: statping-config
+          persistentVolumeClaim:
+            claimName: statping
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: statping
+  name: statping
+  namespace: default
+spec:
+  ports:
+  - name: 80-8080
+    nodePort: 31350
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: statping
+  type: LoadBalancer
+---

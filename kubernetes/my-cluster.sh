@@ -703,17 +703,167 @@ EOF
 #         ingress:
 #           class: nginx
 # EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: archivebox
+# spec:
+#   storageClassName: "local-path"
+#   volumeName: archivebox
+#   resources:
+#     requests:
+#       storage: 1Gi
+#   accessModes:
+#     - ReadWriteMany
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: archivebox
+#   labels:
+#     type:
+#       local
+# spec:
+#   local:
+#     path:
+#       /data/archivebox
+#   capacity: 
+#     storage:
+#       10Gi
+#   storageClassName: "local-path"
+#   accessModes:
+#     - ReadWriteMany
+#   nodeAffinity:
+#     required:
+#       nodeSelectorTerms:
+#       - matchExpressions:
+#         - key: kubernetes.io/hostname
+#           operator: In
+#           values:
+#           - node1
+# EOF
+# cat << 'EOF' | kubectl apply -f -
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: archivebox
+# spec:
+#   selector:
+#     matchLabels:
+#       app: archivebox
+#   replicas: 1
+#   strategy:
+#     type: Recreate
+#   template:
+#     metadata:
+#       labels:
+#         app: archivebox
+#     spec:
+#       initContainers:
+#         - name: init-archivebox
+#           image: archivebox/archivebox
+#           args: ['init']
+#           volumeMounts:
+#             - mountPath: /data
+#               name: archivebox
+#       containers:
+#         - name: archivebox
+#           args: ["server"]
+#           image: archivebox/archivebox
+#           ports:
+#             - containerPort: 8000
+#               protocol: TCP
+#               name: http
+#           resources:
+#             requests:
+#               cpu: 50m
+#               memory: 32Mi
+#           volumeMounts:
+#             - mountPath: /data
+#               name: archivebox
+#       restartPolicy: Always
+#       volumes:
+#         - name: archivebox
+#           persistentVolumeClaim:
+#             claimName: archivebox
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   labels:
+#     app: archivebox
+#   name: archivebox
+# spec:
+#   selector:
+#     app: archivebox
+#   ports:
+#     - name: http
+#       port: 8000
+#   type: LoadBalancer
+# EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: archivebox
+#   annotations:
+#     cert-manager.io/cluster-issuer: "archivebox-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: archivebox.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: archivebox
+#               port:
+#                 number: 8000
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - archivebox.mksybr.com
+#     secretName: archivebox-letsencrypt-prod
+# EOF
+## ArchiveBox END
+
+## ElasticSearch BEGIN
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: elasticsearch-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: elasticsearch-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: archivebox
+  name: elasticsearch
 spec:
   storageClassName: "local-path"
-  volumeName: archivebox
+  volumeName: elasticsearch
   resources:
     requests:
-      storage: 1Gi
+      storage: 10Gi
   accessModes:
     - ReadWriteMany
 EOF
@@ -721,14 +871,14 @@ cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: archivebox
+  name: elasticsearch
   labels:
     type:
       local
 spec:
   local:
     path:
-      /data/archivebox
+      /data/elasticsearch
   capacity: 
     storage:
       10Gi
@@ -748,46 +898,35 @@ cat << 'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: archivebox
+  name: elasticsearch
 spec:
   selector:
     matchLabels:
-      app: archivebox
+      app: elasticsearch
   replicas: 1
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: archivebox
+        app: elasticsearch
     spec:
-      initContainers:
-        - name: init-archivebox
-          image: archivebox/archivebox
-          args: ['init']
-          volumeMounts:
-            - mountPath: /data
-              name: archivebox
       containers:
         - name: archivebox
           args: ["server"]
           image: archivebox/archivebox
           ports:
-            - containerPort: 8000
+            - containerPort: 9200
               protocol: TCP
               name: http
-          resources:
-            requests:
-              cpu: 50m
-              memory: 32Mi
           volumeMounts:
-            - mountPath: /data
-              name: archivebox
+            - mountPath: /usr/share/elasticsearch/data
+              name: elasticsearch
       restartPolicy: Always
       volumes:
-        - name: archivebox
+        - name: elasticsearch
           persistentVolumeClaim:
-            claimName: archivebox
+            claimName: elasticsearch
 EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
@@ -1940,30 +2079,980 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
-  ingressClassName: "nginx"
-  tls:
-  - hosts:
-    - archivebook.mksybr.com
-    - datasette.mksybr.com
-    - drone.mksybr.com
-    - gitea.mksybr.com
-    - keycloak.mksybr.com
-    - paperless.mksybr.com
-    - statping.mksybr.com  
-    secretName: letsencrypt-prod
+  ports:
+  - name: https
+    port: 5601
+    protocol: TCP
+    targetPort: 5601
+  selector:
+    common.k8s.elastic.co/type: kibana
+  sessionAffinity: None
+  type: LoadBalancer
 EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: kibana-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: kibana-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kibana
+spec:
+  storageClassName: "local-path"
+  volumeName: kibana
+  resources:
+    requests:
+      storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kibana
+  labels:
+    type:
+      local
+spec:
+  local:
+    path:
+      /data/kibana
+  capacity: 
+    storage:
+      10Gi
+  storageClassName: "local-path"
+  accessModes:
+    - ReadWriteMany
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+EOF
+cat <<EOF | kubectl apply -f -
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana
+spec:
+  version: 8.11.4
+  count: 1
+  elasticsearchRef:
+    name: kibana
+EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: kibana
+#   annotations:
+#     cert-manager.io/cluster-issuer: "kibana-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: kibana.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: kibana
+#               port:
+#                 number: 5601
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - kibana.mksybr.com
+#     secretName: kibana-letsencrypt-prod
+# EOF
+cat << 'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+spec:
+  selector:
+    matchLabels:
+      app: kibana
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: kibana:8.11.3
+          ports:
+            - containerPort: 5601
+              protocol: TCP
+              name: http
+          volumeMounts:
+            - mountPath: /usr/share/kibana/data
+              name: kibana
+      restartPolicy: Always
+      volumes:
+        - name: kibana
+          persistentVolumeClaim:
+            claimName: kibana
+EOF
+## Kibana END
 
 
-## ArgoCD BEGIN
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-## ArgoCD END
+## Gitea BEGIN
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic gitea-admin-user     --from-file=password=/dev/stdin -o json
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-gitea-user     --from-file=password=/dev/stdin -o json
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE USER IF NOT EXISTS gitea WITH PASSWORD 'password' CREATEDB;"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE DATABASE giteadb WITH OWNER gitea TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+ "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gitea;"
+
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: gitea-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: gitea-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: gitea
+# spec:
+#   storageClassName: "local-path"
+#   volumeName: gitea
+#   resources:
+#     requests:
+#       storage: 10Gi
+#   accessModes:
+#     - ReadWriteMany
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: gitea
+#   labels:
+#     type:
+#       local
+# spec:
+#   local:
+#     path:
+#       /data/gitea
+#   capacity: 
+#     storage:
+#       10Gi
+#   storageClassName: "local-path"
+#   accessModes:
+#     - ReadWriteMany
+#   nodeAffinity:
+#     required:
+#       nodeSelectorTerms:
+#       - matchExpressions:
+#         - key: kubernetes.io/hostname
+#           operator: In
+#           values:
+#           - node1
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# data:
+#   app.ini: |
+#     APP_NAME = Gitea
+#     RUN_USER = git
+#     RUN_MODE = prod
+#     WORK_PATH = /data/gitea/
+
+#     [security]
+#     INTERNAL_TOKEN     = {{ kubectl get secrets gitea-internal-token -o jsonpath='{.data.password}' | base64 -d }}
+#     INSTALL_LOCK       = true
+#     SECRET_KEY         = {{ kubectl get secrets gitea-secret-key -o jsonpath='{.data.password}' | base64 -d }}
+#     PASSWORD_HASH_ALGO = pbkdf2
+    
+#     [database]
+#     DB_TYPE  = postgres
+#     HOST     = postgres-cluster:5432
+#     NAME     = giteadb
+#     USER     = gitea
+#     PASSWD   = {{ kubectl get secrets postgres-gitea-user -o jsonpath='{.data.password}' | base64 -d }}
+#     SCHEMA   = 
+#     SSL_MODE = disable
+#     CHARSET  = utf8
+#     PATH     = /app/gitea/data/gitea.db
+#     LOG_SQL  = false
+
+#     [repository]
+#     ROOT = /data/gitea/gitea-repositories
+#     ENABLE_PUSH_CREATE_USER = true
+    
+#     [server]
+#     SSH_DOMAIN       = gitea.mksybr.com
+#     DOMAIN           = gitea.mksybr.com
+#     HTTP_PORT        = 3000
+#     ROOT_URL         = https://gitea.mksybr.com/
+#     SSH_DOMAIN       = gitea.mksybr.com
+#     DISABLE_SSH      = false
+#     START_SSH_SERVER = true
+#     SSH_PORT         = 22
+#     LFS_START_SERVER = true
+#     LFS_CONTENT_PATH = /data/gitea/lfs
+#     LFS_JWT_SECRET   = {{ kubectl get secrets gitea-lfs-secret -o jsonpath='{.data.password}' | base64 -d }}
+#     OFFLINE_MODE     = false
+
+#     [mailer]
+#     ENABLED = false
+
+#     [service]
+#     REGISTER_EMAIL_CONFIRM            = false
+#     ENABLE_NOTIFY_MAIL                = false
+#     DISABLE_REGISTRATION              = false
+#     ALLOW_ONLY_EXTERNAL_REGISTRATION  = false
+#     ENABLE_CAPTCHA                    = false
+#     REQUIRE_SIGNIN_VIEW               = true
+#     DEFAULT_KEEP_EMAIL_PRIVATE        = true
+#     DEFAULT_ALLOW_CREATE_ORGANIZATION = true
+#     DEFAULT_ENABLE_TIMETRACKING       = true
+#     NO_REPLY_ADDRESS                  = noreply.localhost
+
+#     [picture]
+#     DISABLE_GRAVATAR        = false
+#     ENABLE_FEDERATED_AVATAR = true
+
+#     [openid]
+#     ENABLE_OPENID_SIGNIN = true
+#     ENABLE_OPENID_SIGNUP = true
+
+#     [oauth2_client]
+#     ENABLE_AUTO_REGISTRATION = true
+#     USERNAME = email
+
+#     [session]
+#     PROVIDER = db # TODO(Malik): redis/redis-cluster
+
+#     [log]
+#     MODE      = console
+#     LEVEL     = info
+#     ROOT_PATH = /data/gitea/log
+#     ROUTER    = console
+
+#     [cors]
+#     ENABLED   = false
+
+#     [api]
+#     ENABLE_SWAGGER = false
+
+#     [metrics]
+#     ENABLED    = true
+#     ;; TOKEN      = create and get prometheus secret
+
+#     [cron]
+#     ENABLED      = true
+
+#     [cache]
+#     # ADAPTER    = redis # TODO(Malik): redis
+
+# kind: Secret
+# metadata:
+#   name: gitea-config
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: gitea
+# spec:
+#   selector:
+#     matchLabels:
+#       app: gitea
+#   replicas: 1
+#   strategy:
+#     type: Recreate
+#   template:
+#     metadata:
+#       labels:
+#         app: gitea
+#     spec:
+#       containers:
+#         - name: gitea
+#           image: gitea/gitea:1.15
+#           ports:
+#             - containerPort: 3000
+#               hostPort: 3001
+#               protocol: TCP
+#               name: http
+#           ports:
+#             - containerPort: 22
+#               hostPort: 2222
+#               protocol: TCP
+#               name: ssh
+#           volumeMounts:
+#           - mountPath: /data
+#             name: gitea
+#       restartPolicy: Always
+#       volumes:
+#         - name: gitea
+#           persistentVolumeClaim:
+#             claimName: gitea
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: gitea
+#   namespace: default
+# spec:
+#   ports:
+#   - name: https
+#     port: 3001
+#     protocol: TCP
+#     targetPort: 3000
+#   selector:
+#     app: gitea
+#   sessionAffinity: None
+#   type: LoadBalancer
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: gitea-ssh
+#   namespace: default
+# spec:
+#   ports:
+#   - name: ssh
+#     port: 2222
+#     protocol: TCP
+#     targetPort: 22
+#   selector:
+#     app: gitea
+#   sessionAffinity: None
+#   type: LoadBalancer
+# EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: gitea
+#   annotations:
+#     cert-manager.io/cluster-issuer: "gitea-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: gitea.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: gitea
+#               port:
+#                 number: 3000
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - gitea.mksybr.com
+#     secretName: gitea-letsencrypt-prod
+# EOF
+## Gitea END
+
+##  Drone CI BEGIN
+sudo sysctl -w fs.inotify.max_user_watches=2099999999
+sudo sysctl -w fs.inotify.max_user_instances=2099999999
+sudo sysctl -w fs.inotify.max_queued_events=2099999999
+
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: drone-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: drone-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
+helm repo add drone https://charts.drone.io
+cat << EOF |  helm install --namespace drone drone drone/drone -f -
+env:
+  ## REQUIRED: Set the user-visible Drone hostname, sans protocol.
+  ## Ref: https://docs.drone.io/installation/reference/drone-server-host/
+  ##
+  DRONE_SERVER_HOST: drone.mksybr.com
+  ## The protocol to pair with the value in DRONE_SERVER_HOST (http or https).
+  ## Ref: https://docs.drone.io/installation/reference/drone-server-proto/
+  ##
+  DRONE_SERVER_PROTO: https
+  ## REQUIRED: Set the secret secret token that the Drone server and its Runners will use
+  ## to authenticate. This is commented out in order to leave you the ability to set the
+  ## key via a separately provisioned secret (see existingSecretName above).
+  ## Ref: https://docs.drone.io/installation/reference/drone-rpc-secret/
+  ##
+
+  # TODO(automatically register and store in secret)
+  DRONE_RPC_SECRET: randomly-generated-secret-here
+  DRONE_GITEA_CLIENT_ID: 58efb041-67a0-441b-8565-31047bcc8fc2 
+  DRONE_GITEA_CLIENT_SECRET: QcJnN7XQ8cy18W6gwCqTaPtjYCnmlWZRtuiGsOPXkfdc
+  DRONE_GITEA_SERVER: https://gitea.mksybr.com
+EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: drone
+#   namespace: drone
+#   annotations:
+#     cert-manager.io/cluster-issuer: "drone-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: drone.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: drone
+#               port:
+#                 number: 8080
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - drone.mksybr.com
+#     secretName: drone-letsencrypt-prod
+# EOF
+##  Drone CI END
 
 
-kubectl create ingress argocd -n argocd \
-    --rule=argocd.mksybr.com/*=argocd-server:80 \
-    --rule=argocd.mksybr.com/*=argocd-server:443 \
-    --class=nginx
+## OpenEBS BEGIN
+helm repo add openebs https://openebs.github.io/charts
+helm repo update
+helm install openebs --namespace openebs openebs/openebs --create-namespace
+## OpenEBS BEGIN
+
+
+## Datasette BEGIN
+# cat << EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: datasette-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: datasette-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: datasette
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: datasette
+#   template:
+#     metadata:
+#       labels:
+#         app: datasette
+#     spec:
+#       containers:
+#       - name: datasette
+#         image: datasetteproject/datasette
+#         command:
+#         - sh
+#         - -c
+#         args:
+#         - |-
+#           # Install some plugins
+#           pip install \
+#             datasette-debug-asgi \
+#             datasette-cluster-map \
+#             datasette-psutil
+#           # Download a DB (using Python because curl/wget are not available)
+#           python -c 'import urllib.request; urllib.request.urlretrieve("https://global-power-plants.datasettes.com/global-power-plants.db", "/home/global-power-plants.db")'
+#           # Start Datasette, on 0.0.0.0 to allow external traffic
+#           datasette -h 0.0.0.0 /home/global-power-plants.db
+#         ports:
+#         - containerPort: 8001
+#           protocol: TCP
+# EOF
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: datasette
+#   namespace: default
+# spec:
+#   ports:
+#   - name: https
+#     port: 8001
+#     protocol: TCP
+#     targetPort: 8001
+#   selector:
+#     app: datasette
+#   sessionAffinity: None
+#   type: LoadBalancer
+# EOF
+# cat <<'EOF' | kubectl apply -f -
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: datasette
+#   annotations:
+#     cert-manager.io/cluster-issuer: "datasette-letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: datasette.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: datasette
+#               port:
+#                 number: 8001
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - datasette.mksybr.com
+#     secretName: datasette-letsencrypt-prod
+# EOF
+## Datasette END
+
+
+## Paperless-NGX BEGIN
+curl -L https://github.com/kubernetes/kompose/releases/download/v1.26.0/kompose-linux-amd64 -o kompose
+sudo mv kompose /usr/local/bin
+git clone https://github.com/paperless-ngx/paperless-ngx/
+cd paperless-ngx/docker/compose
+mkdir ../kubernetes
+kompose convert -f docker-compose.postgres.yml
+
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-paperless-user --from-file=password=/dev/stdin -o json
+
+# kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+# "CREATE DATABASE paperless;
+# CREATE USER paperless WITH ENCRYPTED PASSWORD '$(kubectl get secrets postgres-paperless-user -o jsonpath='{.data.password}' | base64 -d)' CREATEDB;
+# GRANT ALL ON DATABASE paperless TO paperless;
+# GRANT USAGE, CREATE ON SCHEMA PUBLIC TO paperless;
+# ALTER DATABASE paperless OWNER TO paperless;"
+
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://paperless:$(kubectl get secrets postgres-paperless-user -o jsonpath='{.data.password}' | base64 -d)@postgres-cluster/paperless" -c \
+"GRANT ALL on schema public TO paperless;"
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-consume
+  name: paperless-consume
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   labels:
+#     app: paperless-data
+#   name: paperless-data
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 100Mi
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   labels:
+#     app: paperless-export
+#   name: paperless-export
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 100Mi
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   labels:
+#     app: paperless-media
+#   name: paperless-media
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 100Mi
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   labels:
+#     app: paperless-redis-data
+#   name: paperless-redis-data
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 100Mi
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   labels:
+#     app: paperless-redis
+#   name: paperless-redis
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: paperless-redis
+#   strategy:
+#     type: Recreate
+#   template:
+#     metadata:
+#       labels:
+#         app: paperless-redis
+#     spec:
+#       containers:
+#         - image: docker.io/library/redis:7
+#           name: paperless-redis
+#           volumeMounts:
+#             - mountPath: /data
+#               name: paperless-redis-data
+#       restartPolicy: Always
+#       volumes:
+#         - name: paperless-redis-data
+#           persistentVolumeClaim:
+#             claimName: paperless-redis-data
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   labels:
+#     app: paperless-redis
+#   name: paperless-redis
+# spec:
+#   ports:
+#     - name: paperless-redis
+#       port: 6379
+#       targetPort: 6379
+#   selector:
+#     app: paperless-redis
+# status:
+#   loadBalancer: {}
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   labels:
+#   name: paperless-redis-name
+# spec:
+#   externalName: paperless-redis.default.svc.cluster.local
+#   sessionAffinity: None
+#   type: ExternalName
+# status:
+#   loadBalancer: {}
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   labels:
+#     app: paperless-webserver
+#   name: paperless-webserver
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: paperless-webserver
+#   strategy:
+#     type: Recreate
+#   template:
+#     metadata:
+#       labels:
+#         app: paperless-webserver
+#     spec:
+#       containers:
+#         - env:
+#             - name: PAPERLESS_REDIS
+#               value: redis://paperless-redis.default.svc.cluster.local:6379
+#             - name: PAPERLESS_DBHOST
+#               value: postgres-cluster.default.svc.cluster.local
+#             - name: PAPERLESS_DBPORT
+#               value: "5432"
+#             - name: PAPERLESS_DBNAME
+#               value: paperless
+#               # TODO(Malik): resolve db permissions issues
+#             - name: PAPERLESS_DBUSER
+#               value: postgres # paperless
+#             - name: PAPERLESS_DBPASS
+#               value: $(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d) 
+#               # $(kubectl get secrets  postgres-paperless-user  -o jsonpath='{.data.password}' | base64 -d)
+#             - name: PAPERLESS_URL
+#               value: https://paperless.mksybr.com
+#           image: ghcr.io/paperless-ngx/paperless-ngx:latest
+#           name: paperless-webserver
+#           ports:
+#             - containerPort: 8000
+#           resources: {}
+#           volumeMounts:
+#             - mountPath: /usr/src/paperless/data
+#               name: paperless-data
+#             - mountPath: /usr/src/paperless/media
+#               name: paperless-media
+#             - mountPath: /usr/src/paperless/export
+#               name: paperless-export
+#             - mountPath: /usr/src/paperless/consume
+#               name: paperless-consume
+#       restartPolicy: Always
+#       volumes:
+#         - name: paperless-data
+#           persistentVolumeClaim:
+#             claimName: paperless-data
+#         - name: paperless-media
+#           persistentVolumeClaim:
+#             claimName: paperless-media
+#         - name: paperless-export
+#           persistentVolumeClaim:
+#             claimName: paperless-export
+#         - name: paperless-consume
+#           persistentVolumeClaim:
+#             claimName: paperless-consume
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   labels:
+#     app: paperless-webserver
+#   name: paperless-webserver
+# spec:
+#   ports:
+#     - name: http
+#       port: 8003
+#       targetPort: 8000
+#   selector:
+#     app: paperless-webserver
+#   type: LoadBalancer
+# status:
+#   loadBalancer: {}
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: paperless-letsencrypt-prod
+#   namespace: cert-manager
+# spec:
+#   acme:
+#     # The ACME server URL
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     # Email address used for ACME registration
+#     email: mksybr@gmail.com
+#     # Name of a secret used to store the ACME account private key
+#     privateKeySecretRef:
+#       name: paperless-letsencrypt-prod
+#     # Enable the HTTP-01 challenge provider
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: paperless
+#   annotations:
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   rules:
+#   - host: paperless.mksybr.com
+#     http:
+#       paths:
+#       - backend:
+#           service:
+#               name: paperless-webserver
+#               port:
+#                 number: 8003
+#         path: /
+#         pathType: Prefix
+#   tls:
+#   - hosts:
+#     - paperless.mksybr.com
+#     secretName: paperless-letsencrypt-prod
+EOF
+## Paperless-NGX END
+
+
+## Statping-NG BEGIN
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-statping-user     --from-file=password=/dev/stdin -o json
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE USER statping WITH ENCRYPTED PASSWORD '$(kubectl get secrets postgres-statping-user -o jsonpath='{.data.password}' | base64 -d)' CREATEDB;
+GRANT ALL PRIVILEGES ON DATABASE statping TO statping;"
+
+# kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+# "CREATE DATABASE statping WITH OWNER statping TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';"
+
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster/statping" -c \
+"GRANT ALL on schema public TO statping;"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://statping:$(kubectl get secrets postgres-statping-user -o jsonpath='{.data.password}' | base64 -d)@postgres-cluster/statping" -c \
+"GRANT ALL on schema public TO statping;"
+
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic statping-admin-user     --from-file=password=/dev/stdin -o json
+
+# cat << EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: statping
+#   labels:
+#     app: statping
+# spec:
+#   accessModes:
+#   - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 100Mi
+# EOF
+# kubectl create deployment statping --image hunterlong/statping:v0.80.51 --port 8080
+# cat  << EOF | kubectl apply -f -
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: statping
+#   labels:
+#     app: statping
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: statping
+#   template:
+#     metadata:
+#       labels:
+#         app: statping
+#     spec:
+#       containers:
+#       - name: statping
+#         image:  hunterlong/statping:v0.80.51
+#         ports:
+#         - containerPort: 8080
+#         volumeMounts:
+#           - mountPath: /app
+#             name: statping-config
+#       volumes:
+#         - name: statping-config
+#           persistentVolumeClaim:
+#             claimName: statping
+# EOF
+# kubectl create svc loadbalancer statping --tcp=80:8080
+# TODO secret from /app/config.yml
+## Statping-NG END
+
+# kubectl create ingress homelab \
+#     --rule=statping.mksybr.com/*=statping:80 \
+#     --rule=statping.mksybr.com/*=statping:443 \
+#     --rule=archivebox.mksybr.com/*=archivebox:80 \
+#     --rule=archivebox.mksybr.com/*=archivebox:443 \
+#     --rule=drone.mksybr.com/*=drone:80 \
+#     --rule=drone.mksybr.com/*=drone:443 \
+#     --rule=gitea.mksybr.com/*=gitea:80 \
+#     --rule=gitea.mksybr.com/*=gitea:443 \
+#     --rule=paperless.mksybr.com/*=paperless:80 \
+#     --rule=paperless.mksybr.com/*=paperless:443 \
+#     --class=nginx
+
+# cat << EOF | kubectl patch ingress homelab --patch="$(cat -)"
+# metadata:
+#   name: homelab
+#   annotations:
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+# spec:
+#   ingressClassName: "nginx"
+#   tls:
+#   - hosts:
+#     - archivebook.mksybr.com
+#     - datasette.mksybr.com
+#     - drone.mksybr.com
+#     - gitea.mksybr.com
+#     - keycloak.mksybr.com
+#     - paperless.mksybr.com
+#     - statping.mksybr.com  
+#     secretName: letsencrypt-prod
+# EOF
+
 
 popd
 
