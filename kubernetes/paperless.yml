@@ -1,0 +1,268 @@
+# paperless.yml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: psql
+  name: psql
+spec:
+  containers:
+  - name: create-paperless-database
+    args:
+    - psql
+    - postgres://postgres:$(POSTGRES_PASSWORD)@postgres-cluster
+    - -c
+    - |-
+      CREATE DATABASE paperless;
+      CREATE USER paperless WITH ENCRYPTED PASSWORD '$(POSTGRES_PAPERLESS_USER)' CREATEDB;
+      GRANT ALL ON DATABASE paperless TO paperless;
+      GRANT USAGE, CREATE ON SCHEMA PUBLIC TO paperless;
+      ALTER DATABASE paperless OWNER TO paperless;
+    image: ongres/postgres-util
+    resources: {}
+    env:
+    - name: KEYCLOAK_ADMIN
+      value: admin
+    - name: POSTGRES_PAPERLESS_USER
+      valueFrom:
+        secretKeyRef:
+          name: postgres-paperless-user 
+          key: password
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: postgres-cluster
+          key: superuser-password
+  - name: grant-paperless-database
+    args:
+    - psql
+    - postgres://paperless:$(POSTGRES_PAPERLESS_USER)@postgres-cluster/paperless
+    - -c
+    - |-
+      GRANT ALL on schema public TO paperless;
+    image: ongres/postgres-util
+    resources: {}
+    env:
+    - name: KEYCLOAK_ADMIN
+      value: admin
+    - name: POSTGRES_PAPERLESS_USER
+      valueFrom:
+        secretKeyRef:
+          name: postgres-paperless-user 
+          key: password
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: postgres-cluster
+          key: superuser-password
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-consume
+  name: paperless-consume
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-data
+  name: paperless-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-export
+  name: paperless-export
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-media
+  name: paperless-media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-redis-data
+  name: paperless-redis-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: paperless-redis
+  name: paperless-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: paperless-redis
+    spec:
+      containers:
+        - image: docker.io/library/redis:7
+          name: paperless-redis
+          volumeMounts:
+            - mountPath: /data
+              name: paperless-redis-data
+      restartPolicy: Always
+      volumes:
+        - name: paperless-redis-data
+          persistentVolumeClaim:
+            claimName: paperless-redis-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: paperless-redis
+  name: paperless-redis
+spec:
+  ports:
+    - name: paperless-redis
+      port: 6379
+      targetPort: 6379
+  selector:
+    app: paperless-redis
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+  name: paperless-redis-name
+spec:
+  externalName: paperless-redis.default.svc.cluster.local
+  sessionAffinity: None
+  type: ExternalName
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: paperless-webserver
+  name: paperless-webserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-webserver
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: paperless-webserver
+    spec:
+      containers:
+        - env:
+            - name: PAPERLESS_REDIS
+              value: redis://paperless-redis.default.svc.cluster.local:6379
+            - name: PAPERLESS_DBHOST
+              value: postgres-cluster.default.svc.cluster.local
+            - name: PAPERLESS_DBPORT
+              value: "5432"
+            - name: PAPERLESS_DBNAME
+              value: paperless
+            - name: PAPERLESS_DBUSER
+              value: postgres # TODO(Malik): paperless
+            - name: PAPERLESS_DBPASS 
+              valueFrom:
+                secretKeyRef: 
+                  name: postgres-cluster
+                  key: superuser-password
+            - name: PAPERLESS_URL
+              value: https://paperless.mksybr.com
+          image: ghcr.io/paperless-ngx/paperless-ngx:latest
+          name: paperless-webserver
+          ports:
+            - containerPort: 8000
+          resources: {}
+          volumeMounts:
+            - mountPath: /usr/src/paperless/data
+              name: paperless-data
+            - mountPath: /usr/src/paperless/media
+              name: paperless-media
+            - mountPath: /usr/src/paperless/export
+              name: paperless-export
+            - mountPath: /usr/src/paperless/consume
+              name: paperless-consume
+      restartPolicy: Always
+      volumes:
+        - name: paperless-data
+          persistentVolumeClaim:
+            claimName: paperless-data
+        - name: paperless-media
+          persistentVolumeClaim:
+            claimName: paperless-media
+        - name: paperless-export
+          persistentVolumeClaim:
+            claimName: paperless-export
+        - name: paperless-consume
+          persistentVolumeClaim:
+            claimName: paperless-consume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: paperless-webserver
+  name: paperless-webserver
+spec:
+  ports:
+    - name: http
+      port: 8003
+      targetPort: 8000
+  selector:
+    app: paperless-webserver
+  type: LoadBalancer
+status:
+  loadBalancer: {}
+---

@@ -1,0 +1,112 @@
+# ingress.yml
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  creationTimestamp: "2024-01-18T01:17:50Z"
+  generation: 2
+  name: homelab
+  namespace: default
+  resourceVersion: "607091"
+  uid: 802fb915-06f7-4e6a-bce7-99d2e5f70423
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: statping.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: statping
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: statping
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  - host: archivebox.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: archivebox
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: archivebox
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  - host: drone.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: drone
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: drone
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  - host: gitea.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: gitea
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: gitea
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  - host: paperless.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: paperless
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: paperless
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - archivebook.mksybr.com
+    - datasette.mksybr.com
+    - drone.mksybr.com
+    - gitea.mksybr.com
+    - keycloak.mksybr.com
+    - paperless.mksybr.com
+    - statping.mksybr.com
+    secretName: letsencrypt-prod
+---
