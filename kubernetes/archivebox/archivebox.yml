@@ -50,7 +50,7 @@ spec:
   ports:
     - name: http
       port: 8000
-  type: LoadBalancer
+  type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -95,3 +95,28 @@ spec:
         - name: archivebox
           persistentVolumeClaim:
             claimName: archivebox
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: archivebox-letsencrypt-prod
+  name: archivebox
+  namespace: archivebox
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: archivebox.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: archivebox
+            port:
+              number: 8000
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - archivebox.mksybr.com
+    secretName: archivebox-letsencrypt-prod
