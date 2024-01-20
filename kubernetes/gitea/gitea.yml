@@ -223,7 +223,7 @@ spec:
   selector:
     app: gitea
   sessionAffinity: None
-  type: LoadBalancer
+  type: NodePort
 ---
 apiVersion: v1
 kind: Service
@@ -239,5 +239,5 @@ spec:
   selector:
     app: gitea
   sessionAffinity: None
-  type: LoadBalancer
+  type: NodePort
 ---
