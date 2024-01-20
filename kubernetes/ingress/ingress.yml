@@ -102,7 +102,6 @@ spec:
   tls:
   - hosts:
     - archivebook.mksybr.com
-    - datasette.mksybr.com
     - drone.mksybr.com
     - gitea.mksybr.com
     - keycloak.mksybr.com
