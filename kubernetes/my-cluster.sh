@@ -2582,6 +2582,23 @@ EOF
 #     - drone.mksybr.com
 #     secretName: drone-letsencrypt-prod
 # EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: drone
+  namespace: default
+spec:
+  ports:
+  - name: https
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  selector:
+    app: drone
+  sessionAffinity: None
+  type: NodePort
+EOF
 ##  Drone CI END
 
 
