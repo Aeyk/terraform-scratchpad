@@ -19,28 +19,48 @@ subjects:
   name: cluster-admin-user
   namespace: kubernetes-dashboard
 ---
-apiVersion: v1
-items:
-- apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    annotations:
-      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-      nginx.ingress.kubernetes.io/configuration-snippet: |-
-        proxy_ssl_server_name on;
-        proxy_ssl_name $host;
-    name: kubernetes-dashboard
-    namespace: kubernetes-dashboard
-  spec:
-    ingressClassName: nginx
-    rules:
-    - host: kubernetes-dashboard.mksybr.com
-      http:
-        paths:
-        - backend:
-            service:
-              name: kubernetes-dashboard
-              port:
-                number: 443
-          path: /
-          pathType: Prefix
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: kubernetes-dashboard.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: kubernetes-dashboard
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - kubernetes-dashboard.mksybr.com
+    secretName: kubernetes-dashboard-letsencrypt-prod
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
