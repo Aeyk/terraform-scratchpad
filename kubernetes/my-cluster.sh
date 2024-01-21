@@ -2067,7 +2067,59 @@ spec:
           persistentVolumeClaim:
             claimName: statping
 EOF
-kubectl create svc loadbalancer statping --tcp=80:8080
+kubectl create svc nodeport statping --tcp=80:8080
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: statping-letsencrypt-prod
+  namespace: ingress-nginx
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: statping-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: statping
+  namespace: statping
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: statping.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: statping
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: statping
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - statping.mksybr.com
+    secretName: statping-letsencrypt-prod
+EOF
 # TODO secret from /app/config.yml
 ## Statping-NG END
 
