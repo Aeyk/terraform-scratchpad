@@ -18,3 +18,29 @@ subjects:
 - kind: ServiceAccount
   name: cluster-admin-user
   namespace: kubernetes-dashboard
+---
+apiVersion: v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+      nginx.ingress.kubernetes.io/configuration-snippet: |-
+        proxy_ssl_server_name on;
+        proxy_ssl_name $host;
+    name: kubernetes-dashboard
+    namespace: kubernetes-dashboard
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: kubernetes-dashboard.mksybr.com
+      http:
+        paths:
+        - backend:
+            service:
+              name: kubernetes-dashboard
+              port:
+                number: 443
+          path: /
+          pathType: Prefix
