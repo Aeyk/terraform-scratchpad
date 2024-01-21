@@ -94,7 +94,8 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-          - mountPath: /app
+          - mountPath: /app/config.yaml
+            subPath: config.yaml
             name: statping-config
         env:
         - name: POSTGRES_STATPING_USER
@@ -109,8 +110,8 @@ spec:
               key: superuser-password
       volumes:
         - name: statping-config
-          persistentVolumeClaim:
-            claimName: statping
+          secret:
+            secretName: statping-config
 ---
 apiVersion: v1
 kind: Service
