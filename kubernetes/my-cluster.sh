@@ -1353,8 +1353,10 @@ data:
     DB_TYPE  = postgres
     HOST     = postgres-cluster:5432
     NAME     = giteadb
-    USER     = gitea
-    PASSWD   = $(kubectl get secrets postgres-gitea-user -o jsonpath='{.data.password}' | base64 -d)
+    # USER     = gitea
+    USER     = postgres
+    # PASSWD   = $(kubectl get secrets postgres-gitea-user -o jsonpath='{.data.password}' | base64 -d)
+    PASSWD   = $(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)
     SCHEMA   = 
     SSL_MODE = disable
     CHARSET  = utf8
@@ -1373,7 +1375,7 @@ data:
     SSH_DOMAIN       = gitea.mksybr.com
     DISABLE_SSH      = false
     START_SSH_SERVER = true
-    SSH_PORT         = 22
+    SSH_PORT         = 2222
     LFS_START_SERVER = true
     LFS_CONTENT_PATH = /data/gitea/lfs
     LFS_JWT_SECRET   = $(kubectl get secrets gitea-lfs-secret -o jsonpath='{.data.password}' | base64 -d)
@@ -1468,11 +1470,20 @@ spec:
           volumeMounts:
           - mountPath: /data
             name: gitea
+          - name: gitea-configmap
+            mountPath: /data/gitea/conf/app.ini
+            subPath: app.ini
       restartPolicy: Always
       volumes:
         - name: gitea
           persistentVolumeClaim:
             claimName: gitea
+        - name: gitea-configmap
+          configMap:
+            name: gitea-configmap
+            items:
+              - key: app.ini
+                path: app.ini
 EOF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
@@ -3893,12 +3904,31 @@ helm install vault hashicorp/vault \
     --namespace=vault
 
 helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
-helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace kube-system --set-string=syncSecret.enabled=true 
+helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --namespace=vault --set-string=syncSecret.enabled=true 
 
-vault policy write internal-app - <<EOF
-path "secret/data/db-pass" {
+kubectl create serviceaccount -n statping statping
+
+vault policy write statping - <<EOF
+path "secret/keycloak-admin-user" {
   capabilities = ["read"]
 }
+EOF
+
+vault write auth/kubernetes/role/statping \
+    bound_service_account_names=statping \
+    bound_service_account_namespaces=statping  \
+    policies=statping \
+    ttl=20m
+
+cat << EOF | kubectl apply -f -
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: vault
+spec:
+  provider: vault
+  parameters:
+    roleName: "csi"
 EOF
 
 popd
