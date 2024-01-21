@@ -80,17 +80,19 @@ data:
     WORK_PATH = /data/gitea/
 
     [security]
-    INTERNAL_TOKEN     = TODO(Malik): $(kubectl get secrets gitea-internal-token -o jsonpath='{.data.password}' | base64 -d)
+    INTERNAL_TOKEN     = $(kubectl get secrets gitea-internal-token -o jsonpath='{.data.password}' | base64 -d)
     INSTALL_LOCK       = true
-    SECRET_KEY         = TODO(Malik): $(kubectl get secrets gitea-secret-key -o jsonpath='{.data.password}' | base64 -d)
+    SECRET_KEY         = $(kubectl get secrets gitea-secret-key -o jsonpath='{.data.password}' | base64 -d)
     PASSWORD_HASH_ALGO = pbkdf2
     
     [database]
     DB_TYPE  = postgres
     HOST     = postgres-cluster:5432
     NAME     = giteadb
-    USER     = gitea
-    PASSWD   = TODO(Malik): $(kubectl get secrets postgres-gitea-user -o jsonpath='{.data.password}' | base64 -d)
+    # USER     = gitea
+    USER     = postgres
+    # PASSWD   = $(kubectl get secrets postgres-gitea-user -o jsonpath='{.data.password}' | base64 -d)
+    PASSWD   = $(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)
     SCHEMA   = 
     SSL_MODE = disable
     CHARSET  = utf8
@@ -109,10 +111,10 @@ data:
     SSH_DOMAIN       = gitea.mksybr.com
     DISABLE_SSH      = false
     START_SSH_SERVER = true
-    SSH_PORT         = 22
+    SSH_PORT         = 2222
     LFS_START_SERVER = true
     LFS_CONTENT_PATH = /data/gitea/lfs
-    LFS_JWT_SECRET   = TODO(Malik): $(kubectl get secrets gitea-lfs-secret -o jsonpath='{.data.password}' | base64 -d)
+    LFS_JWT_SECRET   = $(kubectl get secrets gitea-lfs-secret -o jsonpath='{.data.password}' | base64 -d)
     OFFLINE_MODE     = false
 
     [mailer]
@@ -167,7 +169,7 @@ data:
     [cache]
     # ADAPTER    = redis # TODO(Malik): redis
 
-kind: Secret
+kind: ConfigMap
 metadata:
   name: gitea-config
 ---
@@ -203,11 +205,20 @@ spec:
           volumeMounts:
           - mountPath: /data
             name: gitea
+          - name: gitea-configmap
+            mountPath: /data/gitea/conf/app.ini
+            subPath: app.ini
       restartPolicy: Always
       volumes:
         - name: gitea
           persistentVolumeClaim:
             claimName: gitea
+        - name: gitea-configmap
+          configMap:
+            name: gitea-configmap
+            items:
+              - key: app.ini
+                path: app.ini
 ---
 apiVersion: v1
 kind: Service
