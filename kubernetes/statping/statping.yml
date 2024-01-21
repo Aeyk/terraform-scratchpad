@@ -65,6 +65,7 @@ spec:
       labels:
         app: statping
     spec:
+      # serviceAccountName: statping
       containers:
       - name: statping
         image:  hunterlong/statping:v0.80.51
