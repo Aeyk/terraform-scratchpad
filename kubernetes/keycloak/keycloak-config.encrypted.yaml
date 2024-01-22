@@ -1,0 +1,36 @@
+# keycloak-config.yaml
+apiVersion: v1
+data:
+    keycloak.conf: ENC[AES256_GCM,data:jadKyQRhC9D1wyQAF6k6MlmLZNSaQSitdEVOD7C4f7/mmO4fbidOAkl9VnUx4Vjsf7h5XGjl8er2pCS/oTw5h9Fm61JSBhUztU0DJ+UOeacuhk2eWrFNbdKJ6iIhc8UAL6hQvimFvGUGQtLPZSWDdq7r1v8/R4TDzNlm+L3tT+xPRD4gB6ANGgVkHNoVFYbZa8f8g6Z2sVmSth5yU2iawDt0mrVXhfYiwUQjJEBore6yFnnOPkQ5jRTOEzZl4uT0VA7Z1Sn+eoth1JZUavrWFOW8hFqt8OIk77waMo1PQMqYQGE/DDzsm89telDTnyKU3JF7Wab1IoTvK94oWveF0IrJev/5UHGBtvBO5vk07jrG9L6tlXbjY0jrdBT2wYJrWJCJdGU1iMTzk/vK2/NHAUX9aCi8XYVVAHvERZZsnKAR6buV4hQWcsvJrrKo2Ql6SJd1OxqycTKa9fODa1j6Pg6d6mTPDwNK+ytUAMGFmyUEelnG8/8G3caTaXtirt2uwji9jOFOOq68Xqwoh7GwoyitVWr0ohN+x9oi/baliwBDvh8YvWVlcV+uDOF66vHCt40NZrpvB4UdWtvQa0iajAeccYPJbIrcaWT25vkov4upg+/HfAnpPU5241/8aojgqjo8jrpEdFSHERsiwBUiXNJ2s0ogsptrkjmGn9WgTjfYGBS8Nig+fZ02W4RuvJPgPEUOPib0dKAqWK18SEuVF6ol+KE8yPOvRE7XGZqCObDUxlYvrUeN9lNiaoYIKrCT3doOGDjc6R33xthGnP9tJhtbyEl9kRT1ZdqC2Quwb82PzZoWlZJdPezJP91wCgruyzBkPIIF9/rTlLMD3+M8tYPNxojUhi1LiN92aMDT6JEeAsGA4IjN7r5DdTEsUlaNfRKP9hmT/bXeNmvxVnX3ktx45u4azOQ5Su6kYngrfeVak8fFyJYYG6jU0IQoro/8FIaaKDaXQUkco+zZM0WGmwe/tVJ47OluekQ91iQqXFgtmAFUcaBkZjOE7/uKlxTLitnLPvdKWumBLYjDYjVVl2gOmW2TsoNxF7dYrY3sh/7BAc08Wy1RwkQZcLQ8q602iaheeMEfCHU0+Tl1Ctk40HrN5xEdussoQrQegYy+WjdQaDKEGUiBiMIGcUmAQE1If+x6+gKtwunY6gbmYgv3bX62Ow+87PCpXRHGPwpXQfzW8gpBltfoLA83cOCSb/1a6NeBfSeiyX7TQSBKfsKpS6DptPEGkC3g8LzC3RmRNse8gPD1t7Q1BwAPaKIgJq+DzGjv20xE0dU3q0DrPRh8fbKOslL9WHjFnQO+zdomybZ2trO6+bn1tdIJ8eUwzl8/zaIZRibUV/9HHrpAngJucVmaSCMWY0G0v+B7HE4iqC5cdOr8h/cdxrkSJzJK/l1Qk51A/57AQNS3MY98gYtkAuOUggX0mQp85Wo4SOBbvPrYUnyYcvOg352hTR0BLrRzasNumcI+e9eVsR38QUlcyT2Kz83WaxePMnqH/5kVuzQQ2+6Zr7A3UAIQjpjGybvL8zpYq7Wx74FbIBaiXIqzHA8ff8fwGwTj4pnczHsw49FNTkUI5BZ8akE/vkks50aGzUTHhVLUR/UyIUV96ZlSW7ysMt2S4ouYtm1UcssY9+ZAvA39leowg0d/3XyYNivictr4CIf21WNmYPolfZfWxF7WbpxZdxsqVrX55Yn2OYb1lrYaxBAazcDTrWnWU4PG3VDQTlTBJapq+7a4z66YzHWglrXB88P6LzLk7XtKoXSdbM5AU7HyvcZV6kr7jOD6xSEtwNjqxQuUOgcStChJq/XYeX6QwDj+f+UBKCrQEK7tjCGVwCcxaqIjDdkEX3ys1MeEcg==,iv:Rwrr8SVzEzcm5trGn2S09qc/EjFZ9B5lUX6zjDcBFBw=,tag:7OxTwd/69Uv2vL7oJXkYKA==,type:str]
+kind: ConfigMap
+metadata:
+    name: keycloak-config
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age: []
+    lastmodified: "2024-01-22T13:07:41Z"
+    mac: ENC[AES256_GCM,data:selkvxQG1Rrono2YW36pFdGqLyqMtjSdhqJHf0AOwnu0FnVZM4JPcTaGsW1/GeYdTH0ia8NOkncvnZnR0OYQZ6r4imGGcl7iug8TeZ4okNSdGDYDU3BmBzmnv4eMLeUKZa6JJfT5zz8PwT13KiOj/Qal1MJDegPXhQ026HezQ+U=,iv:o+t35g5269eFLACZqgiEYVrxL4Do3LGSigEn6m9R8YQ=,tag:LpNSk3KmPME90PhhzeKiCg==,type:str]
+    pgp:
+        - created_at: "2024-01-22T13:07:41Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hQGMAzipAh8vzmvTAQv/ZWSDE2GfGfqHlHA1Cs9pG4BOntlFlyKxtlAu3RcqMAmA
+            2FYkcYoqjrVlniSYWPOQw7MJe6MxrdnLYHONNtZHFUS8fTvrccAHOnvsXXl99ZUV
+            8AKAeETX0rlkzgmBC02LiQs80bvMfPbYIMmyDrgWYZaS93eYq1o5TpgaRCaN9DG3
+            xgVIAUra1z/O+1Zk2Lrk/Wlik5LeFnDkj7qYK1HlffOOkJscvpjlgOY0wSyCDc5L
+            BzIUboKGY3y1vz2wVMosJIDMAGZQEXOCN/M1+fg0RLQOuS0tOfQ2sK6xT9s/yI1J
+            enjn7DuBGbcYz9Sbo78hsi6XjvC1boEmS8hERVzqWxwnNm4cqYeLJZfPhcfI+77H
+            7p3OMZLfEOEfgUjsefqGeoPNmafLG6d3B1Deo/TVMLlT6+GPnaDNGGhdBHH6NMnx
+            49B6Erww+jg5zQ6SIaBJu5ul7FowvcAzxjzP/ZnkFLmHgdWysRDxXM66jkHAgbna
+            HeIm+LIzmZvQ4xqwnlpX0l4BjOO39U4pqGSW4l6bcnl2Bsptplxj24fe0DYIngIK
+            j4MsWVeFHgcBG7+xD2NHpgE4LUSG7BNslD402Rfp9RplNYp+z0B8ROzOcWJ3lTJd
+            kPYoaADn1fIMa0QMzKJZ
+            =aPmN
+            -----END PGP MESSAGE-----
+          fp: A8F32284234A54A9CD742F91B1AB195143457ABA
+    encrypted_regex: ^(data|stringData)$
+    version: 3.8.1
