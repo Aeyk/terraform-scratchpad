@@ -94,8 +94,8 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-          - mountPath: /app/config.yaml
-            subPath: config.yaml
+          - mountPath: /app/config.yml
+            subPath: config.yml
             name: statping-config
         env:
         - name: POSTGRES_STATPING_USER
@@ -110,8 +110,8 @@ spec:
               key: superuser-password
       volumes:
         - name: statping-config
-          secret:
-            secretName: statping-config
+          configMap:
+            name: statping-config
 ---
 apiVersion: v1
 kind: Service
@@ -130,4 +130,36 @@ spec:
   selector:
     app: statping
   type: NodePort
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  name: statping
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: statping.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: statping
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: statping
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - statping.mksybr.com
+    secretName: letsencrypt-prod
 ---
