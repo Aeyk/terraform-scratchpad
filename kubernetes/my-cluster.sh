@@ -4000,6 +4000,31 @@ spec:
     roleName: "csi"
 EOF
 
+## WireGuard BEGIN
+sudo apt install wireguard
+
+for node in $(kubectl get nodes | perl -lane 'print @F[0] if $. != 1'); do 
+  kubectl annotate node $node kilo.squat.ai/location="azure"; 
+  kubectl annotate node $node kilo.squat.ai/region="east-us-2"; 
+done
+
+kubectl delete -f https://raw.githubusercontent.com/squat/kilo/main/manifests/crds.yaml
+kubectl delete -f https://raw.githubusercontent.com/squat/kilo/main/manifests/kilo-kubeadm.yaml
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: kilo.squat.ai/v1alpha1
+kind: Peer
+metadata:
+  name: squat
+spec:
+  allowedIPs:
+  - 10.8.0.0/32
+  publicKey: ZWNoNGJHS2ZrTUF3NFpLWXN0bVR2ZyswNm9Jb2FMVDdUTVllcDYzYjZuaz0K
+  persistentKeepalive: 10
+EOF
+
+## WireGuard END
+
 popd
 
 
