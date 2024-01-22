@@ -1,0 +1,37 @@
+apiVersion: v1
+data:
+    password: ENC[AES256_GCM,data:MKlmCo9pnWy5RngmdhCsWlPMphOmqC2biDsl5oEvNFMuizBAPHdNgWiF1ik=,iv:kWEKhXvWu4XfsbEfSGVjOm6gEbMqZVV4bw/VP4137Yg=,tag:GPp6AerZ350IZlCgs1Ysbg==,type:str]
+kind: Secret
+metadata:
+    name: ENC[AES256_GCM,data:AKPY3doQinxYJTHxb5QWRw==,iv:3nyYbBV1Av8mS9w72s/WKAry/cfewrz1sHzXCNwIHck=,tag:I1cf+vRN/kJl71LzXBBC8Q==,type:str]
+    namespace: ENC[AES256_GCM,data:XDVhf7yYwg==,iv:t2gxx/oIhCe1nB2LeDZMyAvjJe6bBnppzDSxcFfC+7w=,tag:EGdRZKONpy6zkGWK0ZAQ0A==,type:str]
+type: Opaque
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age: []
+    lastmodified: "2024-01-22T00:33:53Z"
+    mac: ENC[AES256_GCM,data:oKyKYiBuUKXl9cA9Oh7Jx0ll1IOKpPyRunAejRm5SwboxD1UMLGRfGu/gxJx+LzTM7fQ67UuPtA7xIOJloCsq7w0flsbf7dqeJGbkH6TYjiSmFSf1RAPXRCsfZ26tIrpBHqim4NZZcFNT4iHVpUI82S8rf6jID5svfTkwV4NOuE=,iv:jVDr5cqurZUXL5jRRMdrtvnqwhCJP1yjkGP0/HOiBYo=,tag:cRrZjHbrdWAaQAlHIF6JWA==,type:str]
+    pgp:
+        - created_at: "2024-01-22T00:33:53Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hQGMAzipAh8vzmvTAQv7Bp5EX7TYHGhjm6SFLKUJROKZwJot0dB/mLLbLtJito0X
+            dMiiYLF2bcTtUSZ82LJeKZlslCQWtdHocZlwLGwKAXHhRdvhxIU2uXnxBjA2+aC3
+            eFTnnNadc0u2q8YM3GmGXpfL7v2cLYfMqxMCF4GjJzvFyIc8SGUh+dlRt5ONXHZR
+            s7Q3UgS6Dw89FawPOV1V+TC/0RXDFXLQWPvBcmLmn/dJPlGXm701r0UDf1wQiucM
+            kQowjjlSkJ3jrNIUNBWW6awNKQcYPE/GWc+aWr1jx4jlT9+pUDtxM8j9/v5PSbm+
+            pnrIBrwZbvZsmB2fWuxgb7cnIMoOPm7La9jtP1+12wASSpyloYu7LB9BvSODpllw
+            qp60njxk2FffrEDylX2UsZ6DeycTUR/axkVWcxmyAG7Tu1V4P8+7I1j1c0IAyPuJ
+            LqWcqIoT1xpdO8rMb4tqIJ5L0CqdK65hbqdx+lfg+MIvMEMGyGVZtE1aekdeln9+
+            0KH+qnKlx5ZTg1J3+6YW0l4BF42vIP8onqSy/n2Rpf2o9opXIrCuzVVFZQAtfU6R
+            UbmSKWcJduy0Cu3GOU3gjGxOpTVgGO2JN2ejjoCcSZqx8wcmcxeFppIfyLEzVrm3
+            mo5vDFlUujdNidY0vsy5
+            =7Mqn
+            -----END PGP MESSAGE-----
+          fp: A8F32284234A54A9CD742F91B1AB195143457ABA
+    encrypted_regex: data
+    version: 3.8.1
