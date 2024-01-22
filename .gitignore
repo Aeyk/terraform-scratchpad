@@ -48,3 +48,5 @@ terraform.rc
 
 /*.infra
 ansible/inventory.ini
+
+*.unencrypted.*
