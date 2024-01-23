@@ -1,10 +1,44 @@
 # keycloak.yml
 ---
 apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: psql
+  name: psql
+spec:
+  containers:
+  - name: setup-keycloak-database
+    args:
+    - psql
+    - postgres://postgres:$(POSTGRES_SUPERUSER_PASSWORD)@postgres-cluster
+    - -c
+    - |-
+      CREATE DATABASE keycloak;
+      CREATE USER keycloak WITH PASSWORD '$(POSTGRES_KEYCLOAK_PASSWORD)' CREATEDB;
+      GRANT ALL on schema public TO keycloak;
+    image: ongres/postgres-util
+    resources: {}
+  env:
+    - name: POSTGRES_SUPERUSER_PASSWORD
+      valueFrom: 
+        secretKeyRef:
+          name: postgres-cluster 
+          key: superuser-password
+    - name: POSTGRES_KEYCLOAK_PASSWORD
+      valueFrom: 
+        secretKeyRef:
+          name:  postgres-keycloak-user
+          key: password
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: keycloak
-  namespace: keycloak
   labels:
     app: keycloak
 spec:
@@ -16,13 +50,57 @@ spec:
     app: keycloak
   type: NodePort
 ---
+apiVersion: v1
+data:
+  keycloak.conf: |
+    # Basic settings for running in production. Change accordingly before deploying the server.
+    # Database
+    db=postgres
+    db-username=postgres           # TODO fix permission to run as keycloak
+    db-password=$POSTGRES_PASSWORD # TODO fix permission to run as keycloak
+    db-url-host=postgres-cluster.default.svc.cluster.local
+    # db-url=jdbc:postgresql://postgres-cluster.default.svc.cluster.local/keycloak
+
+    http-max-queued-requests=10
+
+    # Observability
+    # If the server should expose healthcheck endpoints.
+    #health-enabled=true
+    # If the server should expose metrics endpoints.
+    #metrics-enabled=true
+
+    # HTTP
+    # The file path to a server certificate or certificate chain in PEM format.
+    #https-certificate-file=\${kc.home.dir}conf/server.crt.pem
+    # The file path to a private key in PEM format.
+    #https-certificate-key-file=\${kc.home.dir}conf/server.key.pem
+    # The proxy address forwarding mode if the server is behind a reverse proxy.
+    #proxy=reencrypt
+
+    # Do not attach route to cookies and rely on the session affinity capabilities from reverse proxy
+    #spi-sticky-session-encoder-infinispan-should-attach-route=false
+
+    # Hostname for the Keycloak server.
+    # hostname=keycloak.mksybr.com
+    # hostname-path=/keycloak
+    # http-relative-path=/keycloak
+    hostname-url=https://keycloak.mksybr.com:443/keycloak
+    hostname-admin-url=https://keycloak.mksybr.com:443/keycloak
+    proxy=edge
+
+    quarkus.transaction-manager.enable-recovery=true
+
+kind: secret
+metadata:
+  name: keycloak-config
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
     app: keycloak
   name: keycloak
-  namespace: keycloak
+  namespace: default
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -40,29 +118,6 @@ spec:
       labels:
         app: keycloak
     spec:
-      initContainers:
-        - name: setup-keycloak-database
-          args:
-          - psql
-          - postgres://postgres:$(POSTGRES_SUPERUSER_PASSWORD)@postgres-cluster
-          - -c
-          - |-
-            CREATE DATABASE keycloak;
-            CREATE USER keycloak WITH PASSWORD '$(POSTGRES_KEYCLOAK_PASSWORD)' CREATEDB;
-            GRANT ALL on schema public TO keycloak;
-          image: ongres/postgres-util
-          resources: {}
-          env:
-            - name: POSTGRES_SUPERUSER_PASSWORD
-              valueFrom: 
-                secretKeyRef:
-                  name: postgres-cluster 
-                  key: superuser-password
-            - name: POSTGRES_KEYCLOAK_PASSWORD
-              valueFrom: 
-                secretKeyRef:
-                  name:  postgres-keycloak-user
-                  key: password
       containers:
       - args:
         - --verbose
@@ -98,13 +153,9 @@ spec:
         terminationMessagePolicy: File
         volumeMounts:
         - mountPath: /opt/keycloak/conf/keycloak.conf
-          name: keycloak-config
+          name: keycloak-config-file
           readOnly: true
           subPath: keycloak.conf
-        - mountPath: /opt/keycloak/data/import/keycloak-realm
-          name: keycloak-realm
-          readOnly: true
-          subPath: keycloak-realm
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -114,17 +165,16 @@ spec:
       - configMap:
           defaultMode: 420
           name: keycloak-config
-        name: keycloak-config
-      - name: keycloak-realm
-        configMap:
+        name: keycloak-config-file
+      - name: keycloak-realm-file
+        secret:
           defaultMode: 420
-          name: keycloak-realm
+          secretName: keycloak-realm
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: keycloak
-  namespace: keycloak
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"

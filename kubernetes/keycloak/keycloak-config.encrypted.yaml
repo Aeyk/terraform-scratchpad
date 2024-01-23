@@ -1,36 +1,35 @@
 # keycloak-config.yaml
 apiVersion: v1
 data:
-    keycloak.conf: ENC[AES256_GCM,data:jadKyQRhC9D1wyQAF6k6MlmLZNSaQSitdEVOD7C4f7/mmO4fbidOAkl9VnUx4Vjsf7h5XGjl8er2pCS/oTw5h9Fm61JSBhUztU0DJ+UOeacuhk2eWrFNbdKJ6iIhc8UAL6hQvimFvGUGQtLPZSWDdq7r1v8/R4TDzNlm+L3tT+xPRD4gB6ANGgVkHNoVFYbZa8f8g6Z2sVmSth5yU2iawDt0mrVXhfYiwUQjJEBore6yFnnOPkQ5jRTOEzZl4uT0VA7Z1Sn+eoth1JZUavrWFOW8hFqt8OIk77waMo1PQMqYQGE/DDzsm89telDTnyKU3JF7Wab1IoTvK94oWveF0IrJev/5UHGBtvBO5vk07jrG9L6tlXbjY0jrdBT2wYJrWJCJdGU1iMTzk/vK2/NHAUX9aCi8XYVVAHvERZZsnKAR6buV4hQWcsvJrrKo2Ql6SJd1OxqycTKa9fODa1j6Pg6d6mTPDwNK+ytUAMGFmyUEelnG8/8G3caTaXtirt2uwji9jOFOOq68Xqwoh7GwoyitVWr0ohN+x9oi/baliwBDvh8YvWVlcV+uDOF66vHCt40NZrpvB4UdWtvQa0iajAeccYPJbIrcaWT25vkov4upg+/HfAnpPU5241/8aojgqjo8jrpEdFSHERsiwBUiXNJ2s0ogsptrkjmGn9WgTjfYGBS8Nig+fZ02W4RuvJPgPEUOPib0dKAqWK18SEuVF6ol+KE8yPOvRE7XGZqCObDUxlYvrUeN9lNiaoYIKrCT3doOGDjc6R33xthGnP9tJhtbyEl9kRT1ZdqC2Quwb82PzZoWlZJdPezJP91wCgruyzBkPIIF9/rTlLMD3+M8tYPNxojUhi1LiN92aMDT6JEeAsGA4IjN7r5DdTEsUlaNfRKP9hmT/bXeNmvxVnX3ktx45u4azOQ5Su6kYngrfeVak8fFyJYYG6jU0IQoro/8FIaaKDaXQUkco+zZM0WGmwe/tVJ47OluekQ91iQqXFgtmAFUcaBkZjOE7/uKlxTLitnLPvdKWumBLYjDYjVVl2gOmW2TsoNxF7dYrY3sh/7BAc08Wy1RwkQZcLQ8q602iaheeMEfCHU0+Tl1Ctk40HrN5xEdussoQrQegYy+WjdQaDKEGUiBiMIGcUmAQE1If+x6+gKtwunY6gbmYgv3bX62Ow+87PCpXRHGPwpXQfzW8gpBltfoLA83cOCSb/1a6NeBfSeiyX7TQSBKfsKpS6DptPEGkC3g8LzC3RmRNse8gPD1t7Q1BwAPaKIgJq+DzGjv20xE0dU3q0DrPRh8fbKOslL9WHjFnQO+zdomybZ2trO6+bn1tdIJ8eUwzl8/zaIZRibUV/9HHrpAngJucVmaSCMWY0G0v+B7HE4iqC5cdOr8h/cdxrkSJzJK/l1Qk51A/57AQNS3MY98gYtkAuOUggX0mQp85Wo4SOBbvPrYUnyYcvOg352hTR0BLrRzasNumcI+e9eVsR38QUlcyT2Kz83WaxePMnqH/5kVuzQQ2+6Zr7A3UAIQjpjGybvL8zpYq7Wx74FbIBaiXIqzHA8ff8fwGwTj4pnczHsw49FNTkUI5BZ8akE/vkks50aGzUTHhVLUR/UyIUV96ZlSW7ysMt2S4ouYtm1UcssY9+ZAvA39leowg0d/3XyYNivictr4CIf21WNmYPolfZfWxF7WbpxZdxsqVrX55Yn2OYb1lrYaxBAazcDTrWnWU4PG3VDQTlTBJapq+7a4z66YzHWglrXB88P6LzLk7XtKoXSdbM5AU7HyvcZV6kr7jOD6xSEtwNjqxQuUOgcStChJq/XYeX6QwDj+f+UBKCrQEK7tjCGVwCcxaqIjDdkEX3ys1MeEcg==,iv:Rwrr8SVzEzcm5trGn2S09qc/EjFZ9B5lUX6zjDcBFBw=,tag:7OxTwd/69Uv2vL7oJXkYKA==,type:str]
+    keycloak.conf: ENC[AES256_GCM,data:9EPXM/X10lBFqKGDNVGyuSvq8PiS3AzNJUqaFCB2WwYNVDD5iaShmNrgSiIQoiMTC02xbSU5bAnJYWhRoDxjl4G9o38UdmdUiFAkP/mDOfHtuDGJXF50YGKAF+6a2E092LBytn0YuKXQhFvqZLXrAAKEr7iPXnN+AV99Of/LB0eThX2X6SSFG34ehHWImhUo0tpbOpJkxYXjieJSB5bU6BZdkto3V5REyxwZQL+gNKrTAZQmdvbP3MSjledXskJuX4+Tjkq7Hpo+/2jSrVu96Ft7lZ+n3Ujn6kRrlMwyX6OHXlfLSb5niYfK2VRoj4TGi4ZOFNTwbjNVq/gGt8kytDQupNvRr1deGohWwl+zfvFYGBa2sdXSy9MLzx01uQm9bo7rSj5BuhFbhz1NFetTqGB+WnVseJ2WeTfBwY/LYJ6ADHZTSWGvbA9fmeFCUwIjlSZcoHAf8SmYLvFUMMjAdfm5Y2FS7xVixW+rDp5kLlK8rL0XhyFTly9N1HyHBpuhQtJKQ5C+GUoWIHKYoDEAOFPyO2xd38Ie6EFh/vmWKyB9uDwVaNKpzs6qxYxNh7jz62szUDg7OrACAqhBrqhMKr2JsI/xIIpfC/PRzZeKO7BswZ4vOyS4Jn3u/K6mgsxKGcRVnU0YkUaB+hLDPxg9jWmhNrP/ZFkx/5BVyCsXLE5WsKbxNMKLQuWwCX8SjOV7t8CnV9zBx+c/YUgjM41k7PVeOK06whx0trd8wG3cA3g4q0QG3uvDiVwwAUlHhWI/XSNaLoaMM88AUfeGxL3H8AAdBJL4LIi7G8lsXPPso0zM1V3Cl76Q0P8CBsY4vuZPNsYtIfnLisNEby/4Hi6SfvpOaATd7gJ/KACH7Ka1EpYw9fNJgcRHFIZPXhYkEQunBDfcGLTm6J1xL2UpbWn0TAMLRJJisYq+qfeCPL3fwMJnIIyC288y4yt/jndGNu0FiG8Zyxkg6ygch/2ziXQ2VvAeF52lgTHuERy7Mgdf29BNet9gkSiJcbasY1eMLP0ztM7u9SRuauCLgt3QX0Bw0nsaoePapouSD0foA2Xb9LoRqFbTnf+4nXDFT17wBbWPgEa/faAc2vQ5qNGMnFhDFleZIiwgRj3X+Zgh39IHRIJKGl0yo8eFhr1yjagGbNYmsmXnHKf7q6DvBHc6rHJwVrRCKf9OMHGnbwYDl7io/Em+PrSTL2/Kl/GW7w+IU+OQlHWXAadP3dacYQIRf4BHGBEGlx4HQJ2gr0fem5WmQfHVzfdDv9602BgDJ5rfistdQ9CLphfSx4kVbQFLrl8WcUmG4NggL+yPa4rlc1pSjwUa/yyTy6cglyIo3NCmLnWbwXW5qbpE42OjpAkfQiZL+gwRL1ny7FZ2TszK/rpsZ6MHnLUODIatTAvtIYppV5V+dzpN41RjSlLirwuwd6WT0kwPGV7PEQWjcibBMp8C7r4MJs6O1XKBExJQk0d6B58NUgY+KfHxRpX63Dps9uU76mppZT8BtInB79NWWaaFjH94/8ogNr16KNx2bkDSUZSWRWyNbTZ2Io6u0HizC+XuUND9vK8Biu1UDidipyGotEjXN43xGeP19DoF6nxL8jlBh9hLlC3ObRaiY1aoe09544BqZW+GcZ5t/WUywf84N7EKckfKK7dqkSOkix2X8w//V0ACRfKG19zDvaRYWSgV5q2/aE8mWW9SStcVuV3iQspxlBGjI0vR/MnH8CiyveAcYkcrXZ8RXcwXDRn4cgwYtvxz5b1I8Zl2PCbZIVEZSRSX68R1mXOyZVh8S46mXHVxkZZprvLcQOepNBSYwCfQ6tM90PdVUiAFWwYjemYBbSiMt6NaOcwR4QDxvyM+U9d5PjgZdw==,iv:m+56c4qUd/1Zix1AxiGybGxF2lWBkiZxGexmdcDypCc=,tag:0UZeKEWjz9GiHYLXDRnKbA==,type:str]
 kind: ConfigMap
 metadata:
     name: keycloak-config
-    metadata: keycloak
 sops:
     kms: []
     gcp_kms: []
     azure_kv: []
     hc_vault: []
     age: []
-    lastmodified: "2024-01-22T13:07:41Z"
-    mac: ENC[AES256_GCM,data:selkvxQG1Rrono2YW36pFdGqLyqMtjSdhqJHf0AOwnu0FnVZM4JPcTaGsW1/GeYdTH0ia8NOkncvnZnR0OYQZ6r4imGGcl7iug8TeZ4okNSdGDYDU3BmBzmnv4eMLeUKZa6JJfT5zz8PwT13KiOj/Qal1MJDegPXhQ026HezQ+U=,iv:o+t35g5269eFLACZqgiEYVrxL4Do3LGSigEn6m9R8YQ=,tag:LpNSk3KmPME90PhhzeKiCg==,type:str]
+    lastmodified: "2024-01-23T01:39:59Z"
+    mac: ENC[AES256_GCM,data:NG776LQ/nN+hY6ou6iT9Mxm1ZJ/Ntl1WMj5ZtP1RsV3iAjUwT+ZY3zJeb62m0iyFgtnDidOwXdoj2wGd7YDq1vHykDJdx2nVrKTmLy8cO1Xjq02GL1LoeqjK90FnsHW8M/x6Ao/PNxlp2SuJCZYUXcjAcj4QGP4iHycdb4lxfpE=,iv:8wqtHXqUUc0emL7GwLMydefg3k7ZRL+YMPLvjYxM1ug=,tag:DH0uny9BIDtbHOxUt1xVcg==,type:str]
     pgp:
-        - created_at: "2024-01-22T13:07:41Z"
+        - created_at: "2024-01-23T01:39:59Z"
           enc: |-
             -----BEGIN PGP MESSAGE-----
 
-            hQGMAzipAh8vzmvTAQv/ZWSDE2GfGfqHlHA1Cs9pG4BOntlFlyKxtlAu3RcqMAmA
-            2FYkcYoqjrVlniSYWPOQw7MJe6MxrdnLYHONNtZHFUS8fTvrccAHOnvsXXl99ZUV
-            8AKAeETX0rlkzgmBC02LiQs80bvMfPbYIMmyDrgWYZaS93eYq1o5TpgaRCaN9DG3
-            xgVIAUra1z/O+1Zk2Lrk/Wlik5LeFnDkj7qYK1HlffOOkJscvpjlgOY0wSyCDc5L
-            BzIUboKGY3y1vz2wVMosJIDMAGZQEXOCN/M1+fg0RLQOuS0tOfQ2sK6xT9s/yI1J
-            enjn7DuBGbcYz9Sbo78hsi6XjvC1boEmS8hERVzqWxwnNm4cqYeLJZfPhcfI+77H
-            7p3OMZLfEOEfgUjsefqGeoPNmafLG6d3B1Deo/TVMLlT6+GPnaDNGGhdBHH6NMnx
-            49B6Erww+jg5zQ6SIaBJu5ul7FowvcAzxjzP/ZnkFLmHgdWysRDxXM66jkHAgbna
-            HeIm+LIzmZvQ4xqwnlpX0l4BjOO39U4pqGSW4l6bcnl2Bsptplxj24fe0DYIngIK
-            j4MsWVeFHgcBG7+xD2NHpgE4LUSG7BNslD402Rfp9RplNYp+z0B8ROzOcWJ3lTJd
-            kPYoaADn1fIMa0QMzKJZ
-            =aPmN
+            hQGMAzipAh8vzmvTAQv/VvKXktfQZiSSQQGVSG/9XFpMJvhci28TPHJqnsetJjGY
+            TlnKQvxfd2ywYjqmqc64C2y3tr2sh/wI0z/7HRVGkS9R8GN6C8qyr+mhhU1OKFf+
+            ZGOvnXBSr1mPzn49edHxUlPuYXFIxOlLfP/bl3gf66SzJQ4ENNmVtkRnPDGnJUvD
+            NxzCHRZ92A6oIKqTlGnJO2eis+D0nqVW8sYwRURavQJH7930XLmwMeC9B5fUSVEl
+            8Mjrsq11Zh4uh1yDSX9i0Et9yKAB98ZxFjrxp3uR3/hNmfbJDMsAIyYbmOUlN8Yk
+            aPDpVH3rwHrwSp0V02hbJSGo6w2sXslZgJaIbQKFzsq9lBvSBCjab5ht17/mApt2
+            cjwRAm8xytSVgR+z6ZJOlRsph1G9hA94EONKdfYl/Zlsb5J44eTLNvTlbfNctDsD
+            Cak8SD9fAxlj/j1f37XxQBqiaR9QFMYyF663Q6AcL/MS1UkSaOKJ/WtwjSNfYl4C
+            ihgIphB1wQSX+DaQusrQ0l4Bkt97OiYrpobKFKjNzfZBrK3diYfoVI+1LjHdx7TJ
+            XgJYhQJZ9Ky4/fuVTiS4ymGvKABPl2QgfMmvLexieJDMND3k9Cf7zELDBjK+V/jI
+            C7WWrgdyTea5VyISD7zN
+            =TezT
             -----END PGP MESSAGE-----
           fp: A8F32284234A54A9CD742F91B1AB195143457ABA
     encrypted_regex: ^(data|stringData)$
