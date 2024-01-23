@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: argocd-repo-server
     app.kubernetes.io/part-of: argocd
   name: argocd-repo-server
-  namespace: argocd
+  namespace: argocd-test
 spec:
   replicas: 1
   selector:
@@ -29,7 +29,7 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  app.kubernetes.io/part-of: argocd
+                  app.kubernetes.io/part-of: argocd-test
               topologyKey: kubernetes.io/hostname
             weight: 5
       automountServiceAccountToken: false
