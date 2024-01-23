@@ -5,6 +5,7 @@ data:
 kind: ConfigMap
 metadata:
     name: keycloak-realm
+    namespace: keycloak
 sops:
     kms: []
     gcp_kms: []
