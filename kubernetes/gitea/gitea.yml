@@ -6,7 +6,8 @@ metadata:
   creationTimestamp: null
   labels:
     run: psql
-  name: psql
+  name: psql # TODO(Malik): descriptive name
+  namespace: gitea
 spec:
   containers:
   - args:
@@ -15,7 +16,7 @@ spec:
     - -c
     - CREATE USER IF NOT EXISTS gitea WITH PASSWORD 'password' CREATEDB;
     image: ongres/postgres-util
-    name: psql
+    name: psql # TODO(Malik): descriptive name
     env:
     - name: POSTGRES_SUPERUSER_PASSWORD
       valueFrom: 
@@ -36,6 +37,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: gitea
+  namespace: gitea
 spec:
   storageClassName: "local-path"
   volumeName: gitea
@@ -49,6 +51,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: gitea
+  namespace: gitea
   labels:
     type:
       local
@@ -164,11 +167,13 @@ data:
 kind: ConfigMap
 metadata:
   name: gitea-config
+  namespace: gitea
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gitea
+  namespace: gitea
 spec:
   selector:
     matchLabels:
@@ -216,7 +221,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: gitea
-  namespace: default
+  namespace: gitea
 spec:
   ports:
   - name: https
@@ -232,7 +237,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: gitea-ssh
-  namespace: default
+  namespace: gitea
 spec:
   ports:
   - name: ssh
