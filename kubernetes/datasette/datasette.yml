@@ -40,6 +40,7 @@ spec:
         ports:
         - containerPort: 8001
           protocol: TCP
+      dnsPolicy: Default # TODO(Malik): difference between dnsPolicy: Default and ClusterFirst
 ---
 apiVersion: v1
 kind: Service
