@@ -1,9 +1,15 @@
 # datasette.yml
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: datasette
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: datasette
+  namespace: datasette
 spec:
   replicas: 1
   selector:
