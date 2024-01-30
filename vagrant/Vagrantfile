@@ -65,6 +65,9 @@ SHELL
         end
       end
       node.vm.provider "virtualbox" do |vb|
+        vb.customize ["modifyvm", :id, "--nictype1", "virtio"] # TODO(Malik): alternatively try natnetwork
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
         vb.cpus = settings["nodes"]["workers"]["cpu"]
         vb.memory = settings["nodes"]["workers"]["memory"]
         if settings["cluster_name"] and settings["cluster_name"] != ""
