@@ -109,9 +109,9 @@ SHELL
        inline: <<-SHELL
          set +euxo pipefail
          declare -a IPS=()
-         echo "$IP_NW$((IP_START)) master-node" >> /etc/hosts
+         echo "$IP_NW$((IP_START)) master-node" | sudo tee -a /etc/hosts
          for i in `seq 1 ${NUM_WORKER_NODES}`; do
-           echo "$IP_NW$((IP_START+i)) worker-node0${i}" >> /etc/hosts
+           echo "$IP_NW$((IP_START+i)) worker-node0${i}" | sudo tee -a /etc/hosts
            IPS+=($IP_NW$((IP_START+i))) 
          done
          ## Install ansible
@@ -135,7 +135,7 @@ SHELL
          sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
          sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
          export PATH=${PATH:+${PATH}:}$HOME/.local/bin/
-         ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root reset.yml -e reset_confirmation=true -e download_run_once=true
+         ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root reset.yml -e reset_confirmation=true 
          ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root cluster.yml
          sudo chown 1000:1000 /home/vagrant/.kube/config
       SHELL
