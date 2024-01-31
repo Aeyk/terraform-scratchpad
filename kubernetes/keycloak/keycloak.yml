@@ -90,7 +90,7 @@ data:
 
     quarkus.transaction-manager.enable-recovery=true
 
-kind: secret
+kind: ConfigMap
 metadata:
   name: keycloak-config
 ---
