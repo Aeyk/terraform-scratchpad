@@ -1,41 +1,6 @@
 # keycloak.yml
 ---
 apiVersion: v1
-kind: Pod
-metadata:
-  creationTimestamp: null
-  labels:
-    run: psql
-  name: psql
-spec:
-  containers:
-  - name: setup-keycloak-database
-    args:
-    - psql
-    - postgres://postgres:$(POSTGRES_SUPERUSER_PASSWORD)@postgres-cluster
-    - -c
-    - |-
-      CREATE DATABASE keycloak;
-      CREATE USER keycloak WITH PASSWORD '$(POSTGRES_KEYCLOAK_PASSWORD)' CREATEDB;
-      GRANT ALL on schema public TO keycloak;
-    image: ongres/postgres-util
-    resources: {}
-  env:
-    - name: POSTGRES_SUPERUSER_PASSWORD
-      valueFrom: 
-        secretKeyRef:
-          name: postgres-cluster 
-          key: superuser-password
-    - name: POSTGRES_KEYCLOAK_PASSWORD
-      valueFrom: 
-        secretKeyRef:
-          name:  postgres-keycloak-user
-          key: password
-  dnsPolicy: ClusterFirst
-  restartPolicy: Never
-status: {}
----
-apiVersion: v1
 kind: Service
 metadata:
   name: keycloak
@@ -118,6 +83,29 @@ spec:
       labels:
         app: keycloak
     spec:
+      initContainers:
+      - name: setup-keycloak-database
+        args:
+        - psql
+        - postgres://postgres:$(POSTGRES_SUPERUSER_PASSWORD)@postgres-cluster
+        - -c
+        - |-
+          CREATE DATABASE keycloak;
+          CREATE USER keycloak WITH PASSWORD '$(POSTGRES_KEYCLOAK_PASSWORD)' CREATEDB;
+          GRANT ALL on schema public TO keycloak;
+        image: ongres/postgres-util
+        resources: {}
+        env:
+        - name: POSTGRES_SUPERUSER_PASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name: postgres-cluster 
+              key: superuser-password
+        - name: POSTGRES_KEYCLOAK_PASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name:  postgres-keycloak-user
+              key: password
       containers:
       - args:
         - --verbose
