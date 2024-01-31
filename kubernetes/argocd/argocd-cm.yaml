@@ -10,6 +10,6 @@ data:
 kind: ConfigMap
 metadata:
   name: argocd-cm
-  namespace: default
+  namespace: argocd
 data:
   kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
