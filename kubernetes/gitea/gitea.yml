@@ -207,7 +207,7 @@ spec:
           volumeMounts:
           - mountPath: /data
             name: gitea
-          - name: gitea-configmap
+          - name: gitea-config
             mountPath: /data/gitea/conf/app.ini
             subPath: app.ini
       restartPolicy: Always
@@ -215,9 +215,9 @@ spec:
         - name: gitea
           persistentVolumeClaim:
             claimName: gitea
-        - name: gitea-configmap
+        - name: gitea-config
           configMap:
-            name: gitea-configmap
+            name: gitea-config
             items:
               - key: app.ini
                 path: app.ini
