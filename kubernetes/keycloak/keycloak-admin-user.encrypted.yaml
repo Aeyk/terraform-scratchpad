@@ -1,0 +1,36 @@
+apiVersion: v1
+data:
+    password: ENC[AES256_GCM,data:h+RTKsE5l3pfi3JDhlndnGwFdq7sOlOXKmnrqkeykTo7dP8f5zKPVlUwJCw=,iv:nL552W6F4tFsVusStKJIYAsJ+31mW4YVhVBaZ/e5dj8=,tag:URICuN0PlEhEeisdTeNRUQ==,type:str]
+kind: Secret
+metadata:
+    creationTimestamp: null
+    name: keycloak-admin-user
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age: []
+    lastmodified: "2024-01-31T12:39:49Z"
+    mac: ENC[AES256_GCM,data:tNX1PxTiyg3oB4LqmwVAH6I8fKo+ibTAWgEhv+WND3jam8dq3pGQ+qoULrMN0ATH2qfJwDRSG9Wya0d+Z5scXszXtZQQhZuMFfOfGJTnQGGS91/pP6R+Ab9oSw9Hz59zchRKF6d8REOWP88+SCptGNn5hNn+lOrZCLlBsaC66Yo=,iv:gscVTOKEiy+vyCdqNEZy+0fNuLOLNGAwiyXeaH1BMig=,tag:0cbME/3dbabspEIbD5LJTA==,type:str]
+    pgp:
+        - created_at: "2024-01-31T12:39:49Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hQGMAzipAh8vzmvTAQwAg2Qq6hV1GwESyrA/AN7KE0B9QRnstWE5I5X0N/TFqtpY
+            mUdH+TP2J/qfNL+Od/nmlV49WGvOmP2Gel8B2/dHutZYv4Ltts4nJUemqsFnpciD
+            QaKNw/vO66hHzvOU1NSqPyJW0XuGyr3v9WVfcnw3SlTviz3RPRhiAyUwqhLqwfRK
+            oc+KNm6cWf9eaFGPO8NB3B1S4z+FUqk/7dIeIulqq7F7vthsRbfcilV8eJUqj4TE
+            EY5+OICY9L4Jl8RYpy+NwlwzNrxRioHzZpZ23yTvD3UCuFCAHRMKFsVPZd9s3HwF
+            F5uJEa+PdMmouTeIrGWySQouzVrh6CHoJQO+GYI1kX2OUSJYXj5DtwZ31Aee9EiS
+            8PAn/Wa3VJBoeuV4UB96K5c4wjEaPBs012HarNaTf6gTQfenBLm5SqQfpYt5tEW/
+            nWxxycB2U//70k0+KYOtx5JvV5xHDre1ha2MKuTMf2f8NyiyoxrRHjf0EwfX/RiK
+            0XUD9OmqHbgIlgbvaqpL0lwBaBFATiyTMzgKqq++TAl5KOs/CtGHMXEN4m21jGVJ
+            5s3/dQMCEetXEq9U7LAuVLB9lmjfWgei7GuAxNcJvrinydGJsX6n9fBsBduugtqR
+            9GifPJyO7JLyk75pYQ==
+            =cSvk
+            -----END PGP MESSAGE-----
+          fp: A8F32284234A54A9CD742F91B1AB195143457ABA
+    unencrypted_regex: ^(apiVersion|metadata|kind|type)$
+    version: 3.8.1
