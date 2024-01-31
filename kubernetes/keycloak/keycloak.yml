@@ -1,9 +1,18 @@
 # keycloak.yml
 ---
 apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: keycloak
+spec: {}
+status: {}
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: keycloak
+  namespace: keycloak
   labels:
     app: keycloak
 spec:
@@ -58,6 +67,7 @@ data:
 kind: ConfigMap
 metadata:
   name: keycloak-config
+  namespace: keycloak
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -65,7 +75,7 @@ metadata:
   labels:
     app: keycloak
   name: keycloak
-  namespace: default
+  namespace: keycloak
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -163,6 +173,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: keycloak
+  namespace: keycloak
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
