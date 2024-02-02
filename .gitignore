@@ -84,3 +84,6 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+ id_rsa
+ id_rsa.pub
