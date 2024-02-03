@@ -163,28 +163,28 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
   count = var.amd-1vcpu-1gb-us-qas_count
   display_name = "amd-1vcpu-1gb-us-qas-00${count.index}"
   agent_config {
-	is_management_disabled = "false"
-	is_monitoring_disabled = "false"
-	plugins_config {
-	  desired_state = "DISABLED"
-	  name = "Vulnerability Scanning"
-	}
-	plugins_config {
-	  desired_state = "ENABLED"
-	  name = "Management Agent"
-	}
-	plugins_config {
-	  desired_state = "ENABLED"
-	  name = "Custom Logs Monitoring"
-	}
-	plugins_config {
-	  desired_state = "ENABLED"
-	  name = "Compute Instance Monitoring"
-	}
-	plugins_config {
-	  desired_state = "DISABLED"
-	  name = "Bastion"
-	}
+	  is_management_disabled = "false"
+	  is_monitoring_disabled = "false"
+	  plugins_config {
+	    desired_state = "DISABLED"
+	    name = "Vulnerability Scanning"
+	  }
+	  plugins_config {
+	    desired_state = "ENABLED"
+	    name = "Management Agent"
+	  }
+	  plugins_config {
+	    desired_state = "ENABLED"
+	    name = "Custom Logs Monitoring"
+	  }
+	  plugins_config {
+	    desired_state = "ENABLED"
+	    name = "Compute Instance Monitoring"
+	  }
+	  plugins_config {
+	    desired_state = "DISABLED"
+	    name = "Bastion"
+	  }
   }
   availability_config {
     is_live_migration_preferred = "true"
