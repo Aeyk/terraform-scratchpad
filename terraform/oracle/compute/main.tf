@@ -88,7 +88,7 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
     ocpus                     = "1"
   }
   source_details {
-    source_id   = "ocid1.image.oc1.iad.aaaaaaaa65b4p3cuexre4cfwkyig4js4qcv7sekhp3syhed5h4y4de3b4xja"
+    source_id   = "${var.image_id}"
     source_type = "image"
   }
   connection {

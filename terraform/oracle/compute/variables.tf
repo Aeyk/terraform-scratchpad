@@ -3,7 +3,7 @@ variable "amd-1vcpu-1gb-us-qas_count" {
 }
 
 variable "arm-1vcpu-6gb-us-qas_count" {
-  default = 4
+  default = 1
 }
 
 data "oci_core_ipv6s" "amd-1vcpu-1gb-us-qas-ipv6" {
@@ -13,4 +13,8 @@ data "oci_core_ipv6s" "amd-1vcpu-1gb-us-qas-ipv6" {
 
 variable "keepass_database_password" {
   sensitive = true
+}
+
+variable "image_id" {
+  default = "ocid1.image.oc1.iad.aaaaaaaa65b4p3cuexre4cfwkyig4js4qcv7sekhp3syhed5h4y4de3b4xja" # Ubuntu 22.04
 }

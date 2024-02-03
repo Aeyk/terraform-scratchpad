@@ -20,9 +20,14 @@ locals {
   }
 }
 
-variable "keepass_database_password" { 
- sensitive = true
+variable "keepass_database_password" {
+  sensitive = true
 }
+
+variable "keepass_database" {
+  default = "../Cloud Token.kdbx"
+}
+
 
 data "keepass_entry" "aws_access_key" {
   path = "Root/AWS Access Key"
@@ -52,3 +57,4 @@ data "keepass_entry" "oci_user_id" {
 data "keepass_entry" "oci_compartment_id" {
   path = "Root/Oracle Compartment ID"
 }
+
