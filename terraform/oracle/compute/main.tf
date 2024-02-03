@@ -130,7 +130,7 @@ data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
 #   ttl = "30"
 # }
 
-# resource "digitalocean_record" "keycloak-arm-1vcpu-6gb-us-qas-a-dns-record" {
+# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
 #   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
 #   count = var.arm-1vcpu-6gb-us-qas_count
 #   name = "keycloak"
@@ -232,13 +232,23 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
   }
 }
 
-resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-a-dns-record" {
-  depends_on = [oci_core_instance.amd-1vcpu-1gb-us-qas]
-  count = var.amd-1vcpu-1gb-us-qas_count
-  name = "b"
+resource "digitalocean_record" "arm-1vcpu-1gb-us-qas-a-dns-record" {
+  depends_on = [oci_core_instance.arm-1vcpu-1gb-us-qas]
+  count = var.arm-1vcpu-1gb-us-qas_count
+  name = "*"
   domain = "mksybr.com"
   type   = "A"
-  value  = oci_core_instance.amd-1vcpu-1gb-us-qas[count.index].public_ip
+  value  = oci_core_instance.arm-1vcpu-1gb-us-qas[count.index].public_ip
+  ttl = "30"
+}
+
+resource "digitalocean_record" "arm-1vcpu-1gb-us-qas-aaaa-dns-record" {
+  depends_on = [oci_core_instance.amd-1vcpu-1gb-us-qas]
+  count = var.amd-1vcpu-1gb-us-qas_count
+  name = "*"
+  domain = "mksybr.com"
+  type   = "AAAA"
+  value  =  oci_core_ipv6s.amd-1vcpu-1gb-us-qas-ipv6.ipv6s
   ttl = "30"
 }
 
