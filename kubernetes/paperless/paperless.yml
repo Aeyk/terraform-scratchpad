@@ -294,5 +294,5 @@ spec:
         pathType: Prefix
   tls:
   - hosts:
-    - statping.mksybr.com
+    - paperless.mksybr.com
     secretName: letsencrypt-prod
