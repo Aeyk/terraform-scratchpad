@@ -1,3 +1,13 @@
-namespace: argocd
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# namespace: argocd
 resources:
-  - https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml 
+  - ./namespace.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+  - ./ingress.yaml
+  - ./argocd-cm.yaml
+patches:
+  - path: argocd-repo-server-ksops-patch.yaml
+    target:
+      kind: Deployment
+      name: argocd-repo-server
