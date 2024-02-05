@@ -1,0 +1,8 @@
+generators:
+  - ./ksops-secrets-generator.yaml
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - service.yaml
+  - deployment.yaml
+  - ingress.yaml
