@@ -7,9 +7,9 @@ data:
     clientSecret: $oidc.keycloak.clientSecret
     requestedScopes: ["openid", "profile", "email", "groups"]
   url: https://argocd.mksybr.com
+  server.insecure: "true"
+  kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
 kind: ConfigMap
 metadata:
   name: argocd-cm
   namespace: argocd
-data:
-  kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
