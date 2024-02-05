@@ -42,7 +42,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: gitea
 spec:
-  storageClassName: "local-path"
+#  storageClassName: "local-path"
   volumeName: gitea
   resources:
     requests:
@@ -64,7 +64,7 @@ spec:
   capacity: 
     storage:
       10Gi
-  storageClassName: "local-path"
+#  storageClassName: "local-path"
   accessModes:
     - ReadWriteMany
 ---
