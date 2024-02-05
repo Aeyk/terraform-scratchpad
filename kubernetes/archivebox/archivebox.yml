@@ -101,7 +101,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    cert-manager.io/cluster-issuer: archivebox-letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-prod
   name: archivebox
   namespace: archivebox
 spec:
@@ -120,4 +120,4 @@ spec:
   tls:
   - hosts:
     - archivebox.mksybr.com
-    secretName: archivebox-letsencrypt-prod
+    secretName: letsencrypt-prod
