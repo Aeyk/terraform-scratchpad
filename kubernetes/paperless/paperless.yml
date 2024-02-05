@@ -266,3 +266,33 @@ spec:
 status:
   loadBalancer: {}
 ---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-managerio/cluster-issuer: letsencrypt-prod
+  name: paperless
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: paperless.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: paperless
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: paperless
+            port:
+              number: 443
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - statping.mksybr.com
+    secretName: letsencrypt-prod
