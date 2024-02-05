@@ -31,6 +31,12 @@ module "secrets" {
   keepass_database_password = var.keepass_database_password
 }
 
+resource "oci_core_network_security_group" "me_net_security_group" {
+  display_name   = "me-mksybr-network-security-group"
+  compartment_id = module.secrets.oci_compartment_id
+  vcn_id         = module.network.vcn_id
+}
+
 resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   count        = var.arm-1vcpu-6gb-us-qas_count
   display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
@@ -88,7 +94,7 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
     ocpus                     = "1"
   }
   source_details {
-    source_id   = "${var.image_id}"
+    source_id   = var.image_id
     source_type = "image"
   }
   connection {
@@ -184,6 +190,26 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
     host        = self.public_ip
   }
 }
+
+resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-a-dns-record" {
+  depends_on = [oci_core_instance.amd-1vcpu-1gb-us-qas]
+  count      = var.amd-1vcpu-1gb-us-qas_count
+  name       = "b"
+  domain     = "mksybr.com"
+  type       = "A"
+  value      = oci_core_instance.amd-1vcpu-1gb-us-qas[count.index].public_ip
+  ttl        = "30"
+}
+
+# resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-aaaa-dns-record" {
+#   depends_on = [oci_core_instance.amd-1vcpu-1gb-us-qas]
+#   count = var.amd-1vcpu-1gb-us-qas_count
+#   name = "b"
+#   domain = "mksybr.com"
+#   type   = "AAAA"
+#   value  =  oci_core_ipv6s.amd-1vcpu-1gb-us-qas-ipv6.ipv6s
+#   ttl = "30"
+# }
 
 resource "local_file" "ansible_inventory" {
   content = templatefile("../../ansible/inventory.ini.tmpl", {
