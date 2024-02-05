@@ -12,7 +12,6 @@ metadata:
   labels:
     run: psql
   name: psql # TODO(Malik): descriptive name
-  namespace: gitea
 spec:
   containers:
   - args:
@@ -42,7 +41,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: gitea
-  namespace: gitea
 spec:
   storageClassName: "local-path"
   volumeName: gitea
@@ -56,7 +54,6 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: gitea
-  namespace: gitea
   labels:
     type:
       local
@@ -172,13 +169,11 @@ data:
 kind: ConfigMap
 metadata:
   name: gitea-config
-  namespace: gitea
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gitea
-  namespace: gitea
 spec:
   selector:
     matchLabels:
@@ -226,7 +221,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: gitea
-  namespace: gitea
 spec:
   ports:
   - name: https
@@ -236,13 +230,12 @@ spec:
   selector:
     app: gitea
   sessionAffinity: None
-  type: NodePort
+  type: LoadBalancer
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: gitea-ssh
-  namespace: gitea
 spec:
   ports:
   - name: ssh
@@ -252,5 +245,5 @@ spec:
   selector:
     app: gitea
   sessionAffinity: None
-  type: NodePort
+  type: LoadBalancer
 ---
