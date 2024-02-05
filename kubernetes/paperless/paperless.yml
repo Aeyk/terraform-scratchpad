@@ -262,7 +262,7 @@ spec:
       targetPort: 8000
   selector:
     app: paperless-webserver
-  type: NodePort
+  type: LoadBalancer
 status:
   loadBalancer: {}
 ---
