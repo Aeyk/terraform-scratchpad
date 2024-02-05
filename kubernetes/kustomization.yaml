@@ -1,2 +1,6 @@
-generators:
-  - ./ksops-secrets-generator.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+  - https://github.com/cert-manager/cert-manager/releases/download/v1.14.1/cert-manager.yaml
+  - ./clusterissuer.yaml
