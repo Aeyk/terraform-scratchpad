@@ -22,6 +22,20 @@ locals {
 
 variable "keepass_database_password" {
   sensitive = true
+<<<<<<< ours
+<<<<<<< Updated upstream
+=======
+=======
+}
+
+variable "keepass_database" {
+  default = "../Cloud Tokens.kdbx"
+>>>>>>> theirs
+}
+
+variable "keepass_database" {
+  default = "../Cloud Tokens.kdbx"
+>>>>>>> Stashed changes
 }
 
 variable "keepass_database" {
