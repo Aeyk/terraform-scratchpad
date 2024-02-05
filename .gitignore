@@ -84,3 +84,6 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+/terraform/ansible/inventory.ini
+/vagrant/id_rsa
+/vagrant/id_rsa.pub
