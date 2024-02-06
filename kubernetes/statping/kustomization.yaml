@@ -1,0 +1,3 @@
+
+generators:
+  - ./ksops-secrets-generator.yaml
