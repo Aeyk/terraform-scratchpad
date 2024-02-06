@@ -51,13 +51,13 @@ spec:
         terminationMessagePolicy: File
         volumeMounts:
         - mountPath: /opt/keycloak/conf/keycloak.conf
-          name: keycloak-config-file
+          name: config-scratchpad
           readOnly: true
           subPath: keycloak.conf
       initContainers:
       - name: inject-postgres-secret
         image: busybox:1.28
-        command: ["sed", "-i", '"s/\\$$POSTGRES_PASSWORD/${POSTGRES_SUPERUSER_PASSWORD}/g"', "/opt/keycloak/conf/keycloak.conf"]
+        command: ["sed", "s/${POSTGRES_SUPERUSER_PASSWORD}/$(POSTGRES_SUPERUSER_PASSWORD)/g", "/tmp/keycloak.conf", ">", "/opt/keycloak/conf/keycloak.conf"]
         env:
         - name: POSTGRES_SUPERUSER_PASSWORD
           valueFrom:
@@ -69,6 +69,15 @@ spec:
             secretKeyRef:
               key: password
               name: postgres-keycloak-user
+        volumeMounts:
+        - mountPath:  /opt/keycloak/conf/keycloak.conf
+          subPath: keycloak.conf
+          readOnly: false
+          name: config-scratchpad
+        - mountPath: /tmp/keycloak.conf
+          name: keycloak-config-file
+          readOnly: false
+          subPath: keycloak.conf
       - args:
         - psql
         - postgres://postgres:$(POSTGRES_SUPERUSER_PASSWORD)@postgres-cluster.default.svc.cluster.local
@@ -103,6 +112,8 @@ spec:
       schedulerName: default-scheduler
       terminationGracePeriodSeconds: 30
       volumes:
+      - name: config-scratchpad
+        emptyDir: {}
       - configMap:
           defaultMode: 420
           name: keycloak-config
