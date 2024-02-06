@@ -220,7 +220,7 @@ spec:
                   key: superuser-password
             - name: PAPERLESS_URL
               value: https://paperless.mksybr.com
-          image: ghcr.io/paperless-ngx/paperless-ngx:latest
+          image: ghcr.io/paperless-ngx/paperless-ngx:2.4.3
           name: paperless-webserver
           ports:
             - containerPort: 8000
