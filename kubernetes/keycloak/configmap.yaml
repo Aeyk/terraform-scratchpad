@@ -3,7 +3,7 @@ data:
   keycloak.conf: |
     # Basic settings for running in production. Change accordingly before deploying the server.
     # Database
-    db=postgres
+    db=postgres                    # TODO use keycloak database
     db-username=postgres           # TODO fix permission to run as keycloak
     db-password=$POSTGRES_PASSWORD # TODO fix permission to run as keycloak
     db-url-host=postgres-cluster.default.svc.cluster.local
