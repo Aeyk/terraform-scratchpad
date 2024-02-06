@@ -82,7 +82,7 @@ spec:
     spec:
       containers:
       - name: statping
-        image:  hunterlong/statping:v0.80.51
+        image: hunterlong/statping:v0.80.51
         ports:
         - containerPort: 8080
         volumeMounts:
