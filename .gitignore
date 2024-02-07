@@ -87,3 +87,4 @@ Temporary Items
 /terraform/ansible/inventory.ini
 /vagrant/id_rsa
 /vagrant/id_rsa.pub
+*.unencrypted
