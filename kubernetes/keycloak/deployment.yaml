@@ -17,46 +17,11 @@ spec:
       labels:
         app: keycloak
     spec:
-      containers:
-      - args:
-        - --verbose
-        - start
-        env:
-        - name: KEYCLOAK_ADMIN
-          value: admin
-        - name: KEYCLOAK_ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: keycloak-admin-user
-        - name: KC_PROXY
-          value: edge
-        image: quay.io/keycloak/keycloak:23.0.4
-        name: keycloak
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /realms/master
-            port: 8080
-            scheme: HTTP
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 1
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /opt/keycloak/conf/keycloak.conf
-          name: config-scratchpad
-          readOnly: true
-          subPath: keycloak.conf
       initContainers:
       - name: inject-postgres-secret
         image: busybox:1.28
-        command: ["sed", "s/${POSTGRES_SUPERUSER_PASSWORD}/$(POSTGRES_SUPERUSER_PASSWORD)/g", "/tmp/keycloak.conf", ">", "/opt/keycloak/conf/keycloak.conf"]
+        command: [
+        "sh", "-c", "mkdir -p /opt/keycloak/conf/; cp /tmp/keycloak.conf /opt/keycloak/conf/keycloak.conf; sed -ie s/\\$$POSTGRES_PASSWORD/$(POSTGRES_SUPERUSER_PASSWORD)/g /opt/keycloak/conf/keycloak.conf || sleep 600"]
         env:
         - name: POSTGRES_SUPERUSER_PASSWORD
           valueFrom:
@@ -69,7 +34,7 @@ spec:
               key: password
               name: postgres-keycloak-user
         volumeMounts:
-        - mountPath:  /opt/keycloak/conf/keycloak.conf
+        - mountPath:  /opt/keycloak/conf/ #keycloak.conf
           subPath: keycloak.conf
           readOnly: false
           name: config-scratchpad
@@ -77,11 +42,17 @@ spec:
           name: keycloak-config-file
           readOnly: false
           subPath: keycloak.conf
-      - args:
+      - image: ongres/postgres-util
+        name: setup-database
+        args:
         - psql
         - postgres://postgres:$(POSTGRES_SUPERUSER_PASSWORD)@postgres-cluster.default.svc.cluster.local
         - -c
         - |-
+          BEGIN;
+            SELECT 'DROP DATABASE keycloak'
+            WHERE EXISTS (SELECT FROM pg_database WHERE datname = 'keycloak');
+          COMMIT;
           BEGIN;
             SELECT 'CREATE DATABASE keycloak'
             WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'keycloak');
@@ -103,10 +74,61 @@ spec:
             secretKeyRef:
               key: password
               name: postgres-keycloak-user
-        image: ongres/postgres-util
-        name: setup-keycloak-database-0
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
+      # TODO: good way to auto import realm on container creation?
+      # POD=$(kubectl get pods -n keycloak | perl -lane 'print @F[0] unless $. == 1')
+      # cat keycloak/keycloak-realm.unencrypted | kubectl exec -n keycloak -it $POD -c keycloak -- bash -c 'cat - > /tmp/keycloak-realm.json; bash'
+      # kubectl exec -n keycloak -it $POD -c keycloak -- /opt/keycloak/bin/kc.sh import --file /tmp/keycloak-realm.json
+      # - name: import-realm
+      #   image: quay.io/keycloak/keycloak:23.0.4
+      #   args:
+      #   - --verbose
+      #   - import
+      #   - --file
+      #   - /tmp/keycloak-realm
+      #  volumeMounts:
+      #   - mountPath: /opt/keycloak/conf/ #keycloak.conf
+      #     name: config-scratchpad
+      #     readOnly: true
+      #     subPath: keycloak.conf
+      #   - mountPath: /tmp/
+      #     subPath: keycloak-realm
+      #     name: keycloak-realm
+      containers:
+      - args:
+        - --verbose
+        - start
+        env:
+        - name: KEYCLOAK_ADMIN
+          value: admin
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: keycloak-admin-user
+        image: quay.io/keycloak/keycloak:23.0.4
+        name: keycloak
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /realms/master
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/keycloak/conf/ #keycloak.conf
+          name: config-scratchpad
+          readOnly: true
+          subPath: keycloak.conf
       restartPolicy: Always
       schedulerName: default-scheduler
       terminationGracePeriodSeconds: 30
@@ -118,6 +140,4 @@ spec:
           name: keycloak-config
         name: keycloak-config-file
       - name: keycloak-realm-file
-        secret:
-          defaultMode: 420
-          secretName: keycloak-realm
+        emptyDir: {}
