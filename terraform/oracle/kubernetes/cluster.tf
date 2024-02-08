@@ -4,7 +4,7 @@ resource "oci_containerengine_cluster" "k8s_cluster" {
   compartment_id     = module.secrets.oci_compartment_id
   kubernetes_version = var.oke["version"]
   name               = var.oke["name"]
-  vcn_id             = oci_core_vcn.oke_vcn.id
+  vcn_id             = module.oke_vcn.vcn_id
 
   type = "BASIC_CLUSTER"
   # #Optional
@@ -12,6 +12,7 @@ resource "oci_containerengine_cluster" "k8s_cluster" {
   #   service_lb_subnet_ids = ["${oci_core_subnet.loadbalancer_subnet1.id}", "${oci_core_subnet.loadbalancer_subnet2.id}"]
   # }
 }
+
 
 # https://www.terraform.io/docs/providers/oci/r/containerengine_node_pool.html
 resource "oci_containerengine_node_pool" "k8s_node_pool" {
@@ -29,7 +30,7 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
     source_type = "IMAGE"
     image_id    = var.image_id
   }
-  subnet_ids          = ["${oci_core_subnet.worker_subnet1.id}", "${oci_core_subnet.worker_subnet2.id}", "${oci_core_subnet.worker_subnet3.id}"]
+  subnet_ids = ["${local.public_subnet_id}", "${local.private_subnet_id}"]
   quantity_per_subnet = var.oke["nodes_per_subnet"]
   ssh_public_key      = module.secrets.ssh_authorized_keys
 }

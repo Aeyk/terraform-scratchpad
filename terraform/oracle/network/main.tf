@@ -126,7 +126,7 @@ resource "oci_core_subnet" "public_subnet" {
   display_name      = "cloud-mksybr-public-subnet"
   route_table_id    = oci_core_route_table.igw_route_table.id
   dhcp_options_id   = oci_core_dhcp_options.dhcp.id
-  security_list_ids = [oci_core_vcn.vcn.default_security_list_id]
+  security_list_ids = [oci_core_security_list.default_security_list_id]
 }
 
 resource "oci_core_subnet" "private_subnet" {

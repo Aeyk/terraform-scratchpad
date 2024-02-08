@@ -21,6 +21,11 @@ provider "keepass" {
   password = var.keepass_database_password
 }
 
+module "kubernetes" {
+  source                    = "../kubernetes"
+  keepass_database_password = var.keepass_database_password
+}
+
 module "network" {
   source                    = "../network"
   keepass_database_password = var.keepass_database_password
@@ -73,8 +78,9 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   create_vnic_details {
     assign_private_dns_record = "false"
     assign_public_ip          = "true"
-    subnet_id                 = module.network.arm_public_subnet
-    nsg_ids                   = [module.network.arm_net_security_group]
+    subnet_id                 = module.kubernetes.subnet_id
+    # subnet_id                 = module.network.arm_public_subnet
+    nsg_ids = [module.network.arm_net_security_group]
     # assign_ipv6ip = "true"
   }
   instance_options {
@@ -105,9 +111,10 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   }
 }
 
-data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
-  subnet_id = module.network.arm_public_subnet
-}
+# data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
+#   subnet_id = module.kubernetes.subnet_id
+#   # subnet_id = module.network.arm_publisubnet
+# }
 
 resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
@@ -166,7 +173,8 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
     assign_private_dns_record = "false"
     assign_public_ip          = "true"
     # assign_ipv6ip = "true"
-    subnet_id = module.network.arm_public_subnet
+    # subnet_id = module.network.arm_public_subnet
+    subnet_id = module.kubernetes.subnet_id
     nsg_ids   = [module.network.arm_net_security_group]
     # nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
   }
