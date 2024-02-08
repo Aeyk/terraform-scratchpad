@@ -22,26 +22,11 @@ locals {
 
 variable "keepass_database_password" {
   sensitive = true
-<<<<<<< ours
-<<<<<<< Updated upstream
-=======
-=======
 }
 
 variable "keepass_database" {
   default = "../Cloud Tokens.kdbx"
->>>>>>> theirs
 }
-
-variable "keepass_database" {
-  default = "../Cloud Tokens.kdbx"
->>>>>>> Stashed changes
-}
-
-variable "keepass_database" {
-  default = "../Cloud Token.kdbx"
-}
-
 
 data "keepass_entry" "aws_access_key" {
   path = "Root/AWS Access Key"

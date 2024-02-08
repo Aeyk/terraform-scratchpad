@@ -6,6 +6,7 @@ resource "oci_containerengine_cluster" "k8s_cluster" {
   name               = var.oke["name"]
   vcn_id             = oci_core_vcn.oke_vcn.id
 
+  type = "BASIC_CLUSTER"
   # #Optional
   # options {
   #   service_lb_subnet_ids = ["${oci_core_subnet.loadbalancer_subnet1.id}", "${oci_core_subnet.loadbalancer_subnet2.id}"]
