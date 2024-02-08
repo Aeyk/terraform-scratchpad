@@ -24,6 +24,6 @@ provider "keepass" {
 module "secrets" {
   source                    = "../secrets"
   keepass_database_password = var.keepass_database_password
-  keepass_database          = "../../Cloud Tokens.kdbx"
+  keepass_database          = "/home/malik/Downloads/Cloud Tokens.kdbx"
 }
 
