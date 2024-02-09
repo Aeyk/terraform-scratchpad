@@ -1,66 +1,6 @@
 # paperless.yml
 ---
 apiVersion: v1
-kind: Pod
-metadata:
-  creationTimestamp: null
-  labels:
-    run: psql
-  name: psql
-spec:
-  containers:
-  - name: create-paperless-database
-    args:
-    - psql
-    - postgres://postgres:$(POSTGRES_PASSWORD)@postgres-cluster
-    - -c
-    - |-
-      CREATE DATABASE paperless;
-      CREATE USER paperless WITH ENCRYPTED PASSWORD '$(POSTGRES_PAPERLESS_USER)' CREATEDB;
-      GRANT ALL ON DATABASE paperless TO paperless;
-      GRANT USAGE, CREATE ON SCHEMA PUBLIC TO paperless;
-      ALTER DATABASE paperless OWNER TO paperless;
-    image: ongres/postgres-util
-    resources: {}
-    env:
-    - name: KEYCLOAK_ADMIN
-      value: admin
-    - name: POSTGRES_PAPERLESS_USER
-      valueFrom:
-        secretKeyRef:
-          name: postgres-paperless-user 
-          key: password
-    - name: POSTGRES_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: postgres-cluster
-          key: superuser-password
-  - name: grant-paperless-database
-    args:
-    - psql
-    - postgres://paperless:$(POSTGRES_PAPERLESS_USER)@postgres-cluster/paperless
-    - -c
-    - |-
-      GRANT ALL on schema public TO paperless;
-    image: ongres/postgres-util
-    resources: {}
-    env:
-    - name: KEYCLOAK_ADMIN
-      value: admin
-    - name: POSTGRES_PAPERLESS_USER
-      valueFrom:
-        secretKeyRef:
-          name: postgres-paperless-user 
-          key: password
-    - name: POSTGRES_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: postgres-cluster
-          key: superuser-password
-  dnsPolicy: ClusterFirst
-  restartPolicy: Never
----
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
@@ -143,6 +83,55 @@ spec:
       labels:
         app: paperless-redis
     spec:
+      initContainers:
+        - name: create-paperless-database
+          args:
+          - psql
+          - postgres://postgres:$(POSTGRES_PASSWORD)@postgres-cluster
+          - -c
+          - |-
+            CREATE DATABASE paperless;
+            CREATE USER paperless WITH ENCRYPTED PASSWORD '$(POSTGRES_PAPERLESS_USER)' CREATEDB;
+            GRANT ALL ON DATABASE paperless TO paperless;
+            GRANT USAGE, CREATE ON SCHEMA PUBLIC TO paperless;
+            ALTER DATABASE paperless OWNER TO paperless;
+          image: ongres/postgres-util
+          resources: {}
+          env:
+          - name: KEYCLOAK_ADMIN
+            value: admin
+          - name: POSTGRES_PAPERLESS_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-paperless-user 
+                key: password
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-cluster
+                key: superuser-password
+        - name: grant-paperless-database
+          args:
+          - psql
+          - postgres://paperless:$(POSTGRES_PAPERLESS_USER)@postgres-cluster/paperless
+          - -c
+          - |-
+            GRANT ALL on schema public TO paperless;
+          image: ongres/postgres-util
+          resources: {}
+          env:
+          - name: KEYCLOAK_ADMIN
+            value: admin
+          - name: POSTGRES_PAPERLESS_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-paperless-user 
+                key: password
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-cluster
+                key: superuser-password
       containers:
         - image: docker.io/library/redis:7
           name: paperless-redis
