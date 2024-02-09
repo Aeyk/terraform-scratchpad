@@ -10,7 +10,6 @@ metadata:
   name: archivebox
   namespace: archivebox
 spec:
-#  storageClassName: "local-path"
   volumeName: archivebox
   resources:
     requests:
@@ -33,7 +32,6 @@ spec:
   capacity: 
     storage:
       10Gi
-#  storageClassName: "local-path"
   accessModes:
     - ReadWriteMany
 ---
