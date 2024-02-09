@@ -13,7 +13,7 @@ terraform {
 }
 
 provider "keepass" {
-  database = "../Cloud Tokens.kdbx"
+  database = "/home/malik/Documents/Cloud Tokens.kdbx"
   password = var.keepass_database_password
 }
 

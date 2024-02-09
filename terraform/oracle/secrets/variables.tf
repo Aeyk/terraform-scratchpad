@@ -25,7 +25,7 @@ variable "keepass_database_password" {
 }
 
 variable "keepass_database" {
-  default = "../Cloud Tokens.kdbx"
+  default = "/home/malik/Documents/Cloud Tokens.kdbx"
 }
 
 data "keepass_entry" "aws_access_key" {
