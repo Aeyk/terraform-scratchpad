@@ -2,7 +2,7 @@ terraform {
   required_version = "~> 1.6"
   required_providers {
     keepass = {
-      source = "iSchluff/keepass"
+      source  = "iSchluff/keepass"
       version = "~> 0"
     }
   }

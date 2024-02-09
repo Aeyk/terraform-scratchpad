@@ -24,4 +24,11 @@ patches:
     target:
       kind: ServiceAccount
       name: default
+  - patch: |-
+      - op: add
+        path: /metadata/annotations/oci.oraclecloud.com~1load-balancer-type
+        value: "nlb"
+    target:
+      kind: Service
+      
       
