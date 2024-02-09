@@ -1,0 +1,36 @@
+apiVersion: v1
+data:
+    .dockerconfigjson: ENC[AES256_GCM,data:4ZEGjyyT0nMNJwNvIn4NV7Axz6zfDd2pYnpshf+s8TnAYwBvHbbFlDfFe7HYv8xZr6y91THdG/gU0t9ufUgzzBcc9oHQyWzdO2iUslNLM3X1bF+sDPvvO1mksOJBBTX5owvdMfbYjcw1Io1CtfyGcK0hlOKTbnYgM4ZoCTwOgeRlm/MIHNtR8OMaG3btRwJRrdlLVON46IdeKReE,iv:JlDNwZO9HSI9/ZUQpypcvmmj0rWlXWmynmeNYPXfnh8=,tag:BuGHptCNNt827Jc0L4wH5Q==,type:str]
+kind: Secret
+metadata:
+    name: docker-registry
+type: kubernetes.io/dockerconfigjson
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age: []
+    lastmodified: "2024-02-09T04:00:09Z"
+    mac: ENC[AES256_GCM,data:LNUbinJAiHXG5ZMZLdcVOzf796zCCtclcqvk5qVPbD9NXUvlegSQthnJUOBHfIHCgoX51OMxXaeybntjcoMOHMTghhZz9uAu7v8t75VjML16Sbu1UkGUDG3iUmxcV8Tl7QiCKc1ZgM93UEka1tNnE8hnyeNQQiJidAQsmEHSt4s=,iv:MLAPEGoyuQGt/mA0AhY6BrYoEBG76y27bWi8MCf9EJ0=,tag:hBC8WpGLHBHiz74ofNLx6w==,type:str]
+    pgp:
+        - created_at: "2024-02-09T04:00:09Z"
+          enc: |-
+            -----BEGIN PGP MESSAGE-----
+
+            hQGMAzipAh8vzmvTAQwApwl077KgwOxx6uaOr9sHvYB/UCNE+Dfo5MKry0+o+lwm
+            jbZjufjLiQkqdR5ZLM5hegy33S9Jg9SxYRWOu5ojMWOQhgzne393bWh0UOxEqB2m
+            T6izdo1qR9caPao0iUzAOKJYg/UkP7DLFY4i3XNXSqCaCrUjcyNgd6oyBGIEf+I+
+            eM2X9PiJgAUQNOGyhAYI6QjqPnF2XSbSXXy0pvMg0+HeLAfBR8rXPgAitn8RlPJ0
+            0cLBuS/NxOPSkqg7i+MOECx+pLM1s/pnCBj4yiIdSaGjB8KQ0QZimpv2jqF2oAaX
+            fea3ZUbym6dhmXRN6G+2PLo5nwqOYPm78oOM3ZpgfPscgnhitpqlnPEiZrJ3U5Ep
+            0uKhkU6UNVwe97nHwWbOAUCPNd8Kl3kkPo7la4JMPUGePCiQPOGVxvBm3iMm1jHl
+            KNHFCYzenXik0as7eJwPgVX8NsNgEiXoR3cMQwts9b4Ug4RMkE29gdYrCMfc6Zh2
+            VNE5zdtIhu6D5g9G0NVy0l4BVyHBIT5zrgA5v39vcEGK3KCJIsbdr29kaVr8yt4Z
+            D0EU3wp9+NFi66UAv5Mn5JiAjD1zyaNSElVe4GELr8Qpxvxfs5+ZN+ih+/rIAkLh
+            nVl6DVfeVyUEBEUiAjI0
+            =f/uZ
+            -----END PGP MESSAGE-----
+          fp: A8F32284234A54A9CD742F91B1AB195143457ABA
+    unencrypted_regex: ^(apiVersion|metadata|kind|type)$
+    version: 3.8.1

@@ -1,2 +1,4 @@
 generators:
   - ./ksops-secrets-generator.yaml
+resources:
+  - gitea.yml
