@@ -3,7 +3,7 @@ variable "amd-1vcpu-1gb-us-qas_count" {
 }
 
 variable "arm-1vcpu-6gb-us-qas_count" {
-  default = 1
+  default = 4
 }
 
 data "oci_core_ipv6s" "amd-1vcpu-1gb-us-qas-ipv6" {

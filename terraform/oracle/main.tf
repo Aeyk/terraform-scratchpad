@@ -27,7 +27,7 @@ provider "aws" {
 }
 
 provider "keepass" {
-  database = "../Cloud Tokens.kdbx"
+  database = "/home/malik/Documents/Cloud Tokens.kdbx"
   password = var.database_password
 }
 
@@ -51,10 +51,10 @@ provider "oci" {
 #     object = var.object_object
 # }
 
-module "kubernetes" {
-  keepass_database_password = var.keepass_database_password
-  source                    = "./kubernetes"
-}
+# module "kubernetes" {
+#   keepass_database_password = var.keepass_database_password
+#   source                    = "./kubernetes"
+# }
 
 module "network" {
   keepass_database_password = var.keepass_database_password
