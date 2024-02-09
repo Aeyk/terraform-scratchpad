@@ -1,7 +1,7 @@
 terraform {
   required_version = "~> 1.6"
   required_providers {
-    oci = {     
+    oci = {
       source  = "oracle/oci"
       version = "~> 5"
     }
@@ -10,20 +10,20 @@ terraform {
       version = "~> 2"
     }
     keepass = {
-      source = "iSchluff/keepass"
+      source  = "iSchluff/keepass"
       version = "~> 0"
     }
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "~> 5"
     }
   }
 }
 
 provider "aws" {
-    region = "us-east-1"
-    access_key = data.keepass_entry.aws_access_key.password
-    secret_key = data.keepass_entry.aws_secret_key.password
+  region     = "us-east-1"
+  access_key = data.keepass_entry.aws_access_key.password
+  secret_key = data.keepass_entry.aws_secret_key.password
 }
 
 provider "keepass" {
@@ -36,11 +36,11 @@ provider "digitalocean" {
 }
 
 provider "oci" {
-  tenancy_ocid = module.secrets.oci_tenancy_id
-  user_ocid = module.secrets.oci_user_id
-  private_key_path = "/home/malik/.oci/mksybr@gmail.com_2023-12-24T00_16_14.614Z.pem"
-  fingerprint = module.secrets.oci_fingerprint
-  region = "us-ashburn-1"
+  tenancy_ocid        = module.secrets.oci_tenancy_id
+  user_ocid           = module.secrets.oci_user_id
+  auth                = "SecurityToken"
+  config_file_profile = "DEFAULT"
+  region              = "us-ashburn-1"
 }
 
 # TODO(malik): external storage for tfstate
@@ -51,17 +51,22 @@ provider "oci" {
 #     object = var.object_object
 # }
 
+module "kubernetes" {
+  keepass_database_password = var.keepass_database_password
+  source                    = "./kubernetes"
+}
+
 module "network" {
   keepass_database_password = var.keepass_database_password
-  source = "./network"
+  source                    = "./network"
 }
 
 module "compute" {
-  keepass_database_password = var.keepass_database_password  
-  source     = "./compute"
+  keepass_database_password = var.keepass_database_password
+  source                    = "./compute"
 }
 
 module "secrets" {
-  source = "./secrets"
+  source                    = "./secrets"
   keepass_database_password = var.keepass_database_password
 }

@@ -21,6 +21,11 @@ provider "keepass" {
   password = var.keepass_database_password
 }
 
+module "kubernetes" {
+  source                    = "../kubernetes"
+  keepass_database_password = var.keepass_database_password
+}
+
 module "network" {
   source                    = "../network"
   keepass_database_password = var.keepass_database_password
@@ -124,43 +129,14 @@ data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
   subnet_id = module.network.arm_public_subnet
 }
 
-# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
+# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-aaaa-dns-record" {
 #   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
-#   count = var.arm-1vcpu-6gb-us-qas_count
-#   name = "a"
-#   domain = "mksybr.com"
-#   type   = "A"
-#   value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
-#   ttl = "30"
-# }
-
-# resource "digitalocean_record" "keycloak-arm-1vcpu-6gb-us-qas-a-dns-record" {
-#   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
-#   count = var.arm-1vcpu-6gb-us-qas_count
-#   name = "keycloak"
-#   domain = "mksybr.com"
-#   type   = "A"
-#   value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
-#   ttl = "30"
-# }
-
-# resource "aws_ses_domain_identity" "zulip_domain" {
-#   domain = "zulip.mksybr.com"
-# }
-# 
-# resource "aws_ses_domain_identity_verification" "zulip_domain_verification" {
-#   domain = aws_ses_domain_identity.zulip_domain.id
-#   depends_on = [aws_ses_domain_identity.zulip_domain]
-# }
-# 
-
-# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-cname-dns-record" {
-#   depends_on = [aws_ses_domain_identity.zulip_domain]
-#   name = "cname"
-#   domain = "zulip.mksybr.com"
-#   type   = "CNAME"
-#   value  = aws_ses_domain_identity.zulip_domain.verification_token
-#   ttl = "30"
+#   count      = var.arm-1vcpu-6gb-us-qas_count
+#   name       = "*"
+#   domain     = "mksybr.com"
+#   type       = "AAAA"
+#   value      = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ipv6
+#   ttl        = "30"
 # }
 
 resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
@@ -195,8 +171,7 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
     recovery_action             = "RESTORE_INSTANCE"
   }
   availability_domain = "onUG:US-ASHBURN-AD-3"
-  # compartment_id = data.keepass_entry.oci_compartment_id.password
-  compartment_id = module.secrets.oci_compartment_id
+  compartment_id      = module.secrets.oci_compartment_id
   create_vnic_details {
     assign_private_dns_record = "false"
     assign_public_ip          = "true"
@@ -218,16 +193,6 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
     source_id   = "ocid1.image.oc1.iad.aaaaaaaaau2eo3mjbgtmjvocmvx5xbhcmj2ay3mvowdzffxhdiql5gnhxjqa"
     source_type = "image"
   }
-  # provisioner "file" {
-  #   source = "${oci_core_instance.amd-1vcpu-1gb-us-qas.display_name}-installer.sh"
-  #   destination = "/tmp/installer.sh"
-  # }
-  # provisioner "remote-exec" {
-  #   inline = [
-  #     "chmod +x /tmp/installer.sh",
-  #     "sudo /tmp/installer.sh"
-  #   ]
-  # }  
   connection {
     type        = "ssh"
     user        = "ubuntu"
@@ -257,7 +222,7 @@ resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-a-dns-record" {
 # }
 
 resource "local_file" "ansible_inventory" {
-  content = templatefile("../ansible/inventory.ini.tmpl", {
+  content = templatefile("../../ansible/inventory.ini.tmpl", {
     # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
     arm-1vcpu-6gb-us-qas-public_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
   })

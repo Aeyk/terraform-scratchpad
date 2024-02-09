@@ -67,45 +67,104 @@ resource "oci_core_security_list" "public" {
   }
 }
 
-resource "oci_core_security_list" "private" {
-  compartment_id = module.secrets.oci_compartment_id
-  vcn_id         = module.oke_vcn.vcn_id
-  display_name   = "private"
-  egress_security_rules {
-    stateless        = false
-    destination      = "0.0.0.0/0"
-    destination_type = "CIDR_BLOCK"
-    protocol         = "all"
-  }
-  ingress_security_rules {
-    stateless   = false
-    source      = "10.0.0.0/16"
-    source_type = "CIDR_BLOCK"
-    protocol    = "all"
-  }
-}
+# https://www.terraform.io/docs/providers/oci/r/core_internet_gateway.html
+# resource "oci_core_internet_gateway" "oke_ig" {
+#   #Required
+#   compartment_id = module.secrets.oci_compartment_id
+#   vcn_id         = module.oke_vcn.vcn_id
 
-resource "oci_core_subnet" "private" {
-  compartment_id             = module.secrets.oci_compartment_id
-  vcn_id                     = module.oke_vcn.vcn_id
-  cidr_block                 = var.private_cidr_block
-  route_table_id             = module.oke_vcn.nat_route_id
-  security_list_ids          = [oci_core_security_list.private.id]
-  display_name               = "private"
-  prohibit_public_ip_on_vnic = true
-  prohibit_internet_ingress  = true
-}
+#   #Optional
+#   enabled      = var.internet_gateway_enabled
+#   display_name = "oke-gateway"
+# }
 
-resource "oci_core_subnet" "public" {
-  depends_on                 = [module.oke_vcn]
-  compartment_id             = module.secrets.oci_compartment_id
-  vcn_id                     = module.oke_vcn.vcn_id
-  cidr_block                 = var.public_cidr_block
-  display_name               = "public"
-  route_table_id             = module.oke_vcn.ig_route_id
-  security_list_ids          = [oci_core_security_list.public.id]
-  prohibit_public_ip_on_vnic = false
-  prohibit_internet_ingress  = false
-  # dhcp_options_id   = oci_core_dhcp_options.dhcp.id
-  # ipv6cidr_block = var.oci_vcn_public_subnet_ipv6_cidr_block
-}
+# # https://www.terraform.io/docs/providers/oci/r/core_route_table.html
+# resource "oci_core_route_table" "oke_rt" {
+#   #Required
+#   compartment_id = module.secrets.oci_compartment_id
+#   vcn_id         = module.oke_vcn.vcn_id
+#   route_rules {
+#     destination       = "0.0.0.0/0"
+#     network_entity_id = oci_core_internet_gateway.oke_ig.id
+#   }
+
+#   #Optional
+#   display_name = "oke-rt"
+# }
+
+
+# # https://www.terraform.io/docs/providers/oci/r/core_subnet.html
+# resource "oci_core_subnet" "worker_subnet1" {
+#   #Required
+#   cidr_block        = lookup(var.network_cidrs, "worker_subnet1")
+#   compartment_id    = module.secrets.oci_compartment_id
+#   security_list_ids = ["${oci_core_security_list.oke_sl.id}"]
+#   vcn_id            = module.oke_vcn.vcn_id
+
+#   #Optional
+#   availability_domain = "${var.availability_domain}-1"
+#   dhcp_options_id     = oci_core_vcn.oke_vcn.default_dhcp_options_id
+#   display_name        = "worker_subnet1"
+#   dns_label           = "worker1"
+#   route_table_id      = oci_core_route_table.oke_rt.id
+# }
+
+# resource "oci_core_subnet" "worker_subnet2" {
+#   #Required
+#   cidr_block        = lookup(var.network_cidrs, "worker_subnet2")
+#   compartment_id    = module.secrets.oci_compartment_id
+#   security_list_ids = ["${oci_core_security_list.oke_sl.id}"]
+#   vcn_id            = oci_core_vcn.
+
+#   #Optional
+#   availability_domain = "${var.availability_domain}-2"
+#   dhcp_options_id     = oci_core_vcn.oke_vcn.default_dhcp_options_id
+#   display_name        = "worker_subnet2"
+#   dns_label           = "worker2"
+#   route_table_id      = oci_core_route_table.oke_rt.id
+# }
+
+# resource "oci_core_subnet" "worker_subnet3" {
+#   #Required
+#   cidr_block        = lookup(var.network_cidrs, "worker_subnet3")
+#   compartment_id    = module.secrets.oci_compartment_id
+#   security_list_ids = ["${oci_core_security_list.oke_sl.id}"]
+#   vcn_id            = module.oke_vcn.vcn_id
+
+#   #Optional
+#   availability_domain = "${var.availability_domain}-3"
+#   dhcp_options_id     = oci_core_vcn.oke_vcn.default_dhcp_options_id
+#   display_name        = "worker_subnet3"
+#   dns_label           = "worker3"
+#   route_table_id      = oci_core_route_table.oke_rt.id
+# }
+
+# resource "oci_core_subnet" "loadbalancer_subnet1" {
+#   #Required
+#   cidr_block        = lookup(var.network_cidrs, "loadbalancer_subnet1")
+#   compartment_id    = module.secrets.oci_compartment_id
+#   security_list_ids = ["${oci_core_security_list.oke_sl.id}"]
+#   vcn_id            = module.oke_vcn.vcn_id
+
+#   #Optional
+#   availability_domain = var.availability_domain
+#   dhcp_options_id     = oci_core_vcn.oke_vcn.default_dhcp_options_id
+#   display_name        = "loadbalancer_subnet1"
+#   dns_label           = "loadbalancer1"
+#   route_table_id      = oci_core_route_table.oke_rt.id
+# }
+
+# resource "oci_core_subnet" "loadbalancer_subnet2" {
+#   #Required
+#   cidr_block        = lookup(var.network_cidrs, "loadbalancer_subnet2")
+#   compartment_id    = module.secrets.oci_compartment_id
+#   security_list_ids = ["${oci_core_security_list.oke_sl.id}"]
+#   vcn_id            = module.oke_vcn.vcn_id
+
+#   #Optional
+#   availability_domain = var.availability_domain
+#   dhcp_options_id     = oci_core_vcn.oke_vcn.default_dhcp_options_id
+#   display_name        = "loadbalancer_subnet1"
+#   dns_label           = "loadbalancer2"
+#   route_table_id      = oci_core_route_table.oke_rt.id
+# }

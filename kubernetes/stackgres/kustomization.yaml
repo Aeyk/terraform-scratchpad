@@ -1,22 +1,4 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-#  - https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.24/deploy/local-path-storage.yaml
   - https://stackgres.io/downloads/stackgres-k8s/stackgres/1.7.0/stackgres-operator-demo.yml
-# TODO(Malik): how to patch default storageclass is customize
-# patches:
-#   - patch: |-
-#       - op: add
-#         path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
-#         value: "true"
-#     target:
-#       kind: StorageClass
-#       name: local-path
-    
-# cat << EOF | kubectl patch storageclasses.storage.k8s.io local-path --patch-file=/dev/stdin
-# apiVersion: apps/v1
-# kind: StorageClass
-# metadata:
-#   annotations:
-#     storageclass.kubernetes.io/is-default-class: "true"
-# EOF
