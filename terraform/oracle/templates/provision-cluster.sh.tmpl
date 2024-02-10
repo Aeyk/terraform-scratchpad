@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+set -o xtrace
+set -o errexit
+set -o errtrace
+set -o pipefail
+
+# ## Generate and add ssh key to authorized users
+# chmod 700 ~/.ssh
+# touch ~/.ssh/authorized_keys
+# chmod 600 ~/.ssh/authorized_keys
+# test -e "$HOME"/.ssh/id_rsa || ssh-keygen -f "$HOME"/.ssh/id_rsa -P ""
+# cat "$HOME"/.ssh/id_rsa.pub >> "$HOME"/.ssh/authorized_keys
+
+## Install ansible
+sudo apt update
+# sudo apt install software-properties-common --yes
+# sudo add-apt-repository --yes --update ppa:ansible/ansible
+sudo apt install --yes python-is-python3 python3-pip
+pip3 install ruamel_yaml netaddr jmespath==0.9.5 ansible==7.6.0
+
+# sudo mkdir -p /data/{elasticsearch,kibana,archivebox,gitea}
+
+echo 'export PATH=$${PATH:+$${PATH}:}$HOME/.local/bin/' >> "$HOME"/.bashrc && source "$HOME"/.bashrc
+
+## Install kubespray
+cd /tmp || exit
+git clone https://github.com/kubernetes-sigs/kubespray || true
+cd kubespray || exit
+git checkout release-2.23
+
+# Copy ``inventory/sample`` as ``inventory/mycluster``
+cp -rfp inventory/sample inventory/main
+
+# Update Ansible inventory file with inventory builder
+declare -a IPS=(
+  %{ for ip in slice(arm-1vcpu-6gb-us-qas-private_ipv4, 1, 4) ~}
+  ${ ip }
+  %{ endfor ~}
+)
+CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py "$${IPS[@]}"
+
+# Review and change parameters under ``inventory/main/group_vars``
+# cat inventory/main/group_vars/all/all.yml
+# cat inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
+
+sed -i 's/metrics_server_enabled: false/metrics_server_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+# sed -i 's/ingress_nginx_enabled: false/ingress_nginx_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+sed -i 's/cert_manager_enabled: false/cert_manager_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
+sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+sed -i 's/metallb_enabled: false/metallb_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+sed -i 's/metallb_speaker_enabled: false/metallb_speaker_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+echo "metallb_config:
+  address_pools:
+    primary:
+      ip_range:
+%{ for ip in slice(arm-1vcpu-6gb-us-qas-private_ipv4, 1, 4) ~}
+        - ${ ip }
+%{ endfor ~}" >> inventory/main/group_vars/k8s_cluster/addons.yml
+# TODO CA certificate
+
+# Clean up old Kubernetes cluster with Ansible Playbook - run the playbook as root
+# The option `--become` is required, as for example cleaning up SSL keys in /etc/,
+# uninstalling old packages and interacting with various systemd daemons.
+# Without --become the playbook will fail to run!
+# And be mind it will remove the current kubernetes cluster (if it's running)!
+# ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root -e reset_confirmation=true reset.yml
+
+# Deploy Kubespray with Ansible Playbook - run the playbook as root
+# The option `--become` is required, as for example writing SSL keys in /etc/,
+# installing packages and interacting with various systemd daemons.
+# Without --become the playbook will fail to run!
+ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root cluster.yml
+
+mkdir -p "$HOME"/.kube
+sudo cp -fv /etc/kubernetes/admin.conf "$HOME"/.kube/config
+sudo chown "$(id -u):$(id -g)" "$HOME"/.kube/config
