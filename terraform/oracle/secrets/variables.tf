@@ -52,7 +52,6 @@ data "keepass_entry" "oci_user_id" {
   path = "Root/Oracle User ID"
 }
 
-
 data "keepass_entry" "oci_compartment_id" {
   path = "Root/Oracle Compartment ID"
 }
