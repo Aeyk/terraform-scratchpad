@@ -96,7 +96,7 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   }
   availability_domain = "onUG:US-ASHBURN-AD-2"
   compartment_id      = module.secrets.oci_compartment_id
-  create_vnic_details {
+  create_vnic_details { # TODO attach private subnet and remove public ips from nodes 1-
     assign_private_dns_record = "false"
     assign_public_ip          = "true"
     subnet_id                 = module.network.arm_public_subnet
@@ -160,6 +160,9 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
       # , "eval `ssh-agent -s`"
       # , "ssh-add $HOME/.ssh/id_${lower(tls_private_key.keys[count.index].algorithm)}"
       # , "ssh-add -L"
+      , "sudo iptables -I INPUT 6 -p tcp  --match multiport --dports 80,443,2379,2380,2381,6443,7472,7946,9099,9100 -j ACCEPT"
+      , "sudo ip6tables -I INPUT 6 -p tcp  --match multiport --dports 80,443,2379,2380,2381,6443,7472,7946,9099,9100 -j ACCEPT"
+      , "sudo netfilter-persistent save"
     ]
     connection {
       type        = "ssh"

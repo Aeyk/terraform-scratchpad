@@ -21,7 +21,8 @@ pip3 install ruamel_yaml netaddr jmespath==0.9.5 ansible==7.6.0
 
 # sudo mkdir -p /data/{elasticsearch,kibana,archivebox,gitea}
 
-echo 'export PATH=$${PATH:+$${PATH}:}$HOME/.local/bin/' >> "$HOME"/.bashrc && source "$HOME"/.bashrc
+echo 'export PATH=$${PATH:+$${PATH}:}$HOME/.local/bin/' >> "$HOME"/.bashrc
+export PATH=$${PATH:+$${PATH}:}$HOME/.local/bin/
 
 ## Install kubespray
 cd /tmp || exit
@@ -38,7 +39,7 @@ declare -a IPS=(
   ${ ip }
   %{ endfor ~}
 )
-CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py "$${IPS[@]}"
+KUBE_CONTROL_HOST=3 CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py "$${IPS[@]}"
 
 # Review and change parameters under ``inventory/main/group_vars``
 # cat inventory/main/group_vars/all/all.yml
@@ -47,17 +48,31 @@ CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventor
 sed -i 's/metrics_server_enabled: false/metrics_server_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 # sed -i 's/ingress_nginx_enabled: false/ingress_nginx_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 sed -i 's/cert_manager_enabled: false/cert_manager_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+sed -i 's/^# kubeconfig_localhost: false/kubeconfig_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
 sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
 sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 sed -i 's/metallb_enabled: false/metallb_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 sed -i 's/metallb_speaker_enabled: false/metallb_speaker_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-echo "metallb_config:
+sed -i 's/kube_proxy_strict_arp: false/kube_proxy_strict_arp: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
+
+echo 'metallb_config:
+  controller:
+    nodeselector:
+      kubernetes.io/os: linux
+    tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Equal"
+      value: ""
+      effect: "NoSchedule"
   address_pools:
     primary:
       ip_range:
 %{ for ip in slice(arm-1vcpu-6gb-us-qas-private_ipv4, 1, 4) ~}
         - ${ ip }
-%{ endfor ~}" >> inventory/main/group_vars/k8s_cluster/addons.yml
+%{ endfor ~}
+  layer2:
+    - primary' >> inventory/main/group_vars/k8s_cluster/addons.yml
+
 # TODO CA certificate
 
 # Clean up old Kubernetes cluster with Ansible Playbook - run the playbook as root
@@ -65,7 +80,7 @@ echo "metallb_config:
 # uninstalling old packages and interacting with various systemd daemons.
 # Without --become the playbook will fail to run!
 # And be mind it will remove the current kubernetes cluster (if it's running)!
-# ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root -e reset_confirmation=true reset.yml
+ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root -e reset_confirmation=true reset.yml
 
 # Deploy Kubespray with Ansible Playbook - run the playbook as root
 # The option `--become` is required, as for example writing SSL keys in /etc/,
