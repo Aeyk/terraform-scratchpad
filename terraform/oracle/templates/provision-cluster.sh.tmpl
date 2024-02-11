@@ -71,7 +71,7 @@ echo "metallb_config:
 # The option `--become` is required, as for example writing SSL keys in /etc/,
 # installing packages and interacting with various systemd daemons.
 # Without --become the playbook will fail to run!
-ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root cluster.yml
+ansible-playbook -i inventory/main/hosts.yaml -e kube_network_plugin=cilium -e kube_proxy_strict_arp=true --become --become-user=root cluster.yml
 
 mkdir -p "$HOME"/.kube
 sudo cp -fv /etc/kubernetes/admin.conf "$HOME"/.kube/config
