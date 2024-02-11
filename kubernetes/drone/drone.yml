@@ -18,4 +18,4 @@ spec:
   selector:
     app: drone
   sessionAffinity: None
-  type: NodePort
+  type: LoadBalancer
