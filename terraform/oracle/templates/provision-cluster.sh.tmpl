@@ -67,7 +67,7 @@ echo 'metallb_config:
   address_pools:
     primary:
       ip_range:
-%{ for ip in slice(arm-1vcpu-6gb-us-qas-private_ipv4, 1, 4) ~}
+%{ for ip in slice(arm-1vcpu-6gb-us-qas-public_ipv4, 1, 4) ~}
         - ${ ip }
 %{ endfor ~}
   layer2:
