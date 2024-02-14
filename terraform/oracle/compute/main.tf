@@ -287,9 +287,9 @@ resource "local_file" "ansible_inventory" {
 
 resource "local_file" "provision-script" {
   content = templatefile("./templates/provision-cluster.sh.tmpl", {
-    # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
     arm-1vcpu-6gb-us-qas-private_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.private_ip
     arm-1vcpu-6gb-us-qas-public_ipv4  = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
+    arm-1vcpu-6gb-us-qas-display_name = oci_core_instance.arm-1vcpu-6gb-us-qas.*.display_name
   })
   filename = "./provision-cluster.sh"
 }
