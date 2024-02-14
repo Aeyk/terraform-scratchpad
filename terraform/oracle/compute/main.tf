@@ -149,8 +149,10 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
       # , "eval `ssh-agent -s`"
       # , "ssh-add $HOME/.ssh/id_${lower(tls_private_key.keys[count.index].algorithm)}"
       # , "ssh-add -L"
-      , "sudo iptables -I INPUT 6 -p tcp  --match multiport --dports 80,443,2379,2380,2381,6443,7472,7946,9099,9100 -j ACCEPT"
-      , "sudo ip6tables -I INPUT 6 -p tcp  --match multiport --dports 80,443,2379,2380,2381,6443,7472,7946,9099,9100 -j ACCEPT"
+      , "sudo iptables  -I INPUT 6 -p tcp --match multiport --dports 80,443 -j ACCEPT"
+      , "sudo iptables  -I INPUT 6 -p tcp --match multiport --dports 80,443 -j ACCEPT"
+      , "sudo ip6tables -I INPUT 6 -p tcp -s 10.0.0.0/16 --match multiport --dports 80,443,2379,2380,2381,6443,7472,7946,9099,9100 -j ACCEPT"
+      , "sudo ip6tables -I INPUT 6 -p tcp -s 10.0.0.0/16 --match multiport --dports 80,443,2379,2380,2381,6443,7472,7946,9099,9100 -j ACCEPT"
       , "sudo netfilter-persistent save"
     ]
     connection {
