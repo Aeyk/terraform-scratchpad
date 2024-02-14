@@ -136,18 +136,7 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
       host        = self.public_ip
     }
   }
-  # provisioner "remote-exec" {
-  #   inline = [
-  #     "source /tmp/install",
-  #     "remove_snaps; install_emacs"
-  #   ]
-  #   connection {
-  #     type        = "ssh"
-  #     user        = "ubuntu"
-  #     private_key = file(module.secrets.private_ssh_key)
-  #     host        = self.public_ip
-  #   }
-  # }
+
   provisioner "remote-exec" {
     inline = [
       "echo '${tls_private_key.keys[count.index].private_key_openssh}' > $HOME/.ssh/id_${lower(tls_private_key.keys[count.index].algorithm)}"
