@@ -24,3 +24,60 @@ sudo su zulip -c '/home/zulip/deployments/current/manage.py generate_realm_creat
 
 # TODO(Malik): terraform aws ses, setup, get dns txt records
 # TODO(Malik): terraform digital ocean dns record a & txt
+# TODO(Malik): ansible for configuration management
+# TODO(Malik): backups
+# TODO(Malik): high availability (what does this take)
+
+# https://github.com/42wim/matterbridge#readme
+# TODO(Malik): matterbridge: irc connectors
+# TODO(Malik): replace dummy values 
+read -r -d '' MATTERBRIDGE_CONF << EOF
+[slack]
+[slack.test]
+Token="yourslacktoken"
+PrefixMessagesWithNick=true
+
+[discord]
+[discord.test]
+Token="yourdiscordtoken"
+Server="yourdiscordservername"
+
+[general]
+RemoteNickFormat="[{PROTOCOL}/{BRIDGE}] <{NICK}> "
+
+[[gateway]]
+    name = "mygateway"
+    enable=true
+
+    [[gateway.inout]]
+    account = "discord.test"
+    channel="general"
+
+    [[gateway.inout]]
+    account ="slack.test"
+    channel = "general"
+EOF
+
+read -r -d '' MATTERBRIDGE_SERVICE << EOF
+[Unit]
+Description=Matterbridge daemon
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/matterbridge -conf /etc/matterbridge/matterbridge.conf
+Restart=always
+RestartSec=5s
+User=matterbridge
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo useradd -r matterbridge -s /bin/false
+curl -fLO https://github.com/42wim/matterbridge/releases/download/v1.26.0/matterbridge-1.26.0-linux-arm64
+sudo mv ./matterbridge* /usr/local/bin/matterbridge
+echo "$MATTERBRIDGE_SERVICE" | sudo tee /etc/systemd/system/matterbridge.service > /dev/null 
+sudo mkdir /etc/matterbridge
+echo "$MATTERBRIDGE_CONF' | sudo tee /etc/matterbridge/matterbridge.conf > /dev/null
+
