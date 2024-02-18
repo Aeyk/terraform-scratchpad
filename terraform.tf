@@ -208,19 +208,25 @@ resource "oci_core_instance" "ubuntu_instance" {
 	metadata = {
 		"ssh_authorized_keys" = file("/home/me/.ssh/id_rsa.pub")
 	}
-	shape = "VM.Standard.E2.1.Micro" # Always-Free includes : 2 VM.Standard.E2.1.Micro, and 4 OCPUs and 24GB of VM.Standard.A1.Flex
-	shape_config {
-		baseline_ocpu_utilization = "BASELINE_1_1"
-		memory_in_gbs = "16"
-		ocpus = "1"
-	}
+  # Always-Free includes : 2 VM.Standard.E2.1.Micro
+	shape = "VM.Standard.E2.1.Micro"
 	source_details {
 		source_id = "ocid1.image.oc1.iad.aaaaaaaaau2eo3mjbgtmjvocmvx5xbhcmj2ay3mvowdzffxhdiql5gnhxjqa"
 		source_type = "image"
 	}
 }
 
-# TODO network security group to allow http(s) traffic
+# TODO make free A1 VM
+# resource "oci_core_instance" "ubuntu_a1_instance" {
+#   Free Ampere Credits are:
+#   VM.Standard.A1.Flex and 4 OCPUs and 24GB
+#   shape = "VM.Standard.A1.Flex"
+# 	shape_config {
+# 		baseline_ocpu_utilization = "BASELINE_1_1"
+# 		memory_in_gbs = "24"
+# 		ocpus = "4"
+# 	}
+# }
 
 output "compute_public_ip" {
   value = oci_core_instance.ubuntu_instance.public_ip
