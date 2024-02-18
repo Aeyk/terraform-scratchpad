@@ -691,6 +691,26 @@ resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_
   }   
 }
 
+
+resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd_2" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  count = 4
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
+  source = "0.0.0.0/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    destination_port_range {
+      min = 2379
+      max = 2380
+    }
+  }   
+}
+
 resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -698,17 +718,17 @@ resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd" {
   count = 4
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
+  # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
+  source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
     destination_port_range {
-      min = 2380
-      max = 2380
+      min = 10250
+      max = 10255
     }
   }   
 }
-
 
 # resource "oci_core_network_security_group_security_rule" "ipv6_keycloak_ingress_loadbalancer" {
 #   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,

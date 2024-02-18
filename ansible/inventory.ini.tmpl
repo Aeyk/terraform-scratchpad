@@ -3,66 +3,8 @@
 ${ ip }
 %{ endfor ~}
 
-[postgres_cluster]
-%{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
-${ ip } postgresql_exists='false'
-%{ endfor ~}
-
-# Please specify the ip addresses and connection settings for your environment
-# The specified ip addresses will be used to listen by the cluster components.
-# Attention! Specify private IP addresses so that the cluster does not listen a public IP addresses.
-# For deploying via public IPs, add 'ansible_host=public_ip_address' variable for each node.
-
-# "postgresql_exists='true'" if PostgreSQL is already exists and running
-# "hostname=" variable is optional (used to change the server name)
-# "new_node=true" to add a new server to an existing cluster using the add_pgnode.yml playbook
-
-# In this example, all components will be installed on PostgreSQL nodes.
-# You can deploy the haproxy balancers and the etcd or consul cluster on other dedicated servers (recomended).
-
-# if dcs_exists: false and dcs_type: "etcd"
-[etcd_cluster]  # recommendation: 3, or 5-7 nodes
-%{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
-${ ip }
-%{ endfor ~}
-
-# if dcs_exists: false and dcs_type: "consul"
-# [consul_instances]  # recommendation: 3 or 5-7 nodes
-# %{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
-# ${ ip } consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
-# %{ endfor ~}
-
-# if with_haproxy_load_balancing: true
-[balancers]
-%{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
-${ ip }
-%{ endfor ~}
-
-
-# PostgreSQL nodes
-[master]
-${arm-1vcpu-6gb-us-qas-public_ipv4[0]} postgresql_exists=false
-
-[replica]
-%{ for ip in slice(arm-1vcpu-6gb-us-qas-public_ipv4, 1, 3) ~}
-${ ip } postgresql_exists=false
-%{ endfor ~}
-
-[postgres_cluster:children]
-master
-replica
-
-# if pgbackrest_install: true and "repo_host" is set
-[pgbackrest]  # optional (Dedicated Repository Host)
-
-# Connection settings
 [all:vars]
 ansible_connection='ssh'
 ansible_ssh_port='22'
 ansible_connection=ssh
 ansible_user=ubuntu
-
-[pgbackrest:vars]
-ansible_user='postgres'
-ansible_ssh_pass='secretpassword'
-
