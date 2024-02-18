@@ -1359,3 +1359,4 @@ popd
 #### initContainer, Postgres, Keycloak
 # OpenEBS/Ceph/NFS
 # Explicit versions for each image
+# Screego
