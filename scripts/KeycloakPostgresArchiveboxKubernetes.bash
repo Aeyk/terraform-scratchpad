@@ -352,6 +352,31 @@ spec:
         - name: keycloak-config-file
           configMap:
             name: keycloak-configmap
+        - name: keycloak-gitea-realm-file
+          configMap:
+            name: keycloak-gitea-realm
+EOF
+cat << EOF | kubectl patch deployment/keycloak --patch "$(cat -)"
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: import-gitea-real
+          image: quay.io/keycloak/keycloak:23.0.4
+          # command: ['/opt/keycloak/bin/kc.sh]
+          # args: ["import", "--file", "/opt/keycloak/realm/gitea.json"]
+          volumeMounts:
+            - mountPath: /opt/keycloak/realm/
+              subPath: gitea.json
+              name: keycloak-gitea-realm-file
+              readOnly: true
+      volumes:
+        - name: keycloak-config-file
+          configMap:
+            name: keycloak-configmap
+        - name: keycloak-gitea-realm-file
+          configMap:
+            name: keycloak-gitea-realm
 EOF
 echo ""
 KEYCLOAK_URL=https://keycloak.mksybr.com &&
