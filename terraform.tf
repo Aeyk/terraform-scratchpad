@@ -428,20 +428,6 @@ resource "oci_core_instance" "ubuntu_instance" {
 		source_id = "ocid1.image.oc1.iad.aaaaaaaaau2eo3mjbgtmjvocmvx5xbhcmj2ay3mvowdzffxhdiql5gnhxjqa"
 		source_type = "image"
 	}
-
-    provisioner "remote-exec" {
-    inline = ["sudo apt update", "sudo apt install python3 -y", "echo Done!"]
-    connection {
-      host        = oci_core_instance.ubuntu_instance.public_ip
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(var.pvt_key)
-    }
-  }
-
-  provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${oci_core_instance.ubuntu_instance.public_ip},' --private-key ${var.pvt_key} -e 'pub_key=${var.pub_key}' thelounge.yml"
-  }
 }
 
 resource "oci_core_instance" "arm_instance" {
