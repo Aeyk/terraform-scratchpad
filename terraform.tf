@@ -60,16 +60,19 @@ data "oci_identity_availability_domains" "ads" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
 }
 
+data "oci_identity_compartment" "compartment" {
+  id = data.keepass_entry.oci_compartment_id.password
+}
+
 resource "oci_core_vcn" "vcn" {
-  depends_on = [oci_identity_compartment.compartment]
   cidr_blocks    = [var.oci_vcn_cidr_block]
-  compartment_id = oci_identity_compartment.compartment.id
+  compartment_id = data.oci_identity_compartment.compartment.id
   is_ipv6enabled = true
   display_name   = "cloud-mksybr-vcn"
 }
 
 resource "oci_core_dhcp_options" "dhcp" {
-  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn]
+  depends_on = [oci_core_vcn.vcn]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-dhcp-options"
@@ -84,14 +87,14 @@ resource "oci_core_dhcp_options" "dhcp" {
 }
 
 resource "oci_core_internet_gateway" "igw" {
-  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn]
+  depends_on = [oci_core_vcn.vcn]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-igw"
 }
 
 resource "oci_core_route_table" "igw_route_table" {
-  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_internet_gateway.igw]
+  depends_on = [oci_core_vcn.vcn, oci_core_internet_gateway.igw]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-igw-route-table"
@@ -111,7 +114,7 @@ resource "oci_core_nat_gateway" "nat_gateway" {
 }
 
 resource "oci_core_route_table" "nat_route_table" {
-  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_nat_gateway.nat_gateway]
+  depends_on = [oci_core_vcn.vcn, oci_core_nat_gateway.nat_gateway]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "cloud-mksybr-nat-route-table"
@@ -123,7 +126,7 @@ resource "oci_core_route_table" "nat_route_table" {
 }
 
 resource "oci_core_subnet" "public_subnet" {
-  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_nat_gateway.nat_gateway, oci_core_dhcp_options.dhcp]
+  depends_on = [oci_core_vcn.vcn, oci_core_nat_gateway.nat_gateway, oci_core_dhcp_options.dhcp]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_public_subnet_cidr_block
@@ -134,7 +137,7 @@ resource "oci_core_subnet" "public_subnet" {
 }
 
 resource "oci_core_subnet" "private_subnet" {
-  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
+  depends_on = [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id         = oci_core_vcn.vcn.id
   cidr_block     = var.oci_vcn_private_subnet_cidr_block
@@ -161,7 +164,7 @@ locals {
 }
 
 resource "oci_core_instance" "ubuntu_instance" {
-  depends_on = [oci_identity_compartment.compartment, oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
+  depends_on = [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp, oci_core_network_security_group.http_security_group]
 	agent_config {
 		is_management_disabled = "false"
 		is_monitoring_disabled = "false"
