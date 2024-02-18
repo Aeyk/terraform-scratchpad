@@ -6,15 +6,19 @@ resource "oci_core_network_security_group" "me_net_security_group" {
   vcn_id = oci_core_vcn.vcn.id
 }
 
+variable "arm_instance_count" {
+  default = 4
+}
+
 resource "oci_core_instance" "arm_instance" {
   depends_on = [
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
     oci_core_dhcp_options.dhcp,
     oci_core_network_security_group.me_net_security_group,   
-    oci_core_network_security_group_security_rule.rdp_ingress,
-    oci_core_network_security_group_security_rule.rdpv6_ingress
+    # oci_core_network_security_group_security_rule.rdp_ingress,
+    # oci_core_network_security_group_security_rule.rdpv6_ingress
   ]
-  count = 6
+  count = var.arm_instance_count
   display_name = "me-cloud-mksybr-us-qas-00${count.index}"
   agent_config {
 	is_management_disabled = "false"
@@ -91,15 +95,15 @@ resource "oci_core_instance" "arm_instance" {
 }
 
 output "arm_public_ips" {
-  count = 6
-  value = oci_core_instance.arm_instance[count.index].public_ip
+  value = [for u in oci_core_instance.arm_instance : u.public_ip[*]]
 }
 
 resource "digitalocean_record" "me-mksybr-com-dns-record" {
   depends_on = [oci_core_instance.arm_instance]
+  count = var.arm_instance_count
   name = "me"
   domain = "mksybr.com"
   type   = "A"
-  value  = oci_core_instance.arm_instance.public_ip
+  value  = oci_core_instance.arm_instance[count.index].public_ip
   ttl = "30"
 }
