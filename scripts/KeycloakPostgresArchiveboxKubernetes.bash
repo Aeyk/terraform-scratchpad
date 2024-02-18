@@ -303,34 +303,23 @@ data:
     db-username=keycloak
     db-password=$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)
     db-url-host=postgres-cluster.default.svc.cluster.local
-    # db-url-host=postgres-cluster
-    # db-url=jdbc:postgres://keycloak:$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)@postgres-cluster/keycloak
     db-pool-initial-size=10
     
 
-    # Observability
-    # If the server should expose healthcheck endpoints.
+    # Observability TODO(Malik): monitoring
     #health-enabled=true
-    # If the server should expose metrics endpoints.
     #metrics-enabled=true
 
     # HTTP
-    # The file path to a server certificate or certificate chain in PEM format.
-    #https-certificate-file=\${kc.home.dir}conf/server.crt.pem
-    # The file path to a private key in PEM format.
-    #https-certificate-key-file=\${kc.home.dir}conf/server.key.pem
-    # The proxy address forwarding mode if the server is behind a reverse proxy.
-    proxy=edge
+    hostname-debug=true
     http-max-queued-requests=10
-    # Do not attach route to cookies and rely on the session affinity capabilities from reverse proxy
-    #spi-sticky-session-encoder-infinispan-should-attach-route=false
+    proxy=edge
+    hostname-strict-ssl=true
+    http-enabled=true
+    hostname-url=https://keycloak.mksybr.com/
+    hostname-admin-url=https://keycloak.mksybr.com/
 
-    # Hostname for the Keycloak server.
-    # hostname=keycloak.mksybr.com
-    # hostname-path=/keycloak
-    # http-relative-path=/keycloak
-    hostname-url=https://keycloak.mksybr.com:443/
-    hostname-admin-url=https://keycloak.mksybr.com:443/
+    # Quarkus
     quarkus.transaction-manager.enable-recovery=true
 
 kind: ConfigMap
@@ -348,7 +337,7 @@ spec:
       containers:
         - name: keycloak
           # why does thiese args work but the keycloak config map doesnt?
-          args: ["--verbose", "start", "--db-url-host", "postgres-cluster-primary", "--db-username", "keycloak", "--db-password", "$(kubectl get secrets postgres-keycloak-user -o jsonpath='{.data.password}' | base64 -d)"] 
+          args: ["--verbose", "start"]
           volumeMounts:
           - mountPath: /opt/keycloak/conf/keycloak.conf
             subPath: keycloak.conf
