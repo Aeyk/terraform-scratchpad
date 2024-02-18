@@ -61,7 +61,6 @@ locals {
   }
 }
 
-
 provider "oci" {
   tenancy_ocid = data.keepass_entry.oci_tenancy_id.password
   user_ocid = data.keepass_entry.oci_user_id.password
@@ -416,7 +415,7 @@ resource "oci_core_instance" "ubuntu_instance" {
 	}
 	is_pv_encryption_in_transit_enabled = "true"
 	metadata = {
-		"ssh_authorized_keys" = file(var.public_ssh_key)
+		"ssh_authorized_keys" = local.ssh.authorized_keys
 	}
   # Always-Free includes : 2 VM.Standard.E2.1.Micro
 	shape = "VM.Standard.E2.1.Micro"
