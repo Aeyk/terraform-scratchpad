@@ -308,8 +308,8 @@ data:
     
 
     # Observability TODO(Malik): monitoring
-    #health-enabled=true
-    #metrics-enabled=true
+    health-enabled=true
+    metrics-enabled=true
 
     # HTTP
     hostname-debug=true
@@ -357,28 +357,28 @@ spec:
           secret:
             secretName: keycloak-realm
 EOF
-cat << EOF | kubectl patch deployment/keycloak --patch "$(cat -)"
-spec:
-  template:
-    spec:
-      initContainers:
-        - name: import-realm
-          image: quay.io/keycloak/keycloak:23.0.4
-          command: ["/opt/keycloak/bin/kc.sh"]
-          args: ["import", "--file", "/opt/keycloak/realm/dev.json"]
-          volumeMounts:
-            - mountPath: /opt/keycloak/realm/dev.json
-              subPath: dev.json
-              name: keycloak-realm-file
-              readOnly: true          
-      volumes:
-        - name: keycloak-config-file
-          configMap:
-            name: keycloak-configmap
-        - name: keycloak-realm-file
-          secret:
-            secretName: keycloak-realm
-EOF
+# cat << EOF | kubectl patch deployment/keycloak --patch "$(cat -)"
+# spec:
+#   template:
+#     spec:
+#       initContainers:
+#         - name: import-realm
+#           image: quay.io/keycloak/keycloak:23.0.4
+#           command: ["/opt/keycloak/bin/kc.sh"]
+#           args: ["import", "--file", "/opt/keycloak/realm/dev.json"]
+#           volumeMounts:
+#             - mountPath: /opt/keycloak/realm/dev.json
+#               subPath: dev.json
+#               name: keycloak-realm-file
+#               readOnly: true          
+#       volumes:
+#         - name: keycloak-config-file
+#           configMap:
+#             name: keycloak-configmap
+#         - name: keycloak-realm-file
+#           secret:
+#             secretName: keycloak-realm
+# EOF
 # TODO(Malik): automatic realm backups
 echo ""
 KEYCLOAK_URL=https://keycloak.mksybr.com &&
@@ -433,6 +433,69 @@ kubectl apply -f manifests/
 ## Prometheus BEGIN
 ## UNDO:
 #### cd /tmp/kube-prometheus; kubectl delete --ignore-not-found=true -f manifests/ -f manifests/setup
+cat << EOF | kubectl apply  -f -
+apiVersion: v1
+data:
+  prometheus-config: |
+    global:
+      scrape_interval: 10s
+      evaluation_interval: 15s
+    scrape_configs:
+    - job_name: 'ingress-nginx-endpoints'
+      kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+          - ingress-nginx
+          - default
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (https?)
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: prometheus-server
+        action: drop
+    scrape_configs:
+      - job_name: keycloak
+        static_configs:
+          - targets: ['https://keycloak.mksybr.com']
+          - targets: ['https://prometheus.mksybr.com']
+
+kind: ConfigMap
+metadata:
+  name: prometheus-configmap
+  namespace: ingress-nginx
+EOF
+# TODO(Malik): fix prometheus configmap injection
+# cat << EOF | kubectl patch deployments -n ingress-nginx prometheus-server --patch="$(cat -)"
+# spec:
+#   template:
+#     spec:
+#       containers:
+#         - name: prometheus-server
+#           image: prom/prometheus
+#           volumeMounts:
+#             - name: prometheus-config-file 
+#               mountPath: /etc/prometheus/prometheus.yaml
+#               subPath: prometheus.yaml
+#       volumes:
+#         - name: prometheus-config-file
+#           configMap:
+#             name: prometheus-configmap
+# EOF
 kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/prometheus/
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
@@ -838,7 +901,7 @@ cat <<EOF | kubectl apply -f -
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
 metadata:
-  name: quickstart
+  name: elasticsearch
 spec:
   version: 8.11.4
   nodeSets:
@@ -914,8 +977,7 @@ kind: Service
 metadata:
   labels:
     common.k8s.elastic.co/type: kibana
-    kibana.k8s.elastic.co/name: quickstart
-  name: quickstart-kb-http
+  name: kibana
   namespace: default
 spec:
   ports:
@@ -925,7 +987,6 @@ spec:
     targetPort: 5601
   selector:
     common.k8s.elastic.co/type: kibana
-    kibana.k8s.elastic.co/name: quickstart
   sessionAffinity: None
   type: LoadBalancer
 EOF
@@ -995,12 +1056,12 @@ cat <<EOF | kubectl apply -f -
 apiVersion: kibana.k8s.elastic.co/v1
 kind: Kibana
 metadata:
-  name: quickstart
+  name: kibana
 spec:
   version: 8.11.4
   count: 1
   elasticsearchRef:
-    name: quickstart
+    name: kibana
 EOF
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
@@ -1017,7 +1078,7 @@ spec:
       paths:
       - backend:
           service:
-              name: quickstart-kb-http
+              name: kibana
               port:
                 number: 5601
         path: /
@@ -1634,7 +1695,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-  name: paperless-redis
+  name: paperless-redis-name
 spec:
   externalName: paperless-redis.default.svc.cluster.local
   sessionAffinity: None
@@ -1750,8 +1811,8 @@ metadata:
   name: paperless
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    kubernetes.io/ingress.class: "nginx"
 spec:
+  ingressClassName: "nginx"
   rules:
   - host: paperless.mksybr.com
     http:
@@ -1769,6 +1830,119 @@ spec:
     secretName: paperless-letsencrypt-prod
 EOF
 ## Paperless-NGX END
+
+
+## Statping-NG BEGIN
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: statping
+  labels:
+    app: statping
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: statping
+  labels:
+    app: statping
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: statping
+  template:
+    metadata:
+      labels:
+        app: statping
+    spec:
+      containers:
+      - name: statping
+        image:  hunterlong/statping:v0.80.51
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+          - mountPath: /app
+            name: statping-config
+      volumes:
+        - name: statping-config
+          persistentVolumeClaim:
+            claimName: statping
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: statping
+  name: statping
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    app: statping
+status:
+  loadBalancer: {}
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: statping
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: statping.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+              name: staping
+              port:
+                number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - statping.mksybr.com
+    secretName: statping-letsencrypt-prod
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: statping-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: statping-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+## Statping-NG END
+
+
 popd
 
 
