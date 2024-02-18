@@ -5,8 +5,9 @@ if test "$UID" -ne 0; then
     exit
 fi
 
-dnf groupinstall "server with GUI"
+dnf groupinstall -y "server with GUI"
 dnf install -y epel-release
 dnf install -y xrdp
 firewall-cmd -permanent -add-port=3389/tcp
 firewall-cmd -reload
+
