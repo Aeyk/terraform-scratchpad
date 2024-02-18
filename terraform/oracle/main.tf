@@ -44,12 +44,23 @@ provider "oci" {
 }
 
 # TODO(malik): external storage for tfstate
-# resource "oci_objectstorage_object" "terraform_state_storage" {
-#     bucket = "terraform_state_storage"
-#     content = var.object_content
-#     namespace = "IAD"
-#     object = var.object_object
-# }
+resource "oci_objectstorage_object" "terraform_state_storage" {
+    bucket = "terraform_state_storage"
+    content = var.object_content
+    namespace = "IAD"
+    object = var.object_object
+}
+
+data "terraform_remote_state" "terraform_state" {
+  backend = "s3"
+
+  config = {
+    organization = "hashicorp"
+    workspaces = {
+      name = "vpc-prod"
+    }
+  }
+}
 
 module "network" {
   keepass_database_password = var.keepass_database_password
