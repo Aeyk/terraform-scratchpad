@@ -1343,6 +1343,11 @@ spec:
 EOF
 ## Datasette END
 
+## Paperless-NGX BEGIN
+helm repo add k8s-at-home https://k8s-at-home.com/charts/
+helm repo update
+helm install paperless k8s-at-home/paperless
+## Paperless-NGX END
 popd
 
 
