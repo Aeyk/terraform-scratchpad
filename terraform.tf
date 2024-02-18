@@ -55,6 +55,13 @@ provider "digitalocean" {
   token = data.keepass_entry.digitalocean_token.password
 }
 
+locals {
+  ssh = {
+    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}"
+  }
+}
+
+
 provider "oci" {
   tenancy_ocid = data.keepass_entry.oci_tenancy_id.password
   user_ocid = data.keepass_entry.oci_user_id.password
@@ -469,10 +476,8 @@ resource "oci_core_instance" "arm_instance" {
 	}
 	is_pv_encryption_in_transit_enabled = "true"
 	metadata = {
-	  "ssh_authorized_keys" = <<EOT
-${file(var.public_ssh_key)}
-${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}
-EOT
+	  "ssh_authorized_keys" = local.ssh.authorized_keys
+
 	}
   # Month of free ampere instances
   # Free monthly ampere credits are:
