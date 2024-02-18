@@ -24,6 +24,8 @@ sudo apt update
 sudo apt install python-is-python3 python3-pip -y
 pip3 install ansible==7.6.0 ruamel_yaml netaddr jmespath==0.9.5
 
+sudo mkdir /data/{elasticsearch,kibana,archivebox,gitea}
+
 echo 'export PATH=${PATH:+${PATH}:}$HOME/.local/bin/' >> "$HOME"/.bashrc && source "$HOME"/.bashrc
 
 ## Install kubespray
@@ -993,4 +995,157 @@ spec:
 EOF
 ## Kibana END
 
+
+## Gitea BEGIN
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: gitea-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: gitea-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitea
+spec:
+  storageClassName: "local-path"
+  volumeName: gitea
+  resources:
+    requests:
+      storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gitea
+  labels:
+    type:
+      local
+spec:
+  local:
+    path:
+      /data/gitea
+  capacity: 
+    storage:
+      10Gi
+  storageClassName: "local-path"
+  accessModes:
+    - ReadWriteMany
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+EOF
+cat << 'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea
+spec:
+  selector:
+    matchLabels:
+      app: gitea
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: gitea
+    spec:
+      containers:
+        - name: gitea
+          image: gitea/gitea:1.15
+          ports:
+            - containerPort: 3000
+              hostPort: 3001
+              protocol: TCP
+              name: http
+          volumeMounts:
+            - mountPath: /data
+              name: gitea
+      restartPolicy: Always
+      volumes:
+        - name: gitea
+          persistentVolumeClaim:
+            claimName: gitea
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitea
+  namespace: default
+spec:
+  ports:
+  - name: https
+    port: 3001
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: gitea
+  sessionAffinity: None
+  type: LoadBalancer
+EOF
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gitea
+  annotations:
+    cert-manager.io/cluster-issuer: "gitea-letsencrypt-prod"
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: gitea.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+              name: gitea
+              port:
+                number: 3000
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - gitea.mksybr.com
+    secretName: gitea-letsencrypt-prod
+EOF
+## Gitea END
 popd
+
+
+## TODO:
+# Change elasticsearch/kibana name quickstart -> ELK
+# Better secret management
+# Fix ElasticSearch Deployment/Service/Ingress
+# Limit Elasticsearch memory usage
+# Wire up Keycloak for authentication for ELK, ArchiveBox
+# Jenkins/Drone
+# ArgoCD?
+# Gitea -- initContainer, Postgres, Keycloak
+# OpenEBS/Ceph/NFS
