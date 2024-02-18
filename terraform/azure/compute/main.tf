@@ -69,6 +69,11 @@ resource "azurerm_linux_virtual_machine" "main" {
     public_key = module.secrets.home_ssh_key
   }
 
+  admin_ssh_key {
+    username   = "ubuntu"
+    public_key = module.secrets.work_ssh_key
+  }
+
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.main.primary_blob_endpoint
   }
