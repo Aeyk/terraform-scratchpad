@@ -6,6 +6,15 @@ variable "oci_vcn_cidr_block" {}
 variable "oci_vcn_public_subnet_cidr_block" {}
 variable "oci_vcn_private_subnet_cidr_block" {}
 
+resource "tls_private_key" "target_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+variable "public_ssh_key" {
+  default = "/home/me/.ssh/id_rsa.pub"
+}
+
 terraform {
   required_providers {
     oci = {     
@@ -315,8 +324,7 @@ resource "oci_core_instance" "ubuntu_instance" {
     oci_core_network_security_group_security_rule.icmpv6_ingress,
 
     oci_core_network_security_group_security_rule.identd_ingress,
-    oci_core_network_security_group_security_rule.identdv6_ingress,     
-
+    oci_core_network_security_group_security_rule.identdv6_ingress,
   ]
   display_name = "ubuntu000-cloud-mksybr"
 	agent_config {
@@ -370,25 +378,100 @@ resource "oci_core_instance" "ubuntu_instance" {
 	}
 }
 
-# TODO make free A1 VM
-# resource "oci_core_instance" "ubuntu_a1_instance" {
-#   Free Ampere Credits are:
-#   VM.Standard.A1.Flex and 4 OCPUs and 24GB
-#   shape = "VM.Standard.A1.Flex"
-# 	shape_config {
-# 		baseline_ocpu_utilization = "BASELINE_1_1"
-# 		memory_in_gbs = "24"
-# 		ocpus = "4"
-# 	}
-# }
+resource "oci_core_instance" "amp_instance" {
+  depends_on = [
+    tls_private_key.target_key,
+    oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+    oci_core_dhcp_options.dhcp,
+    oci_core_network_security_group.net_security_group,
+
+    oci_core_network_security_group_security_rule.ipv4_http_ingress,
+    oci_core_network_security_group_security_rule.ipv6_http_ingress,
+    
+    oci_core_network_security_group_security_rule.ipv4_https_ingress,
+    oci_core_network_security_group_security_rule.ipv6_https_ingress,
+
+    oci_core_network_security_group_security_rule.icmp_ingress,
+    oci_core_network_security_group_security_rule.icmpv6_ingress,
+
+    oci_core_network_security_group_security_rule.identd_ingress,
+    oci_core_network_security_group_security_rule.identdv6_ingress,
+  ]
+  display_name = "ubuntu001-cloud-mksybr"
+	agent_config {
+		is_management_disabled = "false"
+		is_monitoring_disabled = "false"
+		plugins_config {
+			desired_state = "DISABLED"
+			name = "Vulnerability Scanning"
+		}
+		plugins_config {
+			desired_state = "DISABLED"
+			name = "Management Agent"
+		}
+		plugins_config {
+			desired_state = "ENABLED"
+			name = "Custom Logs Monitoring"
+		}
+		plugins_config {
+			desired_state = "ENABLED"
+			name = "Compute Instance Monitoring"
+		}
+		plugins_config {
+			desired_state = "DISABLED"
+			name = "Bastion"
+		}
+	}
+	availability_config {
+		is_live_migration_preferred = "true"
+		recovery_action = "RESTORE_INSTANCE"
+	}
+	availability_domain = "onUG:US-ASHBURN-AD-2"
+	compartment_id = data.keepass_entry.oci_compartment_id.password
+	create_vnic_details {
+		assign_private_dns_record = "false"
+		assign_public_ip = "true"
+		subnet_id = oci_core_subnet.public_subnet.id
+		nsg_ids = [oci_core_network_security_group.net_security_group.id]
+	}
+	instance_options {
+		are_legacy_imds_endpoints_disabled = "false"
+	}
+	is_pv_encryption_in_transit_enabled = "true"
+	metadata = {
+		"ssh_authorized_keys" = file(var.public_ssh_key)
+	}
+  # Month of free ampere instances
+  # Free monthly ampere credits are:
+  # VM.Standard.A1.Flex and 4 OCPUs and 24GB
+  shape = "VM.Standard.A1.Flex"
+	shape_config {
+		baseline_ocpu_utilization = "BASELINE_1_1"
+		memory_in_gbs = "24"
+		ocpus = "4"
+	}
+	source_details {
+		source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq"
+		source_type = "image"
+	}
+}
 
 output "compute_public_ip" {
   value = oci_core_instance.ubuntu_instance.public_ip
 }
 
-resource "digitalocean_record" "mksybr_api" {
+resource "digitalocean_record" "chat-mksybr-com-dns-record" {
   depends_on = [oci_core_instance.ubuntu_instance]
   name = "chat"
+  domain = "mksybr.com"
+  type   = "A"
+  value  = oci_core_instance.ubuntu_instance.public_ip
+  ttl = "30"
+}
+
+resource "digitalocean_record" "me-mksybr-com-dns-record" {
+  depends_on = [oci_core_instance.amp_instance]
+  name = "me"
   domain = "mksybr.com"
   type   = "A"
   value  = oci_core_instance.ubuntu_instance.public_ip
