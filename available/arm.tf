@@ -128,3 +128,11 @@ resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
 #   # value  =  [for u in data.oci_core_ipv6s.arm-1vcpu-6gb-us-qas-ipv6.ipv6s : u[*].ip_address]
 #   ttl = "30"
 # }
+
+resource "local_file" "ansible_inventory" {
+    content = templatefile("../ansible/inventory.ini.tmpl", {
+        display_name = oci_core_instance.arm-1vcpu-6gb-us-qas.*.display_name
+        public_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
+    })
+    filename = "../ansible/inventory.ini"
+}

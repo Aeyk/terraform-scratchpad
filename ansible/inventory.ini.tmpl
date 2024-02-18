@@ -1,0 +1,8 @@
+[oracle]
+%{ for ip in public_ipv4 ~}
+${ ip }
+%{ endfor ~}
+
+[oracle:vars]
+ansible_connection=ssh
+ansible_user=ubuntu
