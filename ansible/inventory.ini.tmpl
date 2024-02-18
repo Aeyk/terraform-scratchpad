@@ -27,10 +27,10 @@ ${ ip }
 %{ endfor ~}
 
 # if dcs_exists: false and dcs_type: "consul"
-[consul_instances]  # recommendation: 3 or 5-7 nodes
-%{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
-${ ip } consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
-%{ endfor ~}
+# [consul_instances]  # recommendation: 3 or 5-7 nodes
+# %{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
+# ${ ip } consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
+# %{ endfor ~}
 
 # if with_haproxy_load_balancing: true
 [balancers]

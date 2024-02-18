@@ -10,8 +10,12 @@ variable "public_ssh_key" {
   default = "/home/malik/.ssh/id_rsa.pub"
 }
 
+variable "work_public_ssh_key" {
+  default = "/home/malik/.ssh/work_id_rsa.pub"
+}
+
 locals {
   ssh = {
-    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}"
+    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}${file(var.work_public_ssh_key)}"
   }
 }
