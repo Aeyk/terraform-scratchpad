@@ -1,3 +1,7 @@
+variable "private_ssh_key" {
+  default = "/home/malik/.ssh/id_rsa"
+}
+
 data "keepass_entry" "phone_public_ssh_key_contents" {
   path = "Root/Phone Key"
 }

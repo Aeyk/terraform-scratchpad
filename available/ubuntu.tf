@@ -1,39 +1,4 @@
 # -*- mode: ruby; -*-
-variable "database_password" { 
- sensitive = true
-}
-
-variable "oci_vcn_cidr_block" {
-  default = "10.0.0.0/24"
-}
-variable "oci_vcn_public_subnet_cidr_block" {
-  default = "10.0.0.0/28"
-}
-variable "oci_vcn_private_subnet_cidr_block" {
-  default = "10.0.0.16/28"
-}
-
-variable "private_ssh_key" {
-  default = "/home/malik/.ssh/id_rsa"
-}
-
-provider "keepass" {
-  database = "../Cloud Tokens.kdbx"
-  password = var.database_password
-}
-
-provider "digitalocean" {
-  token = data.keepass_entry.digitalocean_token.password
-}
-
-provider "oci" {
-  tenancy_ocid = data.keepass_entry.oci_tenancy_id.password
-  user_ocid = data.keepass_entry.oci_user_id.password
-  private_key_path = "/home/me/.oci/cloud_mksybr.pem"
-  fingerprint = data.keepass_entry.oci_fingerprint.password
-  region = "us-ashburn-1"
-}
-
 data "oci_identity_availability_domains" "ads" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
 }

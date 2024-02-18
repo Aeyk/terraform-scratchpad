@@ -1,4 +1,14 @@
 
+variable "oci_vcn_cidr_block" {
+  default = "10.0.0.0/24"
+}
+variable "oci_vcn_public_subnet_cidr_block" {
+  default = "10.0.0.0/28"
+}
+variable "oci_vcn_private_subnet_cidr_block" {
+  default = "10.0.0.16/28"
+}
+
 resource "oci_core_vcn" "vcn" {
   depends_on = [data.keepass_entry.oci_compartment_id]
   cidr_blocks    = [var.oci_vcn_cidr_block]
