@@ -374,55 +374,59 @@ resource "oci_core_instance" "ubuntu_instance" {
     oci_core_network_security_group_security_rule.identdv6_ingress,
   ]
   display_name = "ubuntu000-cloud-mksybr"
-	agent_config {
-		is_management_disabled = "false"
-		is_monitoring_disabled = "false"
-		plugins_config {
-			desired_state = "DISABLED"
-			name = "Vulnerability Scanning"
-		}
-		plugins_config {
-			desired_state = "DISABLED"
-			name = "Management Agent"
-		}
-		plugins_config {
-			desired_state = "ENABLED"
-			name = "Custom Logs Monitoring"
-		}
-		plugins_config {
-			desired_state = "ENABLED"
-			name = "Compute Instance Monitoring"
-		}
-		plugins_config {
-			desired_state = "DISABLED"
-			name = "Bastion"
-		}
+  agent_config {
+	is_management_disabled = "false"
+	is_monitoring_disabled = "false"
+	plugins_config {
+	  desired_state = "DISABLED"
+	  name = "Vulnerability Scanning"
 	}
-	availability_config {
-		is_live_migration_preferred = "true"
-		recovery_action = "RESTORE_INSTANCE"
+	plugins_config {
+	  desired_state = "DISABLED"
+	  name = "Management Agent"
 	}
-	availability_domain = "onUG:US-ASHBURN-AD-3"
-	compartment_id = data.keepass_entry.oci_compartment_id.password
-	create_vnic_details {
-		assign_private_dns_record = "false"
-		assign_public_ip = "true"
-		subnet_id = oci_core_subnet.public_subnet.id
-		nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+	plugins_config {
+	  desired_state = "ENABLED"
+	  name = "Custom Logs Monitoring"
 	}
-	instance_options {
-		are_legacy_imds_endpoints_disabled = "false"
+	plugins_config {
+	  desired_state = "ENABLED"
+	  name = "Compute Instance Monitoring"
 	}
-	is_pv_encryption_in_transit_enabled = "true"
-	metadata = {
-		"ssh_authorized_keys" = local.ssh.authorized_keys
+	plugins_config {
+	  desired_state = "DISABLED"
+	  name = "Bastion"
 	}
+  }
+  availability_config {
+	is_live_migration_preferred = "true"
+	recovery_action = "RESTORE_INSTANCE"
+  }
+  availability_domain = "onUG:US-ASHBURN-AD-3"
+  compartment_id = data.keepass_entry.oci_compartment_id.password
+  create_vnic_details {
+	assign_private_dns_record = "false"
+	assign_public_ip = "true"
+	subnet_id = oci_core_subnet.public_subnet.id
+	nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+  }
+  instance_options {
+	are_legacy_imds_endpoints_disabled = "false"
+  }
+  is_pv_encryption_in_transit_enabled = "true"
+  metadata = {
+	"ssh_authorized_keys" = local.ssh.authorized_keys
+  }
   # Always-Free includes : 2 VM.Standard.E2.1.Micro
-	shape = "VM.Standard.E2.1.Micro"
-	source_details {
-		source_id = "ocid1.image.oc1.iad.aaaaaaaaau2eo3mjbgtmjvocmvx5xbhcmj2ay3mvowdzffxhdiql5gnhxjqa"
-		source_type = "image"
-	}
+  shape = "VM.Standard.E2.1.Micro"
+  source_details {
+	source_id = "ocid1.image.oc1.iad.aaaaaaaaau2eo3mjbgtmjvocmvx5xbhcmj2ay3mvowdzffxhdiql5gnhxjqa"
+	source_type = "image"
+  }
+  provisioner "file" {
+    source = "${oci_core_instance.ubuntu_instance.display_name}-installer.sh"
+    destination = "/tmp/installer.sh"
+  }
 }
 
 resource "oci_core_instance" "arm_instance" {
@@ -434,63 +438,66 @@ resource "oci_core_instance" "arm_instance" {
     oci_core_network_security_group_security_rule.rdpv6_ingress
   ]
   display_name = "ubuntu001-cloud-mksybr"
-	agent_config {
-		is_management_disabled = "false"
-		is_monitoring_disabled = "false"
-		plugins_config {
-			desired_state = "DISABLED"
-			name = "Vulnerability Scanning"
-		}
-		plugins_config {
-			desired_state = "DISABLED"
-			name = "Management Agent"
-		}
-		plugins_config {
-			desired_state = "ENABLED"
-			name = "Custom Logs Monitoring"
-		}
-		plugins_config {
-			desired_state = "ENABLED"
-			name = "Compute Instance Monitoring"
-		}
-		plugins_config {
-			desired_state = "DISABLED"
-			name = "Bastion"
-		}
+  agent_config {
+	is_management_disabled = "false"
+	is_monitoring_disabled = "false"
+	plugins_config {
+	  desired_state = "DISABLED"
+	  name = "Vulnerability Scanning"
 	}
-	availability_config {
-		is_live_migration_preferred = "true"
-		recovery_action = "RESTORE_INSTANCE"
+	plugins_config {
+	  desired_state = "DISABLED"
+	  name = "Management Agent"
 	}
-	availability_domain = "onUG:US-ASHBURN-AD-2"
-	compartment_id = data.keepass_entry.oci_compartment_id.password
-	create_vnic_details {
-		assign_private_dns_record = "false"
-		assign_public_ip = "true"
-		subnet_id = oci_core_subnet.public_subnet.id
-		nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+	plugins_config {
+	  desired_state = "ENABLED"
+	  name = "Custom Logs Monitoring"
 	}
-	instance_options {
-		are_legacy_imds_endpoints_disabled = "false"
+	plugins_config {
+	  desired_state = "ENABLED"
+	  name = "Compute Instance Monitoring"
 	}
-	is_pv_encryption_in_transit_enabled = "true"
-	metadata = {
-	  "ssh_authorized_keys" = local.ssh.authorized_keys
-
+	plugins_config {
+	  desired_state = "DISABLED"
+	  name = "Bastion"
 	}
+  }
+  availability_config {
+	is_live_migration_preferred = "true"
+	recovery_action = "RESTORE_INSTANCE"
+  }
+  availability_domain = "onUG:US-ASHBURN-AD-2"
+  compartment_id = data.keepass_entry.oci_compartment_id.password
+  create_vnic_details {
+	assign_private_dns_record = "false"
+	assign_public_ip = "true"
+	subnet_id = oci_core_subnet.public_subnet.id
+	nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+  }
+  instance_options {
+	are_legacy_imds_endpoints_disabled = "false"
+  }
+  is_pv_encryption_in_transit_enabled = "true"
+  metadata = {
+	"ssh_authorized_keys" = local.ssh.authorized_keys
+  }
   # Month of free ampere instances
   # Free monthly ampere credits are:
   # VM.Standard.A1.Flex and 4 OCPUs and 24GB
   shape = "VM.Standard.A1.Flex"
-	shape_config {
-		baseline_ocpu_utilization = "BASELINE_1_1"
-		memory_in_gbs = "24"
-		ocpus = "4"
-	}
-	source_details {
-		source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq"
-		source_type = "image"
-	}
+  shape_config {
+	baseline_ocpu_utilization = "BASELINE_1_1"
+	memory_in_gbs = "24"
+	ocpus = "4"
+  }
+  source_details {
+	source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq"
+	source_type = "image"
+  }
+  provisioner "file" {
+    source = "${oci_core_instance.ubuntu_instance.display_name}-installer.sh"
+    destination = "/tmp/installer.sh"
+  }
 }
 
 output "ubuntu_public_ip" {
