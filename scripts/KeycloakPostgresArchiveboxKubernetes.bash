@@ -824,7 +824,7 @@ spec:
     spec:
       containers:
         - name: elasticsearch
-          image: elasticsearch/elasticsearch
+          image: elasticsearch:8.11.3
           ports:
             - containerPort: 9200
               protocol: TCP
@@ -979,7 +979,7 @@ spec:
     spec:
       containers:
         - name: kibana
-          image: kibana/kibana
+          image: kibana:8.11.3
           ports:
             - containerPort: 5601
               protocol: TCP
