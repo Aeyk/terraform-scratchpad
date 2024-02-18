@@ -32,21 +32,15 @@ provider "keepass" {
 }
 
 provider "digitalocean" {
-  token = data.keepass_entry.digitalocean_token.password
+  token = module.secrets.digitalocean_token
 }
 
 provider "oci" {
-  tenancy_ocid = data.keepass_entry.oci_tenancy_id.password
-  user_ocid = data.keepass_entry.oci_user_id.password
+  tenancy_ocid = module.secrets.oci_tenancy_id
+  user_ocid = module.secrets.oci_user_id
   private_key_path = "/home/malik/.oci/mksybr@gmail.com_2023-12-24T00_16_14.614Z.pem"
-  fingerprint = data.keepass_entry.oci_fingerprint.password
+  fingerprint = module.secrets.oci_fingerprint
   region = "us-ashburn-1"
-}
-
-resource "oci_identity_compartment" "cloud-mksybr" {
-    compartment_id = data.keepass_entry.oci_compartment_id.password
-    description = "..."
-    name = "cloud-mksybr"
 }
 
 # TODO(malik): external storage for tfstate
@@ -57,12 +51,17 @@ resource "oci_identity_compartment" "cloud-mksybr" {
 #     object = var.object_object
 # }
 
-
 module "network" {
+  keepass_database_password = var.keepass_database_password
   source = "./network"
 }
 
 module "compute" {
+  keepass_database_password = var.keepass_database_password  
   source     = "./compute"
-  depends_on = [module.network]
+}
+
+module "secrets" {
+  source = "./secrets"
+  keepass_database_password = var.keepass_database_password
 }

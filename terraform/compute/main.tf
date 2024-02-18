@@ -16,24 +16,28 @@ terraform {
   }
 }
 
+provider "keepass" {
+  database = "../Cloud Tokens.kdbx"
+  password = var.keepass_database_password
+}
+
+module "network" {
+  source = "../network"
+  keepass_database_password = var.keepass_database_password
+}
+
+module "secrets" {
+  source = "../secrets"
+  keepass_database_password = var.keepass_database_password
+}
+
 resource "oci_core_network_security_group" "me_net_security_group" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                  oci_core_dhcp_options.dhcp]
   display_name = "me-mksybr-network-security-group"
-  compartment_id = data.keepass_entry.oci_compartment_id.password
-  vcn_id = oci_core_vcn.vcn.id
+  compartment_id = module.secrets.oci_compartment_id
+  vcn_id = module.network.vcn_id
 }
 
 resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
-  depends_on = [
-    oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-    oci_core_dhcp_options.dhcp,
-    oci_core_network_security_group.me_net_security_group,
-    oci_core_subnet.public_subnet,
-    oci_core_subnet.private_subnet
-    # oci_core_network_security_group_security_rule.rdp_ingress,
-    # oci_core_network_security_group_security_rule.rdpv6_ingress
-  ]
   count = var.arm-1vcpu-6gb-us-qas_count
   display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
   agent_config {
@@ -65,12 +69,12 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
     recovery_action = "RESTORE_INSTANCE"
   }
   availability_domain = "onUG:US-ASHBURN-AD-2"
-  compartment_id = data.keepass_entry.oci_compartment_id.password
+  compartment_id = module.secrets.oci_compartment_id
   create_vnic_details {
     assign_private_dns_record = "false"
     assign_public_ip = "true"
-    subnet_id = oci_core_subnet.public_subnet.id
-    nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+    subnet_id = module.network.arm_public_subnet
+    nsg_ids = [module.network.arm_net_security_group]
     # assign_ipv6ip = "true"
   }
   instance_options {
@@ -78,7 +82,7 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   }
   is_pv_encryption_in_transit_enabled = "true"
   metadata = {
-    "ssh_authorized_keys" = local.ssh.authorized_keys
+    "ssh_authorized_keys" = module.secrets.ssh_authorized_keys
   }
   # Month of free ampere instances
   # Free monthly ampere credits are:
@@ -113,7 +117,7 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
 }
 
 data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
-    subnet_id = oci_core_subnet.public_subnet.id
+    subnet_id = module.network.arm_public_subnet
 }
 
 # resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
@@ -155,38 +159,7 @@ data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
 #   ttl = "30"
 # }
 
-data "oci_identity_availability_domains" "ads" {
-  compartment_id = data.keepass_entry.oci_compartment_id.password
-}
-
-data "oci_identity_compartment" "compartment" {
-  id = data.keepass_entry.oci_compartment_id.password
-}
-
-locals {
-  common_tags = {
-    vcn_id = oci_core_vcn.vcn.id
-  }
-}
-
 resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
-  depends_on = [
-    oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-    oci_core_dhcp_options.dhcp,
-    oci_core_network_security_group.cloud_net_security_group,
-
-    oci_core_network_security_group_security_rule.ipv4_http_ingress,
-    oci_core_network_security_group_security_rule.ipv6_http_ingress,
-    
-    oci_core_network_security_group_security_rule.ipv4_https_ingress,
-    oci_core_network_security_group_security_rule.ipv6_https_ingress,
-
-    oci_core_network_security_group_security_rule.icmp_ingress,
-    oci_core_network_security_group_security_rule.icmpv6_ingress,
-
-    oci_core_network_security_group_security_rule.identd_ingress,
-    oci_core_network_security_group_security_rule.identdv6_ingress,
-  ]
   count = var.amd-1vcpu-1gb-us-qas_count
   display_name = "amd-1vcpu-1gb-us-qas-00${count.index}"
   agent_config {
@@ -218,20 +191,22 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
     recovery_action = "RESTORE_INSTANCE"
   }
   availability_domain = "onUG:US-ASHBURN-AD-3"
-  compartment_id = data.keepass_entry.oci_compartment_id.password
+  # compartment_id = data.keepass_entry.oci_compartment_id.password
+  compartment_id = module.secrets.oci_compartment_id
   create_vnic_details {
     assign_private_dns_record = "false"
     assign_public_ip = "true"
     # assign_ipv6ip = "true"
-    subnet_id = oci_core_subnet.public_subnet.id
-    nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+    subnet_id = module.network.arm_public_subnet
+    nsg_ids = [module.network.arm_net_security_group]
+    # nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
   }
   instance_options {
     are_legacy_imds_endpoints_disabled = "false"
   }
   is_pv_encryption_in_transit_enabled = "true"
   metadata = {
-    "ssh_authorized_keys" = local.ssh.authorized_keys
+    "ssh_authorized_keys" = module.secrets.ssh_authorized_keys
   }
   # Always-Free includes : 2 VM.Standard.E2.1.Micro
   shape = "VM.Standard.E2.1.Micro"
