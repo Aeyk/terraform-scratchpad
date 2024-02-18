@@ -54,22 +54,27 @@ EOF
 
 cat <<'EOT' > /etc/nginx/sites-available/irc.conf
 server {
-	location /irc/ {
+	location ^~ /irc {
 		proxy_pass http://127.0.0.1:9000/;
 		proxy_http_version 1.1;
 		proxy_set_header Connection "upgrade";
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header X-Forwarded-For $remote_addr;
 		proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-NginX-Proxy false;
+
 		# by default nginx times out connections in one minute
 		proxy_read_timeout 1d;
 	}
 }
 EOT
-
+rm /etc/nginx/sites-enabled/default
+sed -ie 's\reverseProxy: false\reverseProxy: true\' /etc/thelounge/config.js
 sudo ln -s /etc/nginx/sites-available/irc.conf /etc/nginx/sites-enabled/irc.conf
 systemctl restart nginx
-PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
+systemctl restart thelounge
 printf "password: %s\n" "$PASS"
 sudo -u thelounge sh -c 'PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
 echo "$PASS" | thelounge add me
