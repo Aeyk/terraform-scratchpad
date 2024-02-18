@@ -54,6 +54,9 @@ EOF
 
 cat <<'EOT' > /etc/nginx/sites-available/irc.conf
 server {
+  location / {
+      root /dev/null;
+  }
 	location ^~ /irc {
 		proxy_pass http://127.0.0.1:9000/;
 		proxy_http_version 1.1;
@@ -75,7 +78,8 @@ sed -ie 's\reverseProxy: false\reverseProxy: true\' /etc/thelounge/config.js
 sudo ln -s /etc/nginx/sites-available/irc.conf /etc/nginx/sites-enabled/irc.conf
 systemctl restart nginx
 systemctl restart thelounge
+sudo -u thelounge sh -c '
+PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
 printf "password: %s\n" "$PASS"
-sudo -u thelounge sh -c 'PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
 echo "$PASS" | thelounge add me
 PASS=""'
