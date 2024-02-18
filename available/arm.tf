@@ -14,21 +14,23 @@ resource "oci_core_instance" "arm_instance" {
   depends_on = [
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
     oci_core_dhcp_options.dhcp,
-    oci_core_network_security_group.me_net_security_group,   
+    oci_core_network_security_group.me_net_security_group,
+    oci_core_subnet.public_subnet,
+    oci_core_subnet.private_subnet
     # oci_core_network_security_group_security_rule.rdp_ingress,
     # oci_core_network_security_group_security_rule.rdpv6_ingress
   ]
   count = var.arm_instance_count
   display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
   agent_config {
-	is_management_disabled = "false"
-	is_monitoring_disabled = "false"
+    is_management_disabled = "false"
+    is_monitoring_disabled = "false"
 	plugins_config {
 	  desired_state = "DISABLED"
 	  name = "Vulnerability Scanning"
 	}
 	plugins_config {
-	  desired_state = "DISABLED"
+	  desired_state = "ENABLED"
 	  name = "Management Agent"
 	}
 	plugins_config {
@@ -48,13 +50,14 @@ resource "oci_core_instance" "arm_instance" {
     is_live_migration_preferred = "true"
     recovery_action = "RESTORE_INSTANCE"
   }
-    availability_domain = "onUG:US-ASHBURN-AD-2"
-    compartment_id = data.keepass_entry.oci_compartment_id.password
-    create_vnic_details {
+  availability_domain = "onUG:US-ASHBURN-AD-2"
+  compartment_id = data.keepass_entry.oci_compartment_id.password
+  create_vnic_details {
     assign_private_dns_record = "false"
     assign_public_ip = "true"
     subnet_id = oci_core_subnet.public_subnet.id
     nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+    # assign_ipv6_ip = "true"
   }
   instance_options {
     are_legacy_imds_endpoints_disabled = "false"
@@ -98,6 +101,12 @@ output "arm_public_ips" {
   value = [for u in oci_core_instance.arm_instance : u.public_ip[*]]
 }
 
+data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
+    #Required
+    # count = var.arm_instance_count
+    subnet_id = oci_core_subnet.public_subnet.id
+}
+
 resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
   depends_on = [oci_core_instance.arm_instance]
   count = var.arm_instance_count
@@ -114,6 +123,7 @@ resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
 #   name = "a"
 #   domain = "mksybr.com"
 #   type   = "AAAA"
-#   value  = oci_core_instance.arm_instance[count.index].public_ipv6
+#   value  =  data.oci_core_ipv6s.arm-1vcpu-6gb-us-qas-ipv6.ipv6s
+#   # value  =  [for u in data.oci_core_ipv6s.arm-1vcpu-6gb-us-qas-ipv6.ipv6s : u[*].ip_address]
 #   ttl = "30"
 # }

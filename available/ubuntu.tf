@@ -49,7 +49,7 @@ resource "oci_core_instance" "amd64_instance" {
 	  name = "Vulnerability Scanning"
 	}
 	plugins_config {
-	  desired_state = "DISABLED"
+	  desired_state = "ENABLED"
 	  name = "Management Agent"
 	}
 	plugins_config {
@@ -66,8 +66,8 @@ resource "oci_core_instance" "amd64_instance" {
 	}
   }
   availability_config {
-	is_live_migration_preferred = "true"
-	recovery_action = "RESTORE_INSTANCE"
+    is_live_migration_preferred = "true"
+    recovery_action = "RESTORE_INSTANCE"
   }
   availability_domain = "onUG:US-ASHBURN-AD-3"
   compartment_id = data.keepass_entry.oci_compartment_id.password
@@ -113,6 +113,12 @@ output "ubuntu_public_ips" {
   value = [for u in oci_core_instance.amd64_instance : u.public_ip[*]]
 }
 
+data "oci_core_ipv6s" "amd-1vcpu-1gb-us-qas-ipv6" {
+    #Required
+    count = var.amd64_instance_count
+    subnet_id = oci_core_subnet.public_subnet.id
+}
+
 resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-a-dns-record" {
   depends_on = [oci_core_instance.amd64_instance]
   count = var.amd64_instance_count
@@ -123,12 +129,12 @@ resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-a-dns-record" {
   ttl = "30"
 }
 
-# resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-aaaa-dns-record" {
-#   depends_on = [oci_core_instance.amd64_instance]
-#   count = var.amd64_instance_count
-#   name = "b"
-#   domain = "mksybr.com"
-#   type   = "AAAA"
-#   value  = oci_core_instance.amd64_instance[count.index].public_ipv6
-#   ttl = "30"
-# }
+resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-aaaa-dns-record" {
+  depends_on = [oci_core_instance.amd64_instance]
+  count = var.amd64_instance_count
+  name = "b"
+  domain = "mksybr.com"
+  type   = "AAAA"
+  value  =  oci_core_ipv6s.amd-1vcpu-1gb-us-qas-ipv6.ipv6s
+  ttl = "30"
+}
