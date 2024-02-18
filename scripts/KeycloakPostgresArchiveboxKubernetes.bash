@@ -199,11 +199,6 @@ spec:
   replicas: 1
 EOF
 while ! kubectl get secret postgres-cluster; do echo "Waiting for my secret. CTRL-C to exit."; sleep 1; done
-kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
-"CREATE DATABASE keycloak;"
-kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
-"CREATE USER keycloak WITH PASSWORD 'password' CREATEDB;
- GRANT ALL on schema public TO keycloak;"
 kubectl get secret -n stackgres stackgres-restapi-admin --template '{{ printf "username = %s\npassword = %s\n" (.data.k8sUsername | base64decode) ( .data.clearPassword | base64decode) }}'
 POSTGRES_PASSWORD=$(kubectl get secret postgres-cluster --template '{{ printf "%s" (index .data "superuser-password" | base64decode) }}')
 ## StackGres END
@@ -264,6 +259,11 @@ EOF
 
 
 ## Keycloak BEGIN
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE DATABASE keycloak;"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE USER keycloak WITH PASSWORD 'password' CREATEDB;
+ GRANT ALL on schema public TO keycloak;"
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -997,6 +997,12 @@ EOF
 
 
 ## Gitea BEGIN
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE USER IF NOT EXISTS gitea WITH PASSWORD 'password' CREATEDB;"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE DATABASE giteadb WITH OWNER gitea TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';"
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+ "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gitea;"
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -1059,7 +1065,20 @@ spec:
           values:
           - node1
 EOF
-cat << 'EOF' | kubectl apply -f -
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+data:
+  app.ini: |
+    [server]
+    PROTOCOL  = http
+    ROOT_URL  = http://gitea.mksybr.com/
+    HTTP_PORT = 3000
+
+kind: ConfigMap
+metadata:
+  name: gitea-configmap
+EOF
+cat << EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1085,8 +1104,8 @@ spec:
               protocol: TCP
               name: http
           volumeMounts:
-            - mountPath: /data
-              name: gitea
+          - mountPath: /data
+            name: gitea
       restartPolicy: Always
       volumes:
         - name: gitea
@@ -1163,162 +1182,35 @@ spec:
         ingress:
           class: nginx
 EOF
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: drone
-spec:
-  storageClassName: "local-path"
-  volumeName: drone
-  resources:
-    requests:
-      storage: 10Gi
-  accessModes:
-    - ReadWriteMany
-EOF
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: drone
-  labels:
-    type:
-      local
-spec:
-  local:
-    path:
-      /data/drone
-  capacity: 
-    storage:
-      10Gi
-  storageClassName: "local-path"
-  accessModes:
-    - ReadWriteMany
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - node1
-EOF
-cat << EOF | kubectl apply -f -
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  namespace: default
-  name: drone
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - pods/log
-  verbs:
-  - get
-  - create
-  - delete
-  - list
-  - watch
-  - update
-EOF
-cat <<'EOF' | kubectl apply -f -
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: drone
-  namespace: default
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: default
-roleRef:
-  kind: Role
-  name: drone
-  apiGroup: rbac.authorization.k8s.io
-EOF
-cat <<'EOF' | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: drone
-  labels:
-    app.kubernetes.io/name: drone
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: drone
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: drone
-    spec:
-      containers:
-      - name: drone
-        image: drone/drone:latest
-        ports:
-        - containerPort: 80
-          hostPort: 3002
-        env:
-        - name: DRONE_RPC_HOST
-          value: drone.mksybr.com
-        - name: DRONE_RPC_PROTO
-          value: http
-        - name: DRONE_RPC_SECRET
-          value: super-duper-secret
-        - name: DRONE_GITEA_SERVER
-          value: https://gitea.mksybr.com
-        - name: DRONE_GITEA_CLIENT_ID
-          value: 3a2a
-        - name: DRONE_GITEA_CLIENT_SECRET
-          value: 8ad9
-        - name: DRONE_RUNNER_CAPACITY
-          value: "1"
-        - name: DRONE_SERVER_HOST
-          value: http://drone.mksybr.com
-        - name: DRONE_SERVER_PROTO
-          value: http
-        volumeMounts:
-          - mountPath: /var/lib/drone
-            name: drone
-      restartPolicy: Always
-      volumes:
-        - name: drone
-          persistentVolumeClaim:
-            claimName: drone
-EOF
-cat <<'EOF' | kubectl apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  name: drone
-  namespace: default
-spec:
-  ports:
-  - name: https
-    port: 3002
-    protocol: TCP
-    targetPort: 80
-  selector:
-    app: drone
-  sessionAffinity: None
-  type: LoadBalancer
+helm repo add drone https://charts.drone.io
+cat << EOF |  helm install --namespace drone drone drone/drone -f -
+env:
+  ## REQUIRED: Set the user-visible Drone hostname, sans protocol.
+  ## Ref: https://docs.drone.io/installation/reference/drone-server-host/
+  ##
+  DRONE_SERVER_HOST: drone.mksybr.com
+  ## The protocol to pair with the value in DRONE_SERVER_HOST (http or https).
+  ## Ref: https://docs.drone.io/installation/reference/drone-server-proto/
+  ##
+  DRONE_SERVER_PROTO: https
+  ## REQUIRED: Set the secret secret token that the Drone server and its Runners will use
+  ## to authenticate. This is commented out in order to leave you the ability to set the
+  ## key via a separately provisioned secret (see existingSecretName above).
+  ## Ref: https://docs.drone.io/installation/reference/drone-rpc-secret/
+  ##
+
+  # TODO(automatically register and store in secret)
+  DRONE_RPC_SECRET: 
+  DRONE_GITEA_CLIENT_ID: 
+  DRONE_GITEA_CLIENT_SECRET: 
+  DRONE_GITEA_SERVER: https://gitea.mksybr.com
 EOF
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: drone
+  namespace: drone
   annotations:
     cert-manager.io/cluster-issuer: "drone-letsencrypt-prod"
 spec:
@@ -1331,7 +1223,7 @@ spec:
           service:
               name: drone
               port:
-                number: 80
+                number: 8080
         path: /
         pathType: Prefix
   tls:
@@ -1350,6 +1242,7 @@ popd
 # Limit Elasticsearch memory usage
 # Wire up Keycloak for authentication for ELK, ArchiveBox
 # Jenkins/Drone
+## Drone <-> Gitea automatic secret creation and sync
 # ArgoCD?
 # Gitea 
 #### initContainer, Postgres, Keycloak
