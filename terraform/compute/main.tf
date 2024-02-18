@@ -139,7 +139,6 @@ resource "digitalocean_record" "keycloak-arm-1vcpu-6gb-us-qas-a-dns-record" {
 #   ttl = "30"
 # }
 
-# -*- mode: ruby; -*-
 data "oci_identity_availability_domains" "ads" {
   compartment_id = data.keepass_entry.oci_compartment_id.password
 }
@@ -148,18 +147,10 @@ data "oci_identity_compartment" "compartment" {
   id = data.keepass_entry.oci_compartment_id.password
 }
 
-output "all-availability-domains-in-your-tenancy" {
-  value = data.oci_identity_availability_domains.ads.availability_domains
-}
-
 locals {
   common_tags = {
     vcn_id = oci_core_vcn.vcn.id
   }
-}
-
-variable "amd-1vcpu-1gb-us-qas_count" {
-  default = 2
 }
 
 resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
