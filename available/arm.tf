@@ -6,10 +6,6 @@ resource "oci_core_network_security_group" "me_net_security_group" {
   vcn_id = oci_core_vcn.vcn.id
 }
 
-variable "arm-1vcpu-6gb-us-qas_count" {
-  default = 4
-}
-
 resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   depends_on = [
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
@@ -96,10 +92,6 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
     private_key = "${file(var.private_ssh_key)}"
     host     = "${self.public_ip}"
   }
-}
-
-output "arm_public_ips" {
-  value = [for u in oci_core_instance.arm-1vcpu-6gb-us-qas : u.public_ip[*]]
 }
 
 data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
