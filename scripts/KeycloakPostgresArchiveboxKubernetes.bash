@@ -554,7 +554,6 @@ token_url = https://keycloak.mksybr.com/realms/dev/protocol/openid-connect/token
 api_url = https://keycloak.mksybr.com/realms/dev/protocol/openid-connect/userinfo
 role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 EOF
-# TODO(Malik): fix ro mount error 
 cat << EOF | kubectl patch deployments -n ingress-nginx grafana --patch="$(cat -)"
 spec:
   template:
@@ -1501,20 +1500,283 @@ EOF
 
 
 ## Paperless-NGX BEGIN
-helm repo add k8s-at-home https://k8s-at-home.com/charts/
-helm repo update
-helm install paperless k8s-at-home/paperless
+curl -L https://github.com/kubernetes/kompose/releases/download/v1.26.0/kompose-linux-amd64 -o kompose
+sudo mv kompose /usr/local/bin
+git clone https://github.com/paperless-ngx/paperless-ngx/
+cd paperless-ngx/docker/compose
+mkdir ../kubernetes
+kompose convert -f docker-compose.postgres.yml
+
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-paperless-user --from-file=password=/dev/stdin -o json
+
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
+"CREATE DATABASE paperless;
+CREATE USER paperless WITH ENCRYPTED PASSWORD '$(kubectl get secrets postgres-paperless-user -o jsonpath='{.data.password}' | base64 -d)' CREATEDB;
+GRANT ALL ON DATABASE paperless TO paperless;
+GRANT USAGE, CREATE ON SCHEMA PUBLIC TO paperless;
+ALTER DATABASE paperless OWNER TO paperless;"
+
+kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://paperless:$(kubectl get secrets postgres-paperless-user -o jsonpath='{.data.password}' | base64 -d)@postgres-cluster/paperless" -c \
+"GRANT ALL on schema public TO paperless;"
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-consume
+  name: paperless-consume
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-data
+  name: paperless-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-export
+  name: paperless-export
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-media
+  name: paperless-media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: paperless-redis-data
+  name: paperless-redis-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: paperless-redis
+  name: paperless-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: paperless-redis
+    spec:
+      containers:
+        - image: docker.io/library/redis:7
+          name: paperless-redis
+          volumeMounts:
+            - mountPath: /data
+              name: paperless-redis-data
+      restartPolicy: Always
+      volumes:
+        - name: paperless-redis-data
+          persistentVolumeClaim:
+            claimName: paperless-redis-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: paperless-redis
+  name: paperless-redis
+spec:
+  ports:
+    - name: paperless-redis
+      port: 6379
+      targetPort: 6379
+  selector:
+    app: paperless-redis
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+  name: paperless-redis
+spec:
+  externalName: paperless-redis.default.svc.cluster.local
+  sessionAffinity: None
+  type: ExternalName
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: paperless-webserver
+  name: paperless-webserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-webserver
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: paperless-webserver
+    spec:
+      containers:
+        - env:
+            - name: PAPERLESS_REDIS
+              value: redis://paperless-redis.default.svc.cluster.local:6379
+            - name: PAPERLESS_DBHOST
+              value: postgres-cluster.default.svc.cluster.local
+            - name: PAPERLESS_DBPORT
+              value: "5432"
+            - name: PAPERLESS_DBNAME
+              value: paperless
+              # TODO(Malik): resolve db permissions issues
+            - name: PAPERLESS_DBUSER
+              value: postgres # paperless
+            - name: PAPERLESS_DBPASS
+              value: $(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d) 
+              # $(kubectl get secrets  postgres-paperless-user  -o jsonpath='{.data.password}' | base64 -d)
+            - name: PAPERLESS_URL
+              value: https://paperless.mksybr.com
+          image: ghcr.io/paperless-ngx/paperless-ngx:latest
+          name: paperless-webserver
+          ports:
+            - containerPort: 8000
+          resources: {}
+          volumeMounts:
+            - mountPath: /usr/src/paperless/data
+              name: paperless-data
+            - mountPath: /usr/src/paperless/media
+              name: paperless-media
+            - mountPath: /usr/src/paperless/export
+              name: paperless-export
+            - mountPath: /usr/src/paperless/consume
+              name: paperless-consume
+      restartPolicy: Always
+      volumes:
+        - name: paperless-data
+          persistentVolumeClaim:
+            claimName: paperless-data
+        - name: paperless-media
+          persistentVolumeClaim:
+            claimName: paperless-media
+        - name: paperless-export
+          persistentVolumeClaim:
+            claimName: paperless-export
+        - name: paperless-consume
+          persistentVolumeClaim:
+            claimName: paperless-consume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: paperless-webserver
+  name: paperless-webserver
+spec:
+  ports:
+    - name: http
+      port: 8003
+      targetPort: 8000
+  selector:
+    app: paperless-webserver
+  type: LoadBalancer
+status:
+  loadBalancer: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: paperless-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: paperless-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: paperless
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: paperless.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+              name: paperless-webserver
+              port:
+                number: 8003
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - paperless.mksybr.com
+    secretName: paperless-letsencrypt-prod
+EOF
 ## Paperless-NGX END
 popd
 
 
 ## TODO:
 # Change elasticsearch/kibana name quickstart -> ELK
-# Better secret management
 # Fix ElasticSearch Deployment/Service/Ingress
 # Limit Elasticsearch memory usage
 # Wire up Keycloak for authentication for ELK, ArchiveBox
-# Jenkins/Drone
 ## Drone <-> Gitea automatic secret creation and sync
 # ArgoCD?
 #### initContainer, Postgres, Keycloak
