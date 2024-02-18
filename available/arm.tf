@@ -1,68 +1,68 @@
-resource "oci_core_network_security_group" "me_net_security_group" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  display_name = "me-mksybr-network-security-group"
-  compartment_id = data.keepass_entry.oci_compartment_id.password
-  vcn_id = oci_core_vcn.vcn.id
-}
+    resource "oci_core_network_security_group" "me_net_security_group" {
+      depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                     oci_core_dhcp_options.dhcp]
+      display_name = "me-mksybr-network-security-group"
+      compartment_id = data.keepass_entry.oci_compartment_id.password
+      vcn_id = oci_core_vcn.vcn.id
+    }
 
-variable "arm-1vcpu-6gb-us-qas_count" {
-  default = 4
-}
+    variable "arm-1vcpu-6gb-us-qas_count" {
+      default = 4
+    }
 
-resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
-  depends_on = [
-    oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-    oci_core_dhcp_options.dhcp,
-    oci_core_network_security_group.me_net_security_group,
-    oci_core_subnet.public_subnet,
-    oci_core_subnet.private_subnet
-    # oci_core_network_security_group_security_rule.rdp_ingress,
-    # oci_core_network_security_group_security_rule.rdpv6_ingress
-  ]
-  count = var.arm-1vcpu-6gb-us-qas_count
-  display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
-  agent_config {
-    is_management_disabled = "false"
-    is_monitoring_disabled = "false"
-    plugins_config {
-      desired_state = "DISABLED"
-      name = "Vulnerability Scanning"
-    }
-    plugins_config {
-      desired_state = "ENABLED"
-      name = "Management Agent"
-    }
-    plugins_config {
-      desired_state = "ENABLED"
-      name = "Custom Logs Monitoring"
-    }
-    plugins_config {
-      desired_state = "ENABLED"
-      name = "Compute Instance Monitoring"
-    }
-    plugins_config {
-      desired_state = "DISABLED"
-      name = "Bastion"
-    }
-  }
-  availability_config {
-    is_live_migration_preferred = "true"
-    recovery_action = "RESTORE_INSTANCE"
-  }
-  availability_domain = "onUG:US-ASHBURN-AD-2"
-  compartment_id = data.keepass_entry.oci_compartment_id.password
-  create_vnic_details {
-    assign_private_dns_record = "false"
-    assign_public_ip = "true"
-    subnet_id = oci_core_subnet.public_subnet.id
-    nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
-    assign_ipv6ip = "true"
-  }
-  instance_options {
-    are_legacy_imds_endpoints_disabled = "false"
-  }
-  is_pv_encryption_in_transit_enabled = "true"
+    resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
+      depends_on = [
+        oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+        oci_core_dhcp_options.dhcp,
+        oci_core_network_security_group.me_net_security_group,
+        oci_core_subnet.public_subnet,
+        oci_core_subnet.private_subnet
+        # oci_core_network_security_group_security_rule.rdp_ingress,
+        # oci_core_network_security_group_security_rule.rdpv6_ingress
+      ]
+      count = var.arm-1vcpu-6gb-us-qas_count
+      display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
+      agent_config {
+        is_management_disabled = "false"
+        is_monitoring_disabled = "false"
+        plugins_config {
+          desired_state = "DISABLED"
+          name = "Vulnerability Scanning"
+        }
+        plugins_config {
+          desired_state = "ENABLED"
+          name = "Management Agent"
+        }
+        plugins_config {
+          desired_state = "ENABLED"
+          name = "Custom Logs Monitoring"
+        }
+        plugins_config {
+          desired_state = "ENABLED"
+          name = "Compute Instance Monitoring"
+        }
+        plugins_config {
+          desired_state = "DISABLED"
+          name = "Bastion"
+        }
+      }
+      availability_config {
+        is_live_migration_preferred = "true"
+        recovery_action = "RESTORE_INSTANCE"
+      }
+      availability_domain = "onUG:US-ASHBURN-AD-2"
+      compartment_id = data.keepass_entry.oci_compartment_id.password
+      create_vnic_details {
+        assign_private_dns_record = "false"
+        assign_public_ip = "true"
+        subnet_id = oci_core_subnet.public_subnet.id
+        nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+        # assign_ipv6ip = "true"
+      }
+      instance_options {
+        are_legacy_imds_endpoints_disabled = "false"
+      }
+      is_pv_encryption_in_transit_enabled = "true"
   metadata = {
     "ssh_authorized_keys" = local.ssh.authorized_keys
   }
@@ -76,7 +76,8 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
     ocpus = "1"
   }
   source_details {
-    source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq"
+  # source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq" # Oracle Linux 9 doesn't have support for OLCNE on AArch64
+    source_id = "ocid1.image.oc1.iad.aaaaaaaa65b4p3cuexre4cfwkyig4js4qcv7sekhp3syhed5h4y4de3b4xja" 
     source_type = "image"
   }
   # provisioner "file" {
