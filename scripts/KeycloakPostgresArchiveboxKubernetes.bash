@@ -1231,7 +1231,9 @@ data:
     DOMAIN           = gitea.mksybr.com
     HTTP_PORT        = 3000
     ROOT_URL         = https://gitea.mksybr.com/
+    SSH_DOMAIN       = gitea.mksybr.com
     DISABLE_SSH      = false
+    START_SSH_SERVER = true
     SSH_PORT         = 22
     LFS_START_SERVER = true
     LFS_CONTENT_PATH = /data/gitea/lfs
@@ -1319,6 +1321,11 @@ spec:
               hostPort: 3001
               protocol: TCP
               name: http
+          ports:
+            - containerPort: 22
+              hostPort: 2222
+              protocol: TCP
+              name: ssh
           volumeMounts:
           - mountPath: /data
             name: gitea
@@ -1340,6 +1347,23 @@ spec:
     port: 3001
     protocol: TCP
     targetPort: 3000
+  selector:
+    app: gitea
+  sessionAffinity: None
+  type: LoadBalancer
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitea-ssh
+  namespace: default
+spec:
+  ports:
+  - name: ssh
+    port: 2222
+    protocol: TCP
+    targetPort: 22
   selector:
     app: gitea
   sessionAffinity: None
