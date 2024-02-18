@@ -139,7 +139,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_http_ingress" {
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 80
@@ -157,7 +157,7 @@ resource "oci_core_network_security_group_security_rule" "ipv6_http_ingress" {
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 80
@@ -174,7 +174,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_https_ingress" {
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 443
@@ -191,7 +191,7 @@ resource "oci_core_network_security_group_security_rule" "ipv6_https_ingress" {
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 443
@@ -208,7 +208,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_caprover_ingress"
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 3000
@@ -225,7 +225,7 @@ resource "oci_core_network_security_group_security_rule" "ipv6_caprover_ingress"
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 3000
@@ -242,7 +242,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_https_docker_ingr
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 996
@@ -259,7 +259,7 @@ resource "oci_core_network_security_group_security_rule" "ipv6_https_docker_ingr
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 996
@@ -276,7 +276,7 @@ resource "oci_core_network_security_group_security_rule" "tcp4_container_network
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 7946
@@ -293,7 +293,7 @@ resource "oci_core_network_security_group_security_rule" "tcp6_container_network
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 7946
@@ -310,7 +310,7 @@ resource "oci_core_network_security_group_security_rule" "tcp4_container_overlay
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 4789
@@ -327,7 +327,7 @@ resource "oci_core_network_security_group_security_rule" "tcp6_container_overlay
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 4789
@@ -344,7 +344,7 @@ resource "oci_core_network_security_group_security_rule" "tcp4_docker_swarm_api_
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 2377
@@ -361,7 +361,7 @@ resource "oci_core_network_security_group_security_rule" "udp4_docker_swarm_api_
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   udp_options {
     destination_port_range {
       min = 2377
@@ -377,7 +377,7 @@ resource "oci_core_network_security_group_security_rule" "udp6_docker_swarm_api_
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   udp_options {
     destination_port_range {
       min = 2377
@@ -394,7 +394,7 @@ resource "oci_core_network_security_group_security_rule" "udp4_container_network
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   udp_options {
     destination_port_range {
       min = 7946
@@ -411,7 +411,7 @@ resource "oci_core_network_security_group_security_rule" "udp6_container_network
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   udp_options {
     destination_port_range {
       min = 4789
@@ -428,7 +428,7 @@ resource "oci_core_network_security_group_security_rule" "udp4_container_overlay
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   udp_options {
     destination_port_range {
       min = 4789
@@ -445,7 +445,7 @@ resource "oci_core_network_security_group_security_rule" "udp6_container_overlay
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   udp_options {
     destination_port_range {
       min = 4789
@@ -462,7 +462,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_docker_swarm_api_
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   udp_options {
     destination_port_range {
       min = 2377
@@ -479,7 +479,7 @@ resource "oci_core_network_security_group_security_rule" "ipv6_docker_swarm_api_
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 2377
@@ -519,7 +519,7 @@ resource "oci_core_network_security_group_security_rule" "identd_ingress" {
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 113
@@ -536,7 +536,7 @@ resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 113
@@ -554,7 +554,7 @@ resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
 #   direction = "INGRESS"
 #   source = "172.56.0.0/16"
 #   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-#   stateless = "false"
+#   stateless = "true"
 #   tcp_options {
 #     destination_port_range {
 #       min = 3389
@@ -571,7 +571,7 @@ resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
 #   direction = "INGRESS"
 #   source = "2607:fb90:e210::/48"
 #   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-#   stateless = "false"
+#   stateless = "true"
 #   tcp_options {
 #     destination_port_range {
 #       min = 3389
@@ -588,7 +588,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_kubernetes_ingres
   direction = "INGRESS"
   source = "0.0.0.0/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 6443
@@ -606,7 +606,7 @@ resource "oci_core_network_security_group_security_rule" "ipv6_kubernetes_ingres
   direction = "INGRESS"
   source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "false"
+  stateless = "true"
   tcp_options {
     destination_port_range {
       min = 6443
@@ -614,3 +614,99 @@ resource "oci_core_network_security_group_security_rule" "ipv6_kubernetes_ingres
     }
   }
 }
+
+resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_internal_http" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  count = 4
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    destination_port_range {
+      min = 8080
+      max = 8080
+    }
+  }   
+}
+
+resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_internal_https" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  count = 4
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    destination_port_range {
+      min = 8443
+      max = 8443
+    }
+  }   
+}
+
+resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_health" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  count = 4
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    destination_port_range {
+      min = 9990
+      max = 9990
+    }
+  }   
+}
+
+resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_infinispan" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  count = 4
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    destination_port_range {
+      min = 11222
+      max = 11222
+    }
+  }   
+}
+
+# resource "oci_core_network_security_group_security_rule" "ipv6_keycloak_ingress_loadbalancer" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+#   count = 4
+#   protocol = 6 # TCP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 80
+#       max = 80
+#     }
+#   }
+# }
+
+

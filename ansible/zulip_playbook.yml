@@ -7,5 +7,21 @@
     - name: hello world
       ansible.builtin.debug:
         msg: Hello World
+    - name: open http and https ports
+      become: true
+      become_user: root
+      ansible.builtin.iptables:
+        action: insert # -I 
+        chain: INPUT # -I INPUT
+        # -m multiport
+        # -m state
+        match: ["state"]
+        ctstate: NEW # --state NEW
+        protocol: tcp # -p tcp
+        destination_ports: 
+          - "80"
+          - "443" # --dports 80,443
+        jump: ACCEPT # -j ACCEPT
+
 
 

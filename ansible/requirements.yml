@@ -1,0 +1,3 @@
+- src:  https://git.coopdevs.org/coopdevs/tooling/zulip/zulip-provisioning.git
+  version: main
+  name: zulip
