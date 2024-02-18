@@ -24,6 +24,14 @@ variable "database_password" {
  sensitive = true
 }
 
+data "keepass_entry" "aws_access_key" {
+  path = "Root/AWS Access Key"
+}
+
+data "keepass_entry" "aws_secret_key" {
+  path = "Root/AWS Secret Key"
+}
+
 data "keepass_entry" "digitalocean_token" {
   path = "Root/DigitalOcean Token"
 }

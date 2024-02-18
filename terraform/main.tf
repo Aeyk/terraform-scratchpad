@@ -42,3 +42,25 @@ provider "oci" {
   fingerprint = data.keepass_entry.oci_fingerprint.password
   region = "us-ashburn-1"
 }
+
+resource "oci_identity_compartment" "cloud-mksybr" {
+    compartment_id = data.keepass_entry.oci_compartment_id.password
+    description = "..."
+    name = "cloud-mksybr"
+}
+
+resource "local_file" "ansible_inventory" {
+  content = templatefile("../ansible/inventory.ini.tmpl", {
+    # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
+    arm-1vcpu-6gb-us-qas-public_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
+  })
+  filename = "../ansible/inventory.ini"
+}
+
+# TODO(malik): external storage for tfstate
+# resource "oci_objectstorage_object" "terraform_state_storage" {
+#     bucket = "terraform_state_storage"
+#     content = var.object_content
+#     namespace = "IAD"
+#     object = var.object_object
+# }
