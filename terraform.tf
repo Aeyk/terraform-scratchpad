@@ -47,6 +47,9 @@ data "keepass_entry" "oci_compartment_id" {
 data "keepass_entry" "oci_user_id" {
   path = "Root/Oracle User ID"
 }
+data "keepass_entry" "phone_public_ssh_key_contents" {
+  path = "Root/Phone Key"
+}
 
 provider "digitalocean" {
   token = data.keepass_entry.digitalocean_token.password
@@ -466,7 +469,10 @@ resource "oci_core_instance" "arm_instance" {
 	}
 	is_pv_encryption_in_transit_enabled = "true"
 	metadata = {
-		"ssh_authorized_keys" = file(var.public_ssh_key)
+	  "ssh_authorized_keys" = <<EOT
+${file(var.public_ssh_key)}
+${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}
+EOT
 	}
   # Month of free ampere instances
   # Free monthly ampere credits are:

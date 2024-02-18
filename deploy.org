@@ -1,0 +1,278 @@
+* :) :crypt:
+-----BEGIN PGP MESSAGE-----
+
+hF4DLXtVwF8Ll3ESAQdAlyu4JvMa3DNuS98wXyqxZeM8pRAf0z757xYq9jojcjQw
++9X+bzLg0JTq5ODScoEuCFxf4GYC5aGS4mZy62yKizWkOvbjdqP7ZDQPbuVzyxnD
+0o4BcJsq8DjD9lFErF1VQ+MhKX+T2PMn9TcQ7ErKFCMCmahguekuNBhtAbv281JW
+MznIWHaPQ0nVMlJ9TiAZN5LLE63M0ui6+D8mBuLeYJQtGt/Y6ukpZHZCnY0142x3
+HJ7Q22ghh44+S0O/buNg0vFYeTpIpEJTd8R/f/rqmXVLYNsILP5p3zsSjY7+wDqs
+=R+lO
+-----END PGP MESSAGE-----
+
+* Clear old known_hosts
+#+begin_src sh :dir ~
+ssh-keygen -f "/home/me/.ssh/known_hosts" -R "chat.mksybr.com"
+#+end_src
+
+#+RESULTS:
+:results:
+:end:
+
+* Test Connection
+#+begin_src sh
+whoami
+hostname
+#+end_src
+
+#+RESULTS:
+:results:
+root
+ubuntu000-cloud-mksybr
+:end:
+* Configure Firewall
+Allow ingress for HTTPS (443), identd (113), IRC (6667, optionally
+6660-6669, 7000).
+
+#+begin_src bash
+systemctl start iptables
+systemctl start ip6tables
+cp /etc/iptables/rules.v{4,6} /tmp # backup incase of havok
+iptables -L --line-numbers # get line numbers
+ip6tables -L --line-numbers
+for port in 80 113 443 $(seq 6660 6669) 7000; do
+	iptables -I INPUT 6 -m state --state NEW -p tcp --dport $port -j ACCEPT
+done
+netfilter-persistent save
+iptables -L --line-numbers # make sure accept 80,443 rules addes
+ip6tables -L --line-numbers
+#+end_src
+
+#+RESULTS:
+:results:
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+2    ACCEPT     icmp --  anywhere             anywhere            
+3    ACCEPT     all  --  anywhere             anywhere            
+4    ACCEPT     udp  --  anywhere             anywhere             udp spt:ntp
+5    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+6    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+7    ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+8    ACCEPT     icmp --  anywhere             anywhere            
+9    ACCEPT     all  --  anywhere             anywhere            
+10   ACCEPT     udp  --  anywhere             anywhere             udp spt:ntp
+11   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+12   REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+13   ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+14   ACCEPT     icmp --  anywhere             anywhere            
+15   ACCEPT     all  --  anywhere             anywhere            
+16   ACCEPT     udp  --  anywhere             anywhere             udp spt:ntp
+17   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+18   REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+2    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+3    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    InstanceServices  all  --  anywhere             link-local/16       
+2    InstanceServices  all  --  anywhere             link-local/16       
+3    InstanceServices  all  --  anywhere             link-local/16       
+
+Chain InstanceServices (3 references)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  anywhere             169.254.0.2          owner UID match root tcp dpt:iscsi-target /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+2    ACCEPT     tcp  --  anywhere             169.254.2.0/24       owner UID match root tcp dpt:iscsi-target /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+3    ACCEPT     tcp  --  anywhere             169.254.4.0/24       owner UID match root tcp dpt:iscsi-target /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+4    ACCEPT     tcp  --  anywhere             169.254.5.0/24       owner UID match root tcp dpt:iscsi-target /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+5    ACCEPT     tcp  --  anywhere             169.254.0.2          tcp dpt:http /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+6    ACCEPT     udp  --  anywhere             169.254.169.254      udp dpt:domain /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+7    ACCEPT     tcp  --  anywhere             169.254.169.254      tcp dpt:domain /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+8    ACCEPT     tcp  --  anywhere             169.254.0.3          owner UID match root tcp dpt:http /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+9    ACCEPT     tcp  --  anywhere             169.254.0.4          tcp dpt:http /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+10   ACCEPT     tcp  --  anywhere             169.254.169.254      tcp dpt:http /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+11   ACCEPT     udp  --  anywhere             169.254.169.254      udp dpt:bootps /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+12   ACCEPT     udp  --  anywhere             169.254.169.254      udp dpt:tftp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+13   ACCEPT     udp  --  anywhere             169.254.169.254      udp dpt:ntp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+14   REJECT     tcp  --  anywhere             link-local/16        tcp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */ reject-with tcp-reset
+15   REJECT     udp  --  anywhere             link-local/16        udp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */ reject-with icmp-port-unreachable
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+2    ACCEPT     icmp --  anywhere             anywhere            
+3    ACCEPT     all  --  anywhere             anywhere            
+4    ACCEPT     udp  --  anywhere             anywhere             udp spt:ntp
+5    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+6    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:bbs
+7    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6669
+8    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6668
+9    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ircd
+10   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6666
+11   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6665
+12   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6664
+13   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6663
+14   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6662
+15   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6661
+16   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:6660
+17   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:https
+18   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:auth
+19   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:http
+20   REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+21   ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+22   ACCEPT     icmp --  anywhere             anywhere            
+23   ACCEPT     all  --  anywhere             anywhere            
+24   ACCEPT     udp  --  anywhere             anywhere             udp spt:ntp
+25   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+26   REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+27   ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+28   ACCEPT     icmp --  anywhere             anywhere            
+29   ACCEPT     all  --  anywhere             anywhere            
+30   ACCEPT     udp  --  anywhere             anywhere             udp spt:ntp
+31   ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+32   REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+2    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+3    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    InstanceServices  all  --  anywhere             link-local/16       
+2    InstanceServices  all  --  anywhere             link-local/16       
+3    InstanceServices  all  --  anywhere             link-local/16       
+
+Chain InstanceServices (3 references)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  anywhere             169.254.0.2          owner UID match root tcp dpt:iscsi-target /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+2    ACCEPT     tcp  --  anywhere             169.254.2.0/24       owner UID match root tcp dpt:iscsi-target /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+3    ACCEPT     tcp  --  anywhere             169.254.4.0/24       owner UID match root tcp dpt:iscsi-target /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+4    ACCEPT     tcp  --  anywhere             169.254.5.0/24       owner UID match root tcp dpt:iscsi-target /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+5    ACCEPT     tcp  --  anywhere             169.254.0.2          tcp dpt:http /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+6    ACCEPT     udp  --  anywhere             169.254.169.254      udp dpt:domain /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+7    ACCEPT     tcp  --  anywhere             169.254.169.254      tcp dpt:domain /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+8    ACCEPT     tcp  --  anywhere             169.254.0.3          owner UID match root tcp dpt:http /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+9    ACCEPT     tcp  --  anywhere             169.254.0.4          tcp dpt:http /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+10   ACCEPT     tcp  --  anywhere             169.254.169.254      tcp dpt:http /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+11   ACCEPT     udp  --  anywhere             169.254.169.254      udp dpt:bootps /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+12   ACCEPT     udp  --  anywhere             169.254.169.254      udp dpt:tftp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+13   ACCEPT     udp  --  anywhere             169.254.169.254      udp dpt:ntp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */
+14   REJECT     tcp  --  anywhere             link-local/16        tcp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */ reject-with tcp-reset
+15   REJECT     udp  --  anywhere             link-local/16        udp /* See the Oracle-Provided Images section in the Oracle Cloud Infrastructure documentation for security impact of modifying or removing this rule */ reject-with icmp-port-unreachable
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+:end:
+
+* Install
+Install NGINX, TheLounge, certbot, nullidentd
+#+begin_src bash :results none
+1apt-get update
+apt-get install -y curl nginx certbot python3-certbot-nginx net-tools nullidentd
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 
+curl -sL https://github.com/thelounge/thelounge-deb/releases/download/v4.4.0/thelounge_4.4.0_all.deb -o thelounge.deb
+apt-get update; apt-get install -qq -y nodejs
+dpkg -i thelounge.deb
+snap install core
+snap refresh core
+snap install --classic certbot
+#+end_src
+
+* Configure Services
+#+begin_src text :tangle /etc/nginx/conf.d/chat.mksybr.com.conf
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+	root /var/www/html/;
+	server_name chat.mksybr.com;
+}
+#+end_src
+#+begin_src text :tangle /etc/nginx/sites-available/irc.conf
+server {
+	location ^~ /irc/ {
+		proxy_pass http://127.0.0.1:9000/;
+		proxy_http_version 1.1;
+		proxy_set_header Connection "upgrade";
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header X-Forwarded-For $remote_addr;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_read_timeout 1d;
+	}
+}
+#+end_src
+
+#+begin_src bash
+usermod thelounge -s /bin/bash
+chown -R thelounge:thelounge /etc/thelounge
+certbot --nginx --email mksybr@gmail.com --agree-tos --no-eff-email -d chat.mksybr.com
+rm /etc/nginx/sites-enabled/default
+sed -ie 's\reverseProxy: false\reverseProxy: true\' /etc/thelounge/config.js
+sudo ln -s /etc/nginx/sites-available/irc.conf /etc/nginx/sites-enabled/irc.conf
+systemctl restart nginx
+systemctl restart thelounge
+sudo -u thelounge sh -c '
+PASS=$(dd if=/dev/random bs=16 count=1 status=none | base64)
+printf "password: %s\n" "$PASS"
+echo "$PASS" | thelounge add me
+PASS=""'
+#+end_src
+
+#+RESULTS:
+:results:
+usermod: no changes
+Requesting a certificate for chat.mksybr.com
+
+Certbot failed to authenticate some domains (authenticator: nginx). The Certificate Authority reported these problems:
+  Domain: chat.mksybr.com
+  Type:   connection
+  Detail: During secondary validation: 129.80.53.23: Fetching http://chat.mksybr.com/.well-known/acme-challenge/S7p42mwaMrwXEf2ERFW35vPLoneMhJ9nj7K1Dej09c0: Error getting validation data
+
+Hint: The Certificate Authority failed to verify the temporary nginx configuration changes made by Certbot. Ensure the listed domains point to this nginx server and that it is accessible from the internet.
+
+password: SprG4o0n4XES0h3O38yxrA==
+2023-06-25 23:16:17 [PROMPT] Enter password: 
+2023-06-25 23:16:18 [PROMPT] Save logs to disk? (yes) 
+:end:
+
+
+** Configure nullidentd
+#+begin_src text :tangle /etc/systemd/system/identd@.service
+[Unit]
+Description=per connection null identd
+ 
+[Service]
+User=nobody
+ExecStart=/usr/sbin/nullidentd unremarkable
+StandardInput=socket
+StandardOutput=socket
+#+end_src
+
+#+begin_src text :tangle /etc/systemd/system/ident.socket
+[Unit]
+Description=socket for ident
+ 
+[Socket]
+ListenStream=113
+Accept=yes
+ 
+[Install]
+WantedBy=sockets.target
+#+end_src
+
