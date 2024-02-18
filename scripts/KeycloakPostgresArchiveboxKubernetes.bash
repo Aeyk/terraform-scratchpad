@@ -1232,6 +1232,108 @@ spec:
     secretName: drone-letsencrypt-prod
 EOF
 ##  Drone CI END
+## Datasette BEGIN
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: datasette-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: datasette-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datasette
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datasette
+  template:
+    metadata:
+      labels:
+        app: datasette
+    spec:
+      containers:
+      - name: datasette
+        image: datasetteproject/datasette
+        command:
+        - sh
+        - -c
+        args:
+        - |-
+          # Install some plugins
+          pip install \
+            datasette-debug-asgi \
+            datasette-cluster-map \
+            datasette-psutil
+          # Download a DB (using Python because curl/wget are not available)
+          python -c 'import urllib.request; urllib.request.urlretrieve("https://global-power-plants.datasettes.com/global-power-plants.db", "/home/global-power-plants.db")'
+          # Start Datasette, on 0.0.0.0 to allow external traffic
+          datasette -h 0.0.0.0 /home/global-power-plants.db
+        ports:
+        - containerPort: 8001
+          protocol: TCP
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: datasette
+  namespace: default
+spec:
+  ports:
+  - name: https
+    port: 8001
+    protocol: TCP
+    targetPort: 8001
+  selector:
+    app: datasette
+  sessionAffinity: None
+  type: LoadBalancer
+EOF
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: datasette
+  annotations:
+    cert-manager.io/cluster-issuer: "datasette-letsencrypt-prod"
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: datasette.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+              name: datasette
+              port:
+                number: 8001
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - datasette.mksybr.com
+    secretName: datasette-letsencrypt-prod
+EOF
+## Datasette END
+
 popd
 
 
