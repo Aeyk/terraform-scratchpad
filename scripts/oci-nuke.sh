@@ -2,6 +2,7 @@
 usage_string="Usage: oci-nuke.sh keepassxc-database
 Destroy everything in Oracle inside of ASHBURN-AD-1 and specified tenancy and compartment, searches for the two entries in keepassxc-database under the names 'Oracle Tenancy ID' and 'Oracle Compartment ID'"
 
+## TODO check for keepassxc-cli and jq and die if not exist
 
 if ! test -z "$DEBUG"; then
     debug_oci_string=--debug
