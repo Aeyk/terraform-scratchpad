@@ -398,8 +398,8 @@ metadata:
   name: keycloak
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    kubernetes.io/ingress.class: "nginx"
 spec:
+  ingressClassName: "nginx"
   rules:
   - host: keycloak.mksybr.com
     http:
