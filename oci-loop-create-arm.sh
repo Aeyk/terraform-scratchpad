@@ -4,6 +4,9 @@ read -r -s -p "Cloud Tokens.kdbx password: " password
 
 while true; do
     echo "$password" | terraform plan -out /tmp/i.plan
-    echo "$password" | terrraform apply /tmp/i.plan
-    sleep
+    echo "$password" | terraform apply /tmp/i.plan
+    echo "sleeping"
+    sleep 10
 done
+
+unset password
