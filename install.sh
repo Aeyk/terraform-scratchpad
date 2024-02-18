@@ -54,9 +54,9 @@ EOF
 
 cat <<'EOT' > /etc/nginx/sites-available/irc.conf
 server {
-  location / {
-      root /dev/null;
-  }
+	location / {
+		root /dev/null;
+	}
 	location ^~ /irc {
 		proxy_pass http://127.0.0.1:9000/;
 		proxy_http_version 1.1;
@@ -64,10 +64,9 @@ server {
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header X-Forwarded-For $remote_addr;
 		proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header Host $http_host;
-    proxy_set_header X-NginX-Proxy false;
-
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header Host $http_host;
+		proxy_set_header X-NginX-Proxy false;
 		# by default nginx times out connections in one minute
 		proxy_read_timeout 1d;
 	}
