@@ -10,14 +10,14 @@ systemctl start ip6tables
 cp /etc/iptables/rules.v{4,6} /tmp # backup incase of havok
 iptables -L --line-numbers # get line numbers
 ip6tables -L --line-numbers
-for port in 80 443 6667 ; do
+for port in 80 113 443 6667 ; do
 		iptables -I INPUT 6 -m state --state NEW -p tcp --dport $port -j ACCEPT
 done
 netfilter-persistent save
 iptables -L --line-numbers # make sure accept 80,443 rules addes
 ip6tables -L --line-numbers
 apt-get update
-apt-get install -y curl nginx certbot python3-certbot-nginx net-tools
+apt-get install -y curl nginx certbot python3-certbot-nginx net-tools nullidentd
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 
 curl -sL https://github.com/thelounge/thelounge-deb/releases/download/v4.4.0/thelounge_4.4.0_all.deb -o thelounge.deb
 apt-get update; apt-get install -qq -y nodejs
@@ -29,7 +29,30 @@ snap refresh core
 snap install --classic certbot
 certbot --nginx --email mksybr@gmail.com --agree-tos --no-eff-email -d chat.mksybr.com
 
-cat <<EOT >>/etc/nginx/sites-available/irc.conf
+cat <<EOF > /etc/systemd/system/identd@.service
+[Unit]
+Description=per connection null identd
+ 
+[Service]
+User=nobody
+ExecStart=/usr/sbin/nullidentd unremarkable
+StandardInput=socket
+StandardOutput=socket
+EOF
+
+cat <<EOF > /etc/systemd/system/ident.socket
+[Unit]
+Description=socket for ident
+ 
+[Socket]
+ListenStream=113
+Accept=yes
+ 
+[Install]
+WantedBy=sockets.target
+EOF
+
+cat <<EOT > /etc/nginx/sites-available/irc.conf
 server {
 	listen [::]:443 ssl ipv6only=on; # managed by Certbot
 	listen 443 ssl; # managed by Certbot
