@@ -1,5 +1,5 @@
 variable "amd-1vcpu-1gb-us-qas_count" {
-  default = 2
+  default = 0
 }
 
 variable "arm-1vcpu-6gb-us-qas_count" {
