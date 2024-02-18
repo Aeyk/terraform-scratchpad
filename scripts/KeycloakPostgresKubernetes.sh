@@ -102,6 +102,63 @@ POD_NAME=$(kubectl get pods --namespace stackgres -l "stackgres.io/restapi=true"
 kubectl port-forward "$POD_NAME" 8443:9443 --namespace stackgres
 
 cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+ name: letsencrypt-staging
+ namespace: cert-manager
+spec:
+ acme:
+   # The ACME server URL
+   server: https://acme-staging-v02.api.letsencrypt.org/directory
+   # Email address used for ACME registration
+   email: mksybr@gmail.com
+   # Name of a secret used to store the ACME account private key
+   privateKeySecretRef:
+     name: letsencrypt-staging
+   # Enable the HTTP-01 challenge provider
+   solvers:
+   - http01:
+       ingress:
+         class:  nginx
+EOF
+
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+
+kubectl patch ingress keycloak --patch "$(cat <<EOF
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+  - hosts:
+    - keycloak.mksybr.com
+    secretName: keycloak-tls
+EOF
+)"
+
+cat << EOF | kubectl apply -f -
 apiVersion: stackgres.io/v1
 kind: SGInstanceProfile
 metadata:
