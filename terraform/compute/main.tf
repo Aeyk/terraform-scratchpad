@@ -1,3 +1,21 @@
+terraform {
+  required_version = "~> 1.6"
+  required_providers {
+    oci = {     
+      source  = "oracle/oci"
+      version = "~> 5"
+    }
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2"
+    }
+    keepass = {
+      source = "iSchluff/keepass"
+      version = "~> 0"
+    }
+  }
+}
+
 resource "oci_core_network_security_group" "me_net_security_group" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                   oci_core_dhcp_options.dhcp]
@@ -95,30 +113,28 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
 }
 
 data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
-    #Required
-    # count = var.arm-1vcpu-6gb-us-qas_count
     subnet_id = oci_core_subnet.public_subnet.id
 }
 
-resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
-  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
-  count = var.arm-1vcpu-6gb-us-qas_count
-  name = "a"
-  domain = "mksybr.com"
-  type   = "A"
-  value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
-  ttl = "30"
-}
+# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
+#   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+#   count = var.arm-1vcpu-6gb-us-qas_count
+#   name = "a"
+#   domain = "mksybr.com"
+#   type   = "A"
+#   value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
+#   ttl = "30"
+# }
 
-resource "digitalocean_record" "keycloak-arm-1vcpu-6gb-us-qas-a-dns-record" {
-  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
-  count = var.arm-1vcpu-6gb-us-qas_count
-  name = "keycloak"
-  domain = "mksybr.com"
-  type   = "A"
-  value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
-  ttl = "30"
-}
+# resource "digitalocean_record" "keycloak-arm-1vcpu-6gb-us-qas-a-dns-record" {
+#   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+#   count = var.arm-1vcpu-6gb-us-qas_count
+#   name = "keycloak"
+#   domain = "mksybr.com"
+#   type   = "A"
+#   value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
+#   ttl = "30"
+# }
 
 # resource "aws_ses_domain_identity" "zulip_domain" {
 #   domain = "zulip.mksybr.com"
