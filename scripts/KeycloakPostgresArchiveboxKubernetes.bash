@@ -439,7 +439,7 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: prometheus-letsencrypt-prod
-  namespace: cert-manager
+  namespace: ingress-nginx
 spec:
   acme:
     # The ACME server URL
@@ -463,7 +463,7 @@ metadata:
   labels:
     app.kubernetes.io/name: prometheus
     app.kubernetes.io/part-of: ingress-nginx
-  name: prometheus-server
+  name: prometheus
   namespace: ingress-nginx
 spec:
   ports:
@@ -475,14 +475,12 @@ spec:
     app.kubernetes.io/part-of: ingress-nginx
   type: LoadBalancer
 EOF
-
-## TODO why no lets encrypt?
 cat << EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    cert-prometheus.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-prod
   name: prometheus
   namespace: ingress-nginx
 spec:
