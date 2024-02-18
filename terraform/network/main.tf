@@ -1,20 +1,3 @@
-
-variable "oci_vcn_cidr_block" {
-  default = "10.0.0.0/24"
-}
-variable "oci_vcn_public_subnet_cidr_block" {
-  default = "10.0.0.0/28"
-}
-#variable "oci_vcn_public_subnet_ipv6_cidr_block" {
-#  default = "2603:c020:4014:dc00::/56"
-#}
-variable "oci_vcn_private_subnet_cidr_block" {
-  default = "10.0.0.16/28"
-}
-#variable "oci_vcn_private_subnet_ipv6_cidr_block" {
-#  default = "2603:c020:4014:dc00::/56"
-#}
-
 resource "oci_core_vcn" "vcn" {
   depends_on = [data.keepass_entry.oci_compartment_id]
   cidr_blocks    = [var.oci_vcn_cidr_block]
@@ -118,11 +101,6 @@ resource "oci_core_subnet" "private_subnet" {
   # security_list_ids = [oci_core_security_list.private_security_list.id]
 }
 
-output "vcn_id" {
-  description = "id of vcn that is created"
-  value       = oci_core_vcn.vcn.id
-}
-
 resource "oci_core_network_security_group" "cloud_net_security_group" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -147,7 +125,6 @@ resource "oci_core_network_security_group_security_rule" "ipv4_http_ingress" {
     }
   }   
 }
-
 
 resource "oci_core_network_security_group_security_rule" "ipv6_http_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
