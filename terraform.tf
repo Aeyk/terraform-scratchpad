@@ -163,6 +163,45 @@ locals {
   }
 }
 
+resource "oci_core_network_security_group" "http_security_group" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
+  display_name = "cloud-mksybr-network-security-group-http-ingress"
+  compartment_id = data.keepass_entry.oci_compartment_id.password
+  vcn_id = oci_core_vcn.vcn.id
+}
+
+resource "oci_core_network_security_group_security_rule" "ipv4_https_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.http_security_group.id
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "0.0.0.0/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    source_port_range {
+      min = 80
+      max = 80
+    }
+  }   
+}
+
+resource "oci_core_network_security_group_security_rule" "ipv6_https_ingress" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.http_security_group.id
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "::/0"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    source_port_range {
+      min = 80
+      max = 80
+    }
+  }
+}
+
 resource "oci_core_instance" "ubuntu_instance" {
   depends_on = [oci_core_vcn.vcn, oci_core_internet_gateway.igw, oci_core_dhcp_options.dhcp, oci_core_network_security_group.http_security_group]
 	agent_config {
@@ -199,6 +238,7 @@ resource "oci_core_instance" "ubuntu_instance" {
 		assign_private_dns_record = "false"
 		assign_public_ip = "true"
 		subnet_id = oci_core_subnet.public_subnet.id
+		nsg_ids = [oci_core_network_security_group_security_rule.ipv6_https_ingress, oci_core_network_security_group_security_rule.ipv4_https_ingress]
 	}
 	display_name = "ubuntu001-cloud-mksybr"
 	instance_options {
