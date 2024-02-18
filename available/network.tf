@@ -622,7 +622,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_
   count = 4
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "0.0.0.0/0" # TODO: loopback only
   # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"

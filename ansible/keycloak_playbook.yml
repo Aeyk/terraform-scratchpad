@@ -1,6 +1,6 @@
 ---
 - name: Playbook for keycloak Hosts
-  hosts: oracle_arm
+  hosts: keycloak
   collections:
     - middleware_automation.keycloak
     - middleware_automation.infinispan
