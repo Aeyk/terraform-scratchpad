@@ -209,7 +209,7 @@ resource "oci_core_instance" "ubuntu_instance" {
 	metadata = {
 		"ssh_authorized_keys" = file("/home/me/.ssh/id_rsa.pub")
 	}
-	shape = "VM.Standard3.Flex"
+	shape = "VM.Standard.E2.1.Micro" # Always-Free includes : 2 VM.Standard.E2.1.Micro, and 4 OCPUs and 24GB of VM.Standard.A1.Flex
 	shape_config {
 		baseline_ocpu_utilization = "BASELINE_1_1"
 		memory_in_gbs = "16"
