@@ -222,6 +222,29 @@ spec:
           class: nginx
 EOF
 
+
+cat << EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: grafana-letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: mksybr@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: grafana-letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -579,6 +602,58 @@ spec:
     - prometheus.mksybr.com
     secretName: prometheus-letsencrypt-prod
 EOF
+
+kubectl apply --kustomize github.com/kubernetes/ingress-nginx/deploy/grafana/
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: ingress-nginx
+  name: grafana
+  namespace: ingress-nginx
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: ingress-nginx
+  type: LoadBalancer
+EOF
+
+cat << EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  name: grafana
+  namespace: ingress-nginx
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: grafana.mksybr.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - grafana.mksybr.com
+    secretName: grafana-letsencrypt-prod
+EOF
+
+# # TODO bufix error server is invalid
+# # The Service "prometheus-server" is invalid: spec.ports[1].name: Required value
 # cat << 'EOF' | kubectl patch service -n ingress-nginx prometheus-server --patch "$(cat -)"
 # spec:
 #   ports:
