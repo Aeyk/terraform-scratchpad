@@ -429,8 +429,8 @@ resource "oci_core_instance" "ubuntu_instance" {
   }
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/installer"
-      "/tmp/installer"
+      "chmod +x /tmp/installer.sh",
+      "/tmp/installer.sh"
     ]
   }
 }
@@ -506,8 +506,8 @@ resource "oci_core_instance" "arm_instance" {
   }
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/installer"
-      "/tmp/installer"
+      "chmod +x /tmp/installer.sh",
+      "/tmp/installer.sh"
     ]
   }
 
