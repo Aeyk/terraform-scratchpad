@@ -996,12 +996,15 @@ EOF
 
 
 ## Gitea BEGIN
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic gitea-admin-user     --from-file=password=/dev/stdin -o json
+head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 | kubectl create secret generic postgres-gitea-user     --from-file=password=/dev/stdin -o json
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
 "CREATE USER IF NOT EXISTS gitea WITH PASSWORD 'password' CREATEDB;"
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
 "CREATE DATABASE giteadb WITH OWNER gitea TEMPLATE template0 ENCODING UTF8 LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';"
 kubectl run psql --rm -it --image ongres/postgres-util --restart=Never -- psql "postgres://postgres:$(kubectl get secrets postgres-cluster -o jsonpath='{.data.superuser-password}' | base64 -d)@postgres-cluster" -c \
  "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gitea;"
+
 cat << EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -1068,10 +1071,74 @@ cat << EOF | kubectl apply -f -
 apiVersion: v1
 data:
   app.ini: |
+    APP_NAME = Gitea
+    RUN_USER = git
+    RUN_MODE = prod
+
+    [security]
+    INTERNAL_TOKEN     = $(kubectl get secrets gitea-internal-token -o jsonpath='{.data.password}' | base64 -d)
+    INSTALL_LOCK       = true
+    SECRET_KEY         = $(kubectl get secrets gitea-secret-key -o jsonpath='{.data.password}' | base64 -d)
+    PASSWORD_HASH_ALGO = pbkdf2
+    
+    [database]
+    DB_TYPE  = postgres
+    HOST     = postgres-cluster:5432
+    NAME     = giteadb
+    USER     = gitea
+    PASSWD   = $(kubectl get secrets postgres-gitea-user -o jsonpath='{.data.password}' | base64 -d)
+    SCHEMA   = 
+    SSL_MODE = disable
+    CHARSET  = utf8
+    PATH     = /app/gitea/data/gitea.db
+    LOG_SQL  = false
+
+    [repository]
+    ROOT = /data/gitea/gitea-repositories
+
     [server]
-    PROTOCOL  = http
-    ROOT_URL  = http://gitea.mksybr.com/
-    HTTP_PORT = 3000
+    SSH_DOMAIN       = gitea.mksybr.com
+    DOMAIN           = gitea.mksybr.com
+    HTTP_PORT        = 3000
+    ROOT_URL         = https://gitea.mksybr.com/
+    DISABLE_SSH      = false
+    SSH_PORT         = 22
+    LFS_START_SERVER = true
+    LFS_CONTENT_PATH = /data/gitea/lfs
+    LFS_JWT_SECRET   = $(kubectl get secrets gitea-lfs-secret -o jsonpath='{.data.password}' | base64 -d)
+    OFFLINE_MODE     = false
+
+    [mailer]
+    ENABLED = false
+
+    [service]
+    REGISTER_EMAIL_CONFIRM            = false
+    ENABLE_NOTIFY_MAIL                = false
+    DISABLE_REGISTRATION              = false
+    ALLOW_ONLY_EXTERNAL_REGISTRATION  = false
+    ENABLE_CAPTCHA                    = false
+    REQUIRE_SIGNIN_VIEW               = true
+    DEFAULT_KEEP_EMAIL_PRIVATE        = true
+    DEFAULT_ALLOW_CREATE_ORGANIZATION = true
+    DEFAULT_ENABLE_TIMETRACKING       = true
+    NO_REPLY_ADDRESS                  = noreply.localhost
+
+    [picture]
+    DISABLE_GRAVATAR        = false
+    ENABLE_FEDERATED_AVATAR = true
+
+    [openid]
+    ENABLE_OPENID_SIGNIN = true
+    ENABLE_OPENID_SIGNUP = true
+
+    [session]
+    PROVIDER = file
+
+    [log]
+    MODE      = console
+    LEVEL     = info
+    ROOT_PATH = /data/gitea/log
+    ROUTER    = console
 
 kind: ConfigMap
 metadata:
