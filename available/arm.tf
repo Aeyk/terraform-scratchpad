@@ -6,11 +6,11 @@ resource "oci_core_network_security_group" "me_net_security_group" {
   vcn_id = oci_core_vcn.vcn.id
 }
 
-variable "arm_instance_count" {
+variable "arm-1vcpu-6gb-us-qas_count" {
   default = 4
 }
 
-resource "oci_core_instance" "arm_instance" {
+resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   depends_on = [
     oci_core_vcn.vcn, oci_core_internet_gateway.igw,
     oci_core_dhcp_options.dhcp,
@@ -20,31 +20,31 @@ resource "oci_core_instance" "arm_instance" {
     # oci_core_network_security_group_security_rule.rdp_ingress,
     # oci_core_network_security_group_security_rule.rdpv6_ingress
   ]
-  count = var.arm_instance_count
+  count = var.arm-1vcpu-6gb-us-qas_count
   display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
   agent_config {
     is_management_disabled = "false"
     is_monitoring_disabled = "false"
-	plugins_config {
-	  desired_state = "DISABLED"
-	  name = "Vulnerability Scanning"
-	}
-	plugins_config {
-	  desired_state = "ENABLED"
-	  name = "Management Agent"
-	}
-	plugins_config {
-	  desired_state = "ENABLED"
-	  name = "Custom Logs Monitoring"
-	}
-	plugins_config {
-	  desired_state = "ENABLED"
-	  name = "Compute Instance Monitoring"
-	}
-	plugins_config {
-	  desired_state = "DISABLED"
-	  name = "Bastion"
-	}
+    plugins_config {
+      desired_state = "DISABLED"
+      name = "Vulnerability Scanning"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name = "Management Agent"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name = "Custom Logs Monitoring"
+    }
+    plugins_config {
+      desired_state = "ENABLED"
+      name = "Compute Instance Monitoring"
+    }
+    plugins_config {
+      desired_state = "DISABLED"
+      name = "Bastion"
+    }
   }
   availability_config {
     is_live_migration_preferred = "true"
@@ -57,7 +57,7 @@ resource "oci_core_instance" "arm_instance" {
     assign_public_ip = "true"
     subnet_id = oci_core_subnet.public_subnet.id
     nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
-    # assign_ipv6_ip = "true"
+    assign_ipv6ip = "true"
   }
   instance_options {
     are_legacy_imds_endpoints_disabled = "false"
@@ -98,28 +98,28 @@ resource "oci_core_instance" "arm_instance" {
 }
 
 output "arm_public_ips" {
-  value = [for u in oci_core_instance.arm_instance : u.public_ip[*]]
+  value = [for u in oci_core_instance.arm-1vcpu-6gb-us-qas : u.public_ip[*]]
 }
 
 data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
     #Required
-    # count = var.arm_instance_count
+    # count = var.arm-1vcpu-6gb-us-qas_count
     subnet_id = oci_core_subnet.public_subnet.id
 }
 
 resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
-  depends_on = [oci_core_instance.arm_instance]
-  count = var.arm_instance_count
+  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+  count = var.arm-1vcpu-6gb-us-qas_count
   name = "a"
   domain = "mksybr.com"
   type   = "A"
-  value  = oci_core_instance.arm_instance[count.index].public_ip
+  value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
   ttl = "30"
 }
 
 # resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-aaaa-dns-record" {
-#   depends_on = [oci_core_instance.arm_instance]
-#   count = var.arm_instance_count
+#   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+#   count = var.arm-1vcpu-6gb-us-qas_count
 #   name = "a"
 #   domain = "mksybr.com"
 #   type   = "AAAA"
