@@ -44,3 +44,4 @@ terraform.rc
 # Ignore plans
 *.plan
 
+/*.infra
