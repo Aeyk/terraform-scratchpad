@@ -1,5 +1,7 @@
 # -*- mode: ruby; -*-
-variable "database_password" {}
+variable "database_password" {
+  sensitive = true
+}
 variable "oci_vcn_cidr_block" {}
 variable "oci_vcn_public_subnet_cidr_block" {}
 variable "oci_vcn_private_subnet_cidr_block" {}
