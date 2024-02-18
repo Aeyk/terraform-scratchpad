@@ -201,7 +201,6 @@ spec:
 EOF
 while ! kubectl get secret postgres-cluster; do echo "Waiting for my secret. CTRL-C to exit."; sleep 1; done
 kubectl get secret -n stackgres stackgres-restapi-admin --template '{{ printf "username = %s\npassword = %s\n" (.data.k8sUsername | base64decode) ( .data.clearPassword | base64decode) }}'
-POSTGRES_PASSWORD=$(kubectl get secret postgres-cluster --template '{{ printf "%s" (index .data "superuser-password" | base64decode) }}')
 ## StackGres END
 
 
