@@ -7,14 +7,10 @@ variable "oci_vcn_cidr_block" {
   default = "10.0.0.0/24"
 }
 variable "oci_vcn_public_subnet_cidr_block" {
-  default = "10.0.1.0/24"
+  default = "10.0.0.0/28"
 }
 variable "oci_vcn_private_subnet_cidr_block" {
-  default = "10.0.2.0/24"
-}
-
-variable "public_ssh_key" {
-  default = "/home/malik/.ssh/id_rsa.pub"
+  default = "10.0.0.16/28"
 }
 
 variable "private_ssh_key" {
@@ -24,25 +20,6 @@ variable "private_ssh_key" {
 provider "keepass" {
   database = "../Cloud Tokens.kdbx"
   password = var.database_password
-}
-
-data "keepass_entry" "digitalocean_token" {
-  path = "Root/DigitalOcean Token"
-}
-data "keepass_entry" "oci_fingerprint" {
-  path = "Root/Oracle OCI fingerprint"
-}
-data "keepass_entry" "oci_tenancy_id" {
-  path = "Root/Oracle Tenancy ID"
-}
-data "keepass_entry" "oci_compartment_id" {
-  path = "Root/Oracle Compartment ID"
-}
-data "keepass_entry" "oci_user_id" {
-  path = "Root/Oracle User ID"
-}
-data "keepass_entry" "phone_public_ssh_key_contents" {
-  path = "Root/Phone Key"
 }
 
 provider "digitalocean" {
@@ -98,7 +75,7 @@ resource "oci_core_instance" "amd64_instance" {
     oci_core_network_security_group_security_rule.identdv6_ingress,
   ]
   count = var.amd64_instance_count
-  display_name = "mksybr-us-qas-00${count.index}"
+  display_name = "amd-1vcpu-1gb-us-qas-00${count.index}"
   agent_config {
 	is_management_disabled = "false"
 	is_monitoring_disabled = "false"
@@ -130,24 +107,24 @@ resource "oci_core_instance" "amd64_instance" {
   availability_domain = "onUG:US-ASHBURN-AD-3"
   compartment_id = data.keepass_entry.oci_compartment_id.password
   create_vnic_details {
-	assign_private_dns_record = "false"
-	assign_public_ip = "true"
-        # assign_ipv6ip = "true"
-	subnet_id = oci_core_subnet.public_subnet.id
-	nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+    assign_private_dns_record = "false"
+    assign_public_ip = "true"
+    # assign_ipv6ip = "true"
+    subnet_id = oci_core_subnet.public_subnet.id
+    nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
   }
   instance_options {
-	are_legacy_imds_endpoints_disabled = "false"
+    are_legacy_imds_endpoints_disabled = "false"
   }
   is_pv_encryption_in_transit_enabled = "true"
   metadata = {
-	"ssh_authorized_keys" = local.ssh.authorized_keys
+    "ssh_authorized_keys" = local.ssh.authorized_keys
   }
   # Always-Free includes : 2 VM.Standard.E2.1.Micro
   shape = "VM.Standard.E2.1.Micro"
   source_details {
-	source_id = "ocid1.image.oc1.iad.aaaaaaaaau2eo3mjbgtmjvocmvx5xbhcmj2ay3mvowdzffxhdiql5gnhxjqa"
-	source_type = "image"
+    source_id = "ocid1.image.oc1.iad.aaaaaaaaau2eo3mjbgtmjvocmvx5xbhcmj2ay3mvowdzffxhdiql5gnhxjqa"
+    source_type = "image"
   }
   # provisioner "file" {
   #   source = "${oci_core_instance.amd64_instance.display_name}-installer.sh"
@@ -171,42 +148,22 @@ output "ubuntu_public_ips" {
   value = [for u in oci_core_instance.amd64_instance : u.public_ip[*]]
 }
 
-resource "digitalocean_record" "x-mksybr-com-a-dns-record" {
+resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-a-dns-record" {
   depends_on = [oci_core_instance.amd64_instance]
   count = var.amd64_instance_count
-  name = "x"
+  name = "b"
   domain = "mksybr.com"
   type   = "A"
   value  = oci_core_instance.amd64_instance[count.index].public_ip
   ttl = "30"
 }
 
-resource "digitalocean_record" "wildcard-x-mksybr-com-a-dns-record" {
-  count = var.amd64_instance_count
-  depends_on = [oci_core_instance.amd64_instance]
-  name = "*.x"
-  domain = "mksybr.com"
-  type   = "A"
-  value  = oci_core_instance.amd64_instance[count.index].public_ip
-  ttl = "30"
-}
-
-
-
-# resource "digitalocean_record" "chat-mksybr-com-aaaa-dns-record" {
+# resource "digitalocean_record" "amd-1vcpu-1gb-us-qas-aaaa-dns-record" {
 #   depends_on = [oci_core_instance.amd64_instance]
-#   name = "chat"
+#   count = var.amd64_instance_count
+#   name = "b"
 #   domain = "mksybr.com"
 #   type   = "AAAA"
-#   value  = oci_core_instance.amd64_instance.public_ipv6
-#   ttl = "30"
-# }
-
-# resource "digitalocean_record" "wildcard-chat-mksybr-com-dns-record" {
-#   depends_on = [oci_core_instance.amd64_instance]
-#   name = "*.chat"
-#   domain = "mksybr.com"
-#   type   = "AAAA"
-#   value  = oci_core_instance.amd64_instance.public_ipv6
+#   value  = oci_core_instance.amd64_instance[count.index].public_ipv6
 #   ttl = "30"
 # }

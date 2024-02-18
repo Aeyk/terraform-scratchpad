@@ -19,7 +19,7 @@ resource "oci_core_instance" "arm_instance" {
     # oci_core_network_security_group_security_rule.rdpv6_ingress
   ]
   count = var.arm_instance_count
-  display_name = "me-cloud-mksybr-us-qas-00${count.index}"
+  display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
   agent_config {
 	is_management_disabled = "false"
 	is_monitoring_disabled = "false"
@@ -45,36 +45,36 @@ resource "oci_core_instance" "arm_instance" {
 	}
   }
   availability_config {
-	is_live_migration_preferred = "true"
-	recovery_action = "RESTORE_INSTANCE"
+    is_live_migration_preferred = "true"
+    recovery_action = "RESTORE_INSTANCE"
   }
-  availability_domain = "onUG:US-ASHBURN-AD-2"
-  compartment_id = data.keepass_entry.oci_compartment_id.password
-  create_vnic_details {
-	assign_private_dns_record = "false"
-	assign_public_ip = "true"
-	subnet_id = oci_core_subnet.public_subnet.id
-	nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+    availability_domain = "onUG:US-ASHBURN-AD-2"
+    compartment_id = data.keepass_entry.oci_compartment_id.password
+    create_vnic_details {
+    assign_private_dns_record = "false"
+    assign_public_ip = "true"
+    subnet_id = oci_core_subnet.public_subnet.id
+    nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
   }
   instance_options {
-	are_legacy_imds_endpoints_disabled = "false"
+    are_legacy_imds_endpoints_disabled = "false"
   }
   is_pv_encryption_in_transit_enabled = "true"
   metadata = {
-	"ssh_authorized_keys" = local.ssh.authorized_keys
+    "ssh_authorized_keys" = local.ssh.authorized_keys
   }
   # Month of free ampere instances
   # Free monthly ampere credits are:
   # VM.Standard.A1.Flex and 4 OCPUs and 24GB
   shape = "VM.Standard.A1.Flex"
   shape_config {
-	baseline_ocpu_utilization = "BASELINE_1_1"
-	memory_in_gbs = "6"
-	ocpus = "1"
+    baseline_ocpu_utilization = "BASELINE_1_1"
+    memory_in_gbs = "6"
+    ocpus = "1"
   }
   source_details {
-	source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq"
-	source_type = "image"
+    source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq"
+    source_type = "image"
   }
   # provisioner "file" {
   #   source = "${oci_core_instance.ubuntu_instance.display_name}-installer.sh"
@@ -98,12 +98,22 @@ output "arm_public_ips" {
   value = [for u in oci_core_instance.arm_instance : u.public_ip[*]]
 }
 
-resource "digitalocean_record" "me-mksybr-com-dns-record" {
+resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
   depends_on = [oci_core_instance.arm_instance]
   count = var.arm_instance_count
-  name = "me"
+  name = "a"
   domain = "mksybr.com"
   type   = "A"
   value  = oci_core_instance.arm_instance[count.index].public_ip
   ttl = "30"
 }
+
+# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-aaaa-dns-record" {
+#   depends_on = [oci_core_instance.arm_instance]
+#   count = var.arm_instance_count
+#   name = "a"
+#   domain = "mksybr.com"
+#   type   = "AAAA"
+#   value  = oci_core_instance.arm_instance[count.index].public_ipv6
+#   ttl = "30"
+# }
