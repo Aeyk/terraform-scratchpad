@@ -1164,6 +1164,47 @@ spec:
           class: nginx
 EOF
 cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: drone
+spec:
+  storageClassName: "local-path"
+  volumeName: drone
+  resources:
+    requests:
+      storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: drone
+  labels:
+    type:
+      local
+spec:
+  local:
+    path:
+      /data/drone
+  capacity: 
+    storage:
+      10Gi
+  storageClassName: "local-path"
+  accessModes:
+    - ReadWriteMany
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+EOF
+cat << EOF | kubectl apply -f -
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -1244,9 +1285,17 @@ spec:
         - name: DRONE_RUNNER_CAPACITY
           value: "1"
         - name: DRONE_SERVER_HOST
-          value: https://drone.mksybr.com
+          value: http://drone.mksybr.com
         - name: DRONE_SERVER_PROTO
           value: http
+        volumeMounts:
+          - mountPath: /var/lib/drone
+            name: drone
+      restartPolicy: Always
+      volumes:
+        - name: drone
+          persistentVolumeClaim:
+            claimName: drone
 EOF
 cat <<'EOF' | kubectl apply -f -
 apiVersion: v1
