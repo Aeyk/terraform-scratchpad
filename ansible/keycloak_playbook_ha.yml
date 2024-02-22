@@ -65,7 +65,7 @@
         name: infinispan
       vars:
         infinispan_java_home: "/usr/lib/jvm/default-java"
-        infinispan_supervisor_password: "jChhT4AUnUZ+S3iTHwGKhvQmbp4GONn3jD1ch4Di0u0"
+        infinispan_supervisor_password: ""
         infinispan_users: []
     - name: Include keycloak role
       ansible.builtin.include_role:
@@ -75,8 +75,10 @@
         keycloak_java_home: "/usr/lib/jvm/default-java"
         # keycloak_host: keycloak.mksybr.com
         keycloak_service_restart_on_failure: true
-        keycloak_admin_password: "MdEh5CSlSPuQWZYEKIR0c0uZ97r14hZUT+lsFTlQd4MdxsoqkgbVMMqLxDoGDQwoOt+nT7pr0Gnl" 
-        keycloak_infinispan_trust_store_password: "jChhT4AUnUZ+S3iTHwGKhvQmbp4GONn3jD1ch4Di0u0"
+        keycloak_admin_password: ""
+        keycloak_infinispan_trust_store_password: ""
+        keycloak_admin_password: "" 
+        keycloak_infinispan_trust_store_password: ""
         # TODO replace with var
     - name: Include nginx role
       ansible.builtin.include_role:

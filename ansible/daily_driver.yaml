@@ -11,7 +11,7 @@
 - name: Install developer tools 
   ansible.builtin.package:
     name: [ git-all, tmux, vim, tmux, ansible, direnv, shellcheck, fzf, lnav, 
-            nano, locate, curl, ripgrep ]
+    nano, locate, curl, ripgrep, kitty ]
           # TODO: terraform, oci, podman, alacritty, nodejs, dotnet, 
           # TODO: desktop tools
           # keepassxc, kdeconnect, copyq, xclip, xbacklight, syncthing
