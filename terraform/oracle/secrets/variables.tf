@@ -20,12 +20,8 @@ locals {
   }
 }
 
-variable "keepass_database_password" {
-  sensitive = true
-}
-
-variable "keepass_database" {
-  default = "/home/malik/Documents/Cloud Tokens.kdbx"
+variable "keepass_database_password" { 
+ sensitive = true
 }
 
 data "keepass_entry" "aws_access_key" {
@@ -52,7 +48,7 @@ data "keepass_entry" "oci_user_id" {
   path = "Root/Oracle User ID"
 }
 
+
 data "keepass_entry" "oci_compartment_id" {
   path = "Root/Oracle Compartment ID"
 }
-

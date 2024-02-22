@@ -4,9 +4,9 @@ output "vcn_id" {
 }
 
 output "arm_public_subnet" {
-  value = oci_core_subnet.public.id
+  value = "${oci_core_subnet.public_subnet.id}"
 }
 
 output "arm_net_security_group" {
-  value = oci_core_network_security_group.public.id
+  value = "${oci_core_network_security_group.cloud_net_security_group.id}"
 }
