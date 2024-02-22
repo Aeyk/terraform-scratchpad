@@ -1,0 +1,33 @@
+## TODO: check for Ubuntu/Debian
+- name: Add ansible source repository
+  ansible.builtin.apt_repository:
+    repo: deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main
+    state: present
+## TODO: check for Ubuntu/Debian
+- name: Add signing key for ansible repository
+  ansible.builtin.apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 93C4A3FD7BB9C367 
+- name: Install developer tools 
+  ansible.builtin.package:
+    name: [ git-all, tmux, vim, tmux, ansible, direnv, shellcheck, fzf, lnav, 
+            nano, locate, curl, ripgrep ]
+          # TODO: terraform, oci, podman, alacritty, nodejs, dotnet, 
+          # TODO: desktop tools
+          # keepassxc, kdeconnect, copyq, xclip, xbacklight, syncthing
+    state: latest
+## TODO: check for Ubuntu/Debian
+- name: Install the build dependencies for emacs
+  ansible.builtin.apt:
+    pkg: emacs
+    state: build-dep
+- name: Checkout emacs repo
+  ansible.builtin.git:
+    repo: 'git clone https://git.savannah.gnu.org/git/emacs.git'
+    dest: /tmp/emacs
+    version: master
+- name: Build and install emacs
+  become: true
+  become_user: apache
+  command: cd /tmp/emacs; ./autogen.sh; ./configure; make -j $(nproc); make install
+
