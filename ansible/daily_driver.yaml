@@ -14,20 +14,31 @@
     nano, locate, curl, ripgrep, kitty ]
           # TODO: terraform, oci, podman, alacritty, nodejs, dotnet, 
           # TODO: desktop tools
-          # keepassxc, kdeconnect, copyq, xclip, xbacklight, syncthing
+          # keepassxc, kdeconnect, copyq, xclip, xbacklight, syncthing, qt5-style-kvantum
     state: latest
+## TODO: install detect-secrets (pip)
 ## TODO: check for Ubuntu/Debian
+- name: Install developer tools 
+  ansible.builtin.package:
+    name: libtree-sitter-dev
+  state: latest
 - name: Install the build dependencies for emacs
   ansible.builtin.apt:
     pkg: emacs
     state: build-dep
+## TODO
+## git clone git@github.com:tree-sitter/tree-sitter.git
+## cd tree-sitter/
+## make
+## make install
+## TODO install libgccjit depedencies
 - name: Checkout emacs repo
   ansible.builtin.git:
-    repo: 'git clone https://git.savannah.gnu.org/git/emacs.git'
+    repo: 'https://git.savannah.gnu.org/git/emacs.git'
     dest: /tmp/emacs
     version: master
 - name: Build and install emacs
   become: true
   become_user: apache
-  command: cd /tmp/emacs; ./autogen.sh; ./configure; make -j $(nproc); make install
+  command: "cd /tmp/emacs; ./autogen.sh; ./configure --with-tree-sitter --with-native-compilation; make -j $(nproc); make install"
 
