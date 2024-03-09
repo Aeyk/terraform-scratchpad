@@ -18,6 +18,10 @@ terraform {
       version = "~> 5"
     }
   }
+  backend "http" {
+    address = "${module.secrets.oci_storage_par}terraform.tfstate"
+    update_method = "PUT"
+  }
 }
 
 provider "aws" {
@@ -43,22 +47,11 @@ provider "oci" {
   region = "us-ashburn-1"
 }
 
-# TODO(malik): external storage for tfstate
-resource "oci_objectstorage_object" "terraform_state_storage" {
-    bucket = "terraform_state_storage"
-    content = var.object_content
-    namespace = "IAD"
-    object = var.object_object
-}
-
 data "terraform_remote_state" "terraform_state" {
-  backend = "s3"
+  backend = "http"
 
   config = {
-    organization = "hashicorp"
-    workspaces = {
-      name = "vpc-prod"
-    }
+    address = "${module.secrets.oci_storage_par}terraform.tfstate"
   }
 }
 
