@@ -40,8 +40,8 @@ declare -a IPS=(
   %{ endfor ~}
 )
 
-%{ for ip in slice(arm-1vcpu-6gb-us-qas-private_ipv4, 1, 4) ~}
-echo "node{{loop.index}} ${ ip }" | sudo tee -a /etc/hosts
+%{ for index, ip in slice(arm-1vcpu-6gb-us-qas-private_ipv4, 1, 4) ~}
+echo "node${index} ${ ip }" | sudo tee -a /etc/hosts
 %{ endfor ~}
 
 KUBE_CONTROL_HOST=3 CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py "$${IPS[@]}"
