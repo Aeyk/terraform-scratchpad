@@ -120,15 +120,15 @@ data "oci_core_ipv6s" "arm-1vcpu-6gb-us-qas-ipv6" {
     subnet_id = module.network.arm_public_subnet
 }
 
-# resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
-#   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
-#   count = var.arm-1vcpu-6gb-us-qas_count
-#   name = "a"
-#   domain = "mksybr.com"
-#   type   = "A"
-#   value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
-#   ttl = "30"
-# }
+resource "digitalocean_record" "arm-1vcpu-6gb-us-qas-a-dns-record" {
+  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+  count = var.arm-1vcpu-6gb-us-qas_count
+  name = "${count.index}"
+  domain = "mksybr.com"
+  type   = "A"
+  value  = oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip
+  ttl = "30"
+}
 
 # resource "digitalocean_record" "keycloak-arm-1vcpu-6gb-us-qas-a-dns-record" {
 #   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
