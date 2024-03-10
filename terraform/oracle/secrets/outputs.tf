@@ -29,7 +29,3 @@ output "ssh_authorized_keys" {
 output "private_ssh_key" {
   value = var.private_ssh_key
 }
-
-output "oci_storage_par" {
-  value = var.oci_storage_par
-}

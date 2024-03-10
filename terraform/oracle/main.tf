@@ -48,18 +48,6 @@ provider "oci" {
   region = "us-ashburn-1" 
 }
 
-data "terraform_remote_state" "terraform_state" {
-  backend = "http"
-}
-
-data "terraform_remote_state" "terraform_state" {
-  backend = "http"
-
-  config = {
-    address = "${module.secrets.oci_storage_par}terraform.tfstate"
-  }
-}
-
 module "network" {
   keepass_database_password = var.keepass_database_password
   source = "./network"
