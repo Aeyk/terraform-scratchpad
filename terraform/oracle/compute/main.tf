@@ -95,7 +95,7 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   }
   source_details {
   # source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq" # Oracle Linux 9 doesn't have support for OLCNE on AArch64
-    source_id = "ocid1.image.oc1.iad.aaaaaaaa65b4p3cuexre4cfwkyig4js4qcv7sekhp3syhed5h4y4de3b4xja" 
+    source_id = "ocid1.image.oc1.iad.aaaaaaaaojbb6oamw7aratuw4erhc4em7dygegatww7w2hptw6wxgz3me3oa"
     source_type = "image"
   }
   # provisioner "file" {
@@ -211,7 +211,7 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
   # Always-Free includes : 2 VM.Standard.E2.1.Micro
   shape = "VM.Standard.E2.1.Micro"
   source_details {
-    source_id = "ocid1.image.oc1.iad.aaaaaaaaau2eo3mjbgtmjvocmvx5xbhcmj2ay3mvowdzffxhdiql5gnhxjqa"
+    source_id = "ocid1.image.oc1.iad.aaaaaaaaojbb6oamw7aratuw4erhc4em7dygegatww7w2hptw6wxgz3me3oa"
     source_type = "image"
   }
   # provisioner "file" {
