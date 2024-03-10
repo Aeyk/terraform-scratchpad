@@ -37,6 +37,16 @@ resource "oci_core_network_security_group" "me_net_security_group" {
   vcn_id = module.network.vcn_id
 }
 
+resource "tls_private_key" "keys" {
+  count     = var.arm-1vcpu-6gb-us-qas_count
+  algorithm = "RSA"
+  rsa_bits  = "2048"
+}
+
+output "keys" {
+  value = tls_private_key.keys
+}
+
 resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
   count = var.arm-1vcpu-6gb-us-qas_count
   display_name = "arm-1vcpu-6gb-us-qas-00${count.index}"
@@ -94,25 +104,37 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
     ocpus = "1"
   }
   source_details {
-  # source_id = "ocid1.image.oc1.iad.aaaaaaaavubwxrc4xy3coabavp7da7ltjnfath6oe3h6nxrgxx7pr67xp6iq" # Oracle Linux 9 doesn't have support for OLCNE on AArch64
     source_id = "ocid1.image.oc1.iad.aaaaaaaaojbb6oamw7aratuw4erhc4em7dygegatww7w2hptw6wxgz3me3oa"
     source_type = "image"
   }
-  # provisioner "file" {
-  #   source = "${oci_core_instance.ubuntu_instance.display_name}-installer.sh"
-  #   destination = "/tmp/installer.sh"
-  # }
-  # provisioner "remote-exec" {
-  #   inline = [
-  #     "chmod +x /tmp/installer.sh",
-  #     "sudo /tmp/installer.sh"
-  #   ]
-  # }
   connection {
     type     = "ssh"
     user     = "ubuntu"
     private_key = "${file(var.private_ssh_key)}"
     host     = "${self.public_ip}"
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "echo '${tls_private_key.keys[count.index].private_key_openssh}' > $HOME/.ssh/id_${lower(tls_private_key.keys[count.index].algorithm)}"
+      , "echo '${tls_private_key.keys[count.index].public_key_openssh}' > $HOME/.ssh/id_${lower(tls_private_key.keys[count.index].algorithm)}.pub"
+      , "echo '${join("", tls_private_key.keys[*].public_key_openssh)}' >> $HOME/.ssh/authorized_keys"
+      # , "sudo chmod 700 $HOME/.ssh"
+      # , "sudo chmod 0644 -R $HOME/.ssh/"
+      , "sudo chmod 0600 $HOME/.ssh/id_${lower(tls_private_key.keys[count.index].algorithm)}"
+      # , "sudo chown ubuntu:ubuntu -R $HOME/.ssh"
+      # , "eval `ssh-agent -s`"
+      # , "ssh-add $HOME/.ssh/id_${lower(tls_private_key.keys[count.index].algorithm)}"
+      # , "ssh-add -L"
+      , "sudo iptables  -I INPUT 6 -p tcp -s 10.0.0.0/16 --match multiport --dports 80,443,2379,2380,2381,6443,7472,7946,9099,9100 -j ACCEPT" # TODO DRY
+      , "sudo ip6tables -I INPUT 6 -p tcp -s 10.0.0.0/16 --match multiport --dports 80,443,2379,2380,2381,6443,7472,7946,9099,9100 -j ACCEPT"
+      , "sudo netfilter-persistent save"
+    ]
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(module.secrets.private_ssh_key)
+      host        = self.public_ip
+    }
   }
 }
 
@@ -261,17 +283,19 @@ resource "local_file" "ansible_inventory" {
 }
 
 resource "local_file" "provision-script" {
+  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
   content = templatefile("./templates/provision-cluster.sh.tmpl", {
     # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
     arm-1vcpu-6gb-us-qas-private_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.private_ip
     arm-1vcpu-6gb-us-qas-public_ipv4  = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
   })
-  filename = "./provision-cluster.sh"
+  filename = "/tmp/provision-cluster.sh"
 }
 
 resource "terraform_data" "run-provisioner-script" {
+  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
   provisioner "file" {
-    source      = "./provision-cluster.sh"
+    source      = "/tmp/provision-cluster.sh"
     destination = "/tmp/cluster"
     connection {
       type        = "ssh"
