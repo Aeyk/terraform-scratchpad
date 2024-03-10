@@ -19,7 +19,6 @@ terraform {
     }
   }
   backend "http" {
-    address = "${module.secrets.oci_storage_par}terraform.tfstate"
     update_method = "PUT"
   }
 }
@@ -46,7 +45,11 @@ provider "oci" {
   # oci session authenticate --profile-name DEFAULT 
   auth = "SecurityToken" 
   config_file_profile = "DEFAULT"
-  region = "us-ashburn-1"
+  region = "us-ashburn-1" 
+}
+
+data "terraform_remote_state" "terraform_state" {
+  backend = "http"
 }
 
 data "terraform_remote_state" "terraform_state" {
