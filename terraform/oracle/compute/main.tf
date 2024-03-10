@@ -316,4 +316,13 @@ resource "terraform_data" "run-provisioner-script" {
       host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
     }
   }
+  provisioner "local-exec" {
+    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${module.secrets.private_ssh_key} ubuntu@${oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip}:~/.kube/ociconfig ~/.kube/ociconfig"
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(module.secrets.private_ssh_key)
+      host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
+    }
+  }
 }
