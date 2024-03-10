@@ -17,13 +17,13 @@ terraform {
 }
 
 provider "keepass" {
-  database = "/home/malik/Downloads/Cloud Tokens.kdbx"
+  database = "../Cloud Tokens.kdbx"
   password = var.keepass_database_password
 }
 
 module "secrets" {
   source                    = "../secrets"
   keepass_database_password = var.keepass_database_password
-  keepass_database          = "/home/malik/Downloads/Cloud Tokens.kdbx"
+  keepass_database          = "../Cloud Tokens.kdbx"
 }
 

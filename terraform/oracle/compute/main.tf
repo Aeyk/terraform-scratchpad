@@ -259,3 +259,37 @@ resource "local_file" "ansible_inventory" {
   })
   filename = "../../ansible/inventory.ini"
 }
+
+resource "local_file" "provision-script" {
+  content = templatefile("./templates/provision-cluster.sh.tmpl", {
+    # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
+    arm-1vcpu-6gb-us-qas-private_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.private_ip
+    arm-1vcpu-6gb-us-qas-public_ipv4  = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
+  })
+  filename = "./provision-cluster.sh"
+}
+
+resource "terraform_data" "run-provisioner-script" {
+  provisioner "file" {
+    source      = "./provision-cluster.sh"
+    destination = "/tmp/cluster"
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(module.secrets.private_ssh_key)
+      host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
+    }
+  }
+  provisioner "remote-exec" {
+    inline = [
+      # "chmod a+x /tmp/install; . /tmp/install && remove_snaps && install_emacs",
+      "bash /tmp/cluster"
+    ]
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(module.secrets.private_ssh_key)
+      host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
+    }
+  }
+}
