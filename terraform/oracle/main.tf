@@ -42,8 +42,10 @@ provider "digitalocean" {
 provider "oci" {
   tenancy_ocid = module.secrets.oci_tenancy_id
   user_ocid = module.secrets.oci_user_id
-  private_key_path = "/home/malik/.oci/mksybr@gmail.com_2023-12-24T00_16_14.614Z.pem"
   fingerprint = module.secrets.oci_fingerprint
+  # oci session authenticate --profile-name DEFAULT 
+  auth = "SecurityToken" 
+  config_file_profile = "DEFAULT"
   region = "us-ashburn-1"
 }
 
