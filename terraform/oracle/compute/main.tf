@@ -317,7 +317,7 @@ resource "terraform_data" "run-provisioner-script" {
     }
   }
   provisioner "local-exec" {
-    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${module.secrets.private_ssh_key} ubuntu@${oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip}:~/.kube/ociconfig ~/.kube/ociconfig"
+    command = "mkdir -p ~/.kube && scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${module.secrets.private_ssh_key} ubuntu@${oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip}:/tmp/kubespray/inventory/main/artifacts/admin.conf ~/.kube/ociconfig"
     connection {
       type        = "ssh"
       user        = "ubuntu"

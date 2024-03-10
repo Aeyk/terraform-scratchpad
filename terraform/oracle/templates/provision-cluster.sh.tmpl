@@ -53,39 +53,51 @@ if ! grep -qxF -- "node${index} ${ ip }" /etc/hosts; then
 fi
 %{ endfor ~}
 
-KUBE_CONTROL_HOST=3 CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py "$${IPS[@]}"
+KUBE_MASTERS=3 KUBE_CONTROL_HOST=3 CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py "$${IPS[@]}"
 
 # Review and change parameters under ``inventory/main/group_vars``
 # cat inventory/main/group_vars/all/all.yml
 # cat inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
 
 sed -i 's/metrics_server_enabled: false/metrics_server_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-# sed -i 's/ingress_nginx_enabled: false/ingress_nginx_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+sed -i 's/ingress_nginx_enabled: false/ingress_nginx_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 sed -i 's/cert_manager_enabled: false/cert_manager_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 sed -i 's/^# kubeconfig_localhost: false/kubeconfig_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
 sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
-sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-sed -i 's/metallb_enabled: false/metallb_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-sed -i 's/metallb_speaker_enabled: false/metallb_speaker_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-sed -i 's/kube_proxy_strict_arp: false/kube_proxy_strict_arp: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
 
-echo 'metallb_config:
-  controller:
-    nodeselector:
-      kubernetes.io/os: linux
-    tolerations:
-    - key: "node-role.kubernetes.io/control-plane"
-      operator: "Equal"
-      value: ""
-      effect: "NoSchedule"
-  address_pools:
-    primary:
-      ip_range:
-%{ for ip in slice(arm-1vcpu-6gb-us-qas-public_ipv4, 1, 4) ~}
-        - ${ ip }
-%{ endfor ~}
-  layer2:
-    - primary' >> inventory/main/group_vars/k8s_cluster/addons.yml
+# sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+# sed -i 's/kube_proxy_strict_arp: false/kube_proxy_strict_arp: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+# echo 'kube_vip_lb_enable: true
+# kube_vip_enabled: true
+# kube_vip_controlplane_enabled: true
+# kube_vip_address: 10.42.42.42
+# loadbalancer_apiserver:
+#   address: "{{ kube_vip_address }}"
+#   port: 6443
+# kube_vip_services_enabled: false' >> inventory/main/group_vars/k8s_cluster/addons.yml
+
+# kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
+# kubectl create configmap -n kube-system kubevip --from-literal cidr-global=10.69.0.0/16
+
+# sed -i 's/metallb_speaker_enabled: false/metallb_speaker_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+# sed -i 's/kube_proxy_strict_arp: false/kube_proxy_strict_arp: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
+# echo 'metallb_config:
+#   controller:
+#     nodeselector:
+#       kubernetes.io/os: linux
+#     tolerations:
+#     - key: "node-role.kubernetes.io/control-plane"
+#       operator: "Equal"
+#       value: ""
+#       effect: "NoSchedule"
+#   address_pools:
+#     primary:
+#       ip_range:
+# %{ for ip in slice(arm-1vcpu-6gb-us-qas-public_ipv4, 1, 4) ~}
+#         - ${ ip }
+# %{ endfor ~}
+#   layer2:
+#     - primary' >> inventory/main/group_vars/k8s_cluster/addons.yml
 
 # TODO CA certificate
 
