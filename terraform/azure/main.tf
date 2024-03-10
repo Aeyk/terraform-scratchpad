@@ -30,7 +30,7 @@ provider "azurerm" {
 }
 
 provider "keepass" {
-  database = "../Cloud Tokens.kdbx"
+  database = "~/Documents/Cloud Tokens.kdbx"
   password = var.keepass_database_password
 }
 
