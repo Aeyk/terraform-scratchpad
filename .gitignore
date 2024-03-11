@@ -140,3 +140,4 @@ Temporary Items
 *.unencrypted
 /terraform/oracle/provision-cluster.sh
 
+/kubernetes/metallb/ip-address-pool.yml

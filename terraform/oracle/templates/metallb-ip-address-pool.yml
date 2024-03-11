@@ -5,6 +5,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    - 1.mksybr.com
-    - 2.mksybr.com
-    - 3.mksybr.com
+%{ for ip in slice(arm-1vcpu-6gb-us-qas-public_ipv4, 1, 4) ~}
+    - ${ip}/32
+%{ endfor ~}
+
