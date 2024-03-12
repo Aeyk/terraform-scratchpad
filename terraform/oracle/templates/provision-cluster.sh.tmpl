@@ -66,15 +66,15 @@ sed -i 's/^# kubeconfig_localhost: false/kubeconfig_localhost: true/g' inventory
 sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
 
 # sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-# sed -i 's/kube_proxy_strict_arp: false/kube_proxy_strict_arp: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-# echo 'kube_vip_lb_enable: true
-# kube_vip_enabled: true
-# kube_vip_controlplane_enabled: true
-# kube_vip_address: 10.42.42.42
-# loadbalancer_apiserver:
-#   address: "{{ kube_vip_address }}"
-#   port: 6443
-# kube_vip_services_enabled: false' >> inventory/main/group_vars/k8s_cluster/addons.yml
+sed -i 's/kube_proxy_strict_arp: false/kube_proxy_strict_arp: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
+echo 'kube_vip_lb_enable: true
+kube_vip_enabled: true
+kube_vip_controlplane_enabled: true
+kube_vip_address: 10.0.0.254
+loadbalancer_apiserver:
+  address: "{{ kube_vip_address }}"
+  port: 6443
+kube_vip_services_enabled: false' >> inventory/main/group_vars/k8s_cluster/addons.yml
 
 # kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
 # kubectl create configmap -n kube-system kubevip --from-literal cidr-global=10.69.0.0/16
