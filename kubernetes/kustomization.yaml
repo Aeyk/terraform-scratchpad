@@ -3,10 +3,10 @@ kind: Kustomization
 generators:
   - ./ksops-secrets-generator.yaml
 resources:
-  - https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
   - https://github.com/cert-manager/cert-manager/releases/download/v1.14.1/cert-manager.yaml
   - ./metallb
   - ./clusterissuer.yaml
+  - ./ingress
   - ./archivebox
   - ./datasette
   - ./statping
