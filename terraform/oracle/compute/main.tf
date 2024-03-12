@@ -337,3 +337,17 @@ resource "terraform_data" "run-provisioner-script" {
     }
   }
 }
+
+resource "terraform_data" "cluster" {
+  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+  provisioner "file" {
+    source      = "../../kubernetes"
+    destination = "/home/ubuntu"
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(module.secrets.private_ssh_key)
+      host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
+    }
+  }
+}
