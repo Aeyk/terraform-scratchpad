@@ -16,7 +16,7 @@ variable "work_public_ssh_key" {
 
 locals {
   ssh = {
-    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}${file(var.work_public_ssh_key)}"
+    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}${data.keepass_entry.work_public_ssh_key}"
   }
 }
 
@@ -51,4 +51,8 @@ data "keepass_entry" "oci_user_id" {
 
 data "keepass_entry" "oci_compartment_id" {
   path = "Root/Oracle Compartment ID"
+}
+
+data "keepass_entry" "work_public_ssh_key" {
+  path = "Root/Work Public SSH Key"
 }
