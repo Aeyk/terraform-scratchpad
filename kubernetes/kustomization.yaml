@@ -4,7 +4,7 @@ generators:
   - ./ksops-secrets-generator.yaml
 resources:
   - https://github.com/cert-manager/cert-manager/releases/download/v1.14.1/cert-manager.yaml
-  - ./metallb
+  # - ./metallb
   - ./clusterissuer.yaml
   - ./ingress
   - ./archivebox
