@@ -247,7 +247,7 @@ spec:
   selector:
     app: gitea
   sessionAffinity: None
-  type: LoadBalancer
+  type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
@@ -263,5 +263,5 @@ spec:
   selector:
     app: gitea
   sessionAffinity: None
-  type: LoadBalancer
+  type: ClusterIP
 ---
