@@ -16,7 +16,7 @@ variable "work_public_ssh_key" {
 
 locals {
   ssh = {
-    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}${data.keepass_entry.work_public_ssh_key}"
+    authorized_keys = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}${data.keepass_entry.work_public_ssh_key.password}"
   }
 }
 
