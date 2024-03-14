@@ -7,16 +7,10 @@ IP_NW = IP_SECTIONS.captures[0]
 # Last octet excluding all dots:
 IP_START = Integer(IP_SECTIONS.captures[1])
 NUM_WORKER_NODES = settings["nodes"]["workers"]["count"]
-
+IPS=(1..NUM_WORKER_NODES).each{ |node|
+  IP_NW + (IP_START.to_s + node.to_s)
+}
 Vagrant.configure("2") do |config|
-  config.vm.provision "shell", env: { "IP_NW" => IP_NW, "IP_START" => IP_START, "NUM_WORKER_NODES" => NUM_WORKER_NODES }, inline: <<-SHELL
-      set -euxo pipefail
-      # apt-get update -y
-      echo "$IP_NW$((IP_START)) master-node" >> /etc/hosts
-      for i in `seq 1 ${NUM_WORKER_NODES}`; do
-        echo "$IP_NW$((IP_START+i)) worker-node0${i}" >> /etc/hosts
-      done
-  SHELL
   config.vm.provision "shell", env: { "IP_NW" => IP_NW, "IP_START" => IP_START, "NUM_WORKER_NODES" => NUM_WORKER_NODES }, privileged: false, 
     inline: <<-SHELL
       set -euxo pipefail
@@ -74,19 +68,6 @@ SHELL
           vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
         end
       end
-    #   node.vm.provision "shell", 
-    #     inline: <<-SHELL
-    #       config_path="/vagrant/configs"
-    #       /bin/bash $config_path/join.sh -v
-    #       sudo -i -u vagrant bash << EOF
-    #       whoami
-    #       mkdir -p /home/vagrant/.kube
-    #       sudo cp -i $config_path/config /home/vagrant/.kube/
-    #       sudo chown 1000:1000 /home/vagrant/.kube/config
-    #       NODENAME=$(hostname -s)
-    #       kubectl label node $(hostname -s) node-role.kubernetes.io/worker=worker
-    #       EOF
-    #     SHELL
     end
   end
   config.vm.define "master" do |master|
@@ -105,40 +86,8 @@ SHELL
         vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
       end
     end
-    master.vm.provision "shell", env: { "IP_NW" => IP_NW, "IP_START" => IP_START, "NUM_WORKER_NODES" => NUM_WORKER_NODES }, privileged: false, 
-       inline: <<-SHELL
-         set +euxo pipefail
-         declare -a IPS=()
-         echo "$IP_NW$((IP_START)) master-node" | sudo tee -a /etc/hosts
-         for i in `seq 1 ${NUM_WORKER_NODES}`; do
-           echo "$IP_NW$((IP_START+i)) worker-node0${i}" | sudo tee -a /etc/hosts
-           IPS+=($IP_NW$((IP_START+i))) 
-         done
-         ## Install ansible
-         sudo apt update
-         sudo apt install software-properties-common --yes
-         sudo add-apt-repository --yes --update ppa:ansible/ansible
-         sudo apt install python-is-python3 python3-pip -y
-         echo 'export PATH=${PATH:+${PATH}:}$HOME/.local/bin/' >> "$HOME"/.bashrc && source "$HOME"/.bashrc
-         pip3 install ansible==7.6.0 ruamel_yaml netaddr jmespath==0.9.5
-         ## Install kubespray
-         cd /tmp || exit
-         git clone https://github.com/kubernetes-sigs/kubespray || true
-         cd kubespray || exit
-         git checkout release-2.23
-         # Copy ``inventory/sample`` as ``inventory/mycluster``
-         cp -rfp inventory/sample inventory/main
-         CONFIG_FILE=inventory/main/hosts.yaml python3 contrib/inventory_builder/inventory.py "${IPS[@]}"
-         sed -i 's/metrics_server_enabled: false/metrics_server_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-         sed -i 's/ingress_nginx_enabled: false/ingress_nginx_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-         sed -i 's/cert_manager_enabled: false/cert_manager_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-         sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/group_vars/k8s_cluster/k8s-cluster.yml
-         sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-         export PATH=${PATH:+${PATH}:}$HOME/.local/bin/
-         ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root reset.yml -e reset_confirmation=true 
-         ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root cluster.yml
-         sudo chown 1000:1000 /home/vagrant/.kube/config
-      SHELL
+    master.vm.provision "shell", env: { "IPS" => IPS }, privileged: false, 
+      path: "/tmp/provisioner-cluster.sh"
   end
 
 
