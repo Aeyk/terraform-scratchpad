@@ -120,6 +120,7 @@ ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root -e re
 # installing packages and interacting with various systemd daemons.
 # Without --become the playbook will fail to run!
 ansible-playbook -i inventory/main/hosts.yaml -e kube_network_plugin=cilium --become --become-user=root cluster.yml
+ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root \
 
 mkdir -p "$HOME"/.kube
 sudo cp -fv /tmp/kubespray/inventory/main/artifacts/admin.conf "$HOME"/.kube/config
