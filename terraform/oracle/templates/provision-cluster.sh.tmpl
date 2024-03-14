@@ -122,5 +122,6 @@ ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root -e re
 ansible-playbook -i inventory/main/hosts.yaml -e kube_network_plugin=cilium --become --become-user=root cluster.yml
 
 mkdir -p "$HOME"/.kube
-sudo cp -fv /etc/kubernetes/admin.conf "$HOME"/.kube/config
+sudo cp -fv /tmp/kubespray/inventory/main/artifacts/admin.conf "$HOME"/.kube/config
+# sudo cp -fv /etc/kubernetes/admin.conf "$HOME"/.kube/config
 sudo chown "$(id -u):$(id -g)" "$HOME"/.kube/config
