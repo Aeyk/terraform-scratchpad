@@ -207,7 +207,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_caprover_ingress"
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -241,7 +241,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_https_docker_ingr
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -275,7 +275,7 @@ resource "oci_core_network_security_group_security_rule" "tcp4_container_network
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -309,7 +309,7 @@ resource "oci_core_network_security_group_security_rule" "tcp4_container_overlay
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -343,7 +343,7 @@ resource "oci_core_network_security_group_security_rule" "tcp4_docker_swarm_api_
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -360,7 +360,7 @@ resource "oci_core_network_security_group_security_rule" "udp4_docker_swarm_api_
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 17 # UDP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   udp_options {
@@ -393,7 +393,7 @@ resource "oci_core_network_security_group_security_rule" "udp4_container_network
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 17 # UDP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   udp_options {
@@ -427,7 +427,7 @@ resource "oci_core_network_security_group_security_rule" "udp4_container_overlay
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 17 # UDP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   udp_options {
@@ -461,7 +461,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_docker_swarm_api_
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 17 # UDP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   udp_options {
@@ -496,7 +496,7 @@ resource "oci_core_network_security_group_security_rule" "icmp_ingress" {
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 1 # ICMP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
 }
@@ -518,7 +518,7 @@ resource "oci_core_network_security_group_security_rule" "identd_ingress" {
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # ICMPv6
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -587,7 +587,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_kubernetes_ingres
   network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -623,7 +623,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_
   count = 4
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0" # TODO: loopback only
+  source = "10.0.0.0/8" # TODO: loopback only
   # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
@@ -642,7 +642,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_
   count = 4
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
@@ -661,7 +661,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_
   count = 4
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
@@ -680,7 +680,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_
   count = 4
   protocol = 6 # TCP
   direction = "INGRESS"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
@@ -701,7 +701,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd_2" {
   protocol = 6 # TCP
   direction = "INGRESS"
   # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -720,7 +720,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd" {
   protocol = 6 # TCP
   direction = "INGRESS"
   # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
-  source = "0.0.0.0/0"
+  source = "10.0.0.0/8"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -768,5 +768,3 @@ resource "oci_core_network_security_group_security_rule" "ipv4_ingress_bgp" {
 #     }
 #   }
 # }
-
-
