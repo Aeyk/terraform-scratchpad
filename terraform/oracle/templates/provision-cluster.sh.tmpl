@@ -67,7 +67,14 @@ sed -i 's/^# kubectl_localhost: false/kubectl_localhost: true/g' inventory/main/
 # sed -i 's/helm_enabled: false/helm_enabled: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
 
 sed -i 's/kube_proxy_strict_arp: false/kube_proxy_strict_arp: true/g' inventory/main/group_vars/k8s_cluster/addons.yml
-echo 'kube_vip_lb_enable: true
+echo 'kube_vip_bgp_enabled: true
+kube_vip_local_as: 65000
+kube_vip_bgp_routerid: 10.0.0.1
+kube_vip_bgppeers:
+%{ for ip in slice(arm-1vcpu-6gb-us-qas-private_ipv4, 1, 4) ~}
+- ${ ip }:65000::false
+%{ endfor ~}
+kube_vip_lb_enable: true
 kube_vip_enabled: true
 kube_vip_controlplane_enabled: true
 kube_vip_address: 10.0.0.254
@@ -112,7 +119,7 @@ ansible-playbook -i inventory/main/hosts.yaml  --become --become-user=root -e re
 # The option `--become` is required, as for example writing SSL keys in /etc/,
 # installing packages and interacting with various systemd daemons.
 # Without --become the playbook will fail to run!
-ansible-playbook -i inventory/main/hosts.yaml -e kube_network_plugin=cilium -e kube_proxy_strict_arp=true --become --become-user=root cluster.yml
+ansible-playbook -i inventory/main/hosts.yaml -e kube_network_plugin=cilium --become --become-user=root cluster.yml
 
 mkdir -p "$HOME"/.kube
 sudo cp -fv /etc/kubernetes/admin.conf "$HOME"/.kube/config
