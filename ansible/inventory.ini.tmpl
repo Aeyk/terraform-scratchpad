@@ -1,7 +1,13 @@
-[keycloak]
-%{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4 ~}
+[kubernetes]
+%{ for ip in arm-1vcpu-6gb-us-qas-public_ipv4(1, 3) ~}
 ${ ip }
 %{ endfor ~}
+
+[keycloak]
+${ arm-1vcpu-6gb-us-qas-public_ipv4[0] ~}
+
+[syncthing]
+${ arm-1vcpu-6gb-us-qas-public_ipv4[0] ~}
 
 [all:vars]
 ansible_connection='ssh'

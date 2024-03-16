@@ -1,0 +1,7 @@
+- hosts: keycloak
+  roles:
+    -  { role: middleware_automation.keycloak_quarkus, tags: [ 'keycloak' ], when: "keycloak is defined" }
+
+- hosts: syncthing
+  roles:
+    -  {  role: syncthing, tags: [ 'syncthing' ], when: "syncthing is defined" }

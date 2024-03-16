@@ -1,3 +1,7 @@
-- src:  https://git.coopdevs.org/coopdevs/tooling/zulip/zulip-provisioning.git
+- src: https://github.com/Aeyk/syncthing-ansible-role.git
+  version: master
+  name: syncthing
+
+- src: https://github.com/Aeyk/keycloak-ansible-role.git
   version: main
-  name: zulip
+  name: middleware_automation.keycloak_quarkus
