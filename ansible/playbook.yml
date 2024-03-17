@@ -69,15 +69,20 @@
       ansible.builtin.package:
         name: "{{ packages }}"
     - name: Configure syncthing
-      ansible.builtin.copy:
-        content: "{{ lookup('community.sops.sops', './syncthing/config.xml.enc', rstrip=false) }}"
-        dest: /home/{{ user }}/.config/syncthing/config.xml
-        owner: "{{ user }}"
-        group: "{{ user }}"
-        mode: 0600
-      args:
-        creates: /home/{{ user }}/.config/syncthing/config.xml
-      no_log: true
+      become: true
+      block:
+      - ansible.builtin.copy:
+          content: /home/{{ user }}/.config/syncthing/config.xml
+          dest: /home/{{ user }}/.config/syncthing/config.xml.{{ ansible_date_time.iso8601 }}
+          owner: "{{ user }}"
+          group: "{{ user }}"
+          mode: 0600
+      - ansible.builtin.copy:
+          content: "{{ lookup('community.sops.sops', './syncthing/config.xml.enc', rstrip=false) }}"
+          dest: /home/{{ user }}/.config/syncthing/config.xml
+          owner: "{{ user }}"
+          group: "{{ user }}"
+          mode: 0600
     - name: Start and enable services
       ansible.builtin.service:
         name: "syncthing@{{ user }}"
@@ -87,7 +92,7 @@
     jenkins
   become: true
   vars:
-    jenkins_hostname: jenkins.mksybr.com
+    jenkins_hostname: localhost
     jenkins_http_port: 8081
     java_packages:
       - openjdk-21-jdk
@@ -164,7 +169,7 @@
         owner: root
         group: root
         state: link
-      loop: [ keycloak, syncthing, ansible ]
+      loop: [ keycloak, syncthing, jenkins ]
     # - name: Restart NGINX service
     #   ansible.builtin.systemd_service:
     #     name: nginx
