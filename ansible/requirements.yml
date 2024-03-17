@@ -1,16 +1,23 @@
-- src: https://github.com/Aeyk/syncthing-ansible-role.git
-  version: master
-  name: syncthing
+roles:
+  - src: https://github.com/Aeyk/syncthing-ansible-role.git
+    name: adyxax.syncthing
 
-- src: https://github.com/Aeyk/keycloak-ansible-role.git
-  version: main
-  name: middleware_automation.keycloak
+  - src: nginxinc.nginx_config
+    name: nginxinc.nginx_config
+  
+  - src: nginxinc.nginx
+    name: nginxinc.nginx
+  
+  - src: community.sops
+    name: community.sops
 
-- src: nginxinc.nginx_config
-  name: nginxinc.nginx_config
+  - src: geerlingguy.java
+    name: geerlingguy.java
 
-- src: nginxinc.nginx
-  name: nginxinc.nginx
+  - src: geerlingguy.jenkins
+    name: geerlingguy.jenkins
 
-- src: community.sops
-  name: community.sops
+collections:
+  - src: https://github.com/Aeyk/keycloak-ansible-role.git
+    name: middleware_automation.keycloak
+  
