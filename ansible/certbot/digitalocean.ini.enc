@@ -1,0 +1,8 @@
+[sops]
+mac                         = ENC[AES256_GCM,data:YkUGp9kkVK9LSAazGQbaU9K08Obdcrc3sA1wk0bXTxDu+7vCMNbruOrYlqmPfBx3Ok4ASZZoEoaOBTWArphw3nthd043MtjpSztq9SaF19Pat+IwBQsMtcFCY0mkN+jHsuDAq0Z5ddSoc46eI99AICyIe/FdPbrBhoZV80Jpabs=,iv:QjHN9/txMuwoPqlDSnlxa4rEmlTiOHmuilGKMu/kKow=,tag:PdccZ09hn1K4Ku7COhFTjQ==,type:str]
+encrypted_regex             = ^(data|stringData)$
+lastmodified                = 2024-03-17T00:45:44Z
+pgp__list_0__map_fp         = A8F32284234A54A9CD742F91B1AB195143457ABA
+pgp__list_0__map_created_at = 2024-03-17T00:45:44Z
+pgp__list_0__map_enc        = -----BEGIN PGP MESSAGE-----\n\nhQGMAzipAh8vzmvTAQwAlSnLHfk6lpATzEq3SYk5KWRc6w5os0hLByirLukHS19G\nFpHHkmYsxbAn9bximNaN9QSxgjvug4fi7/XggQGDgHVa288EnRqPZ4H9gnupjl3t\nats9ylT2QRPBKUYaCCeB91qbAr2LD+3N8ZTdyQgDsOEUAzbpHOuP0xzrXXYAdKKT\n1pN9p6UxqJyQIBwNaJgFsP98zwVniwWOh6gosfaKNF1iqqjLeE8t5NQrAEp0uPsl\n+WytMerSFno1oiZJ6cNjEiR5TjlW05c1gaLEbSPEl0ADKQQLxfbhtgvSqE3wXQWn\nJFTZT9TJ8ycmQeuVdeWGWEF16dhQAvST8xvOg7wjJtCUP8NFmOVTfCXsTwAel280\nct8EV33TLXpnII23PjhgDVr67HkQkJvgcl1j6EuUo6b9rpRz7gwlisyp44RgOD1C\nlK8DBSFeoP8pAmW12RHnwohCDR07q4l2LdTnkSgzxkn4+Ro9S7z5auEiWB9wVCK/\nOsfCg3BE5wG7nrkVHd8l0l4BjRvgVeu6W4UGZZNbQtRgJ/aE9fKH1jnezTo4a2IF\nfbVOylWU6UN/7OxQ2VdugIj3lT0c/XRonfDBzIbsK/kGZqIlQjg2mb2Ee5u0/ieT\ncSnDWJcXJnNJ++M9ltIq\n=Y5ay\n-----END PGP MESSAGE-----
+version                     = 3.8.1

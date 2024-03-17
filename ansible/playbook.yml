@@ -1,7 +1,85 @@
-- hosts: keycloak
+- name: keycloakjn
+  hosts: keycloak
+  vars:
+    keycloak_quarkus_admin_pass: "remembertochangeme"
+    keycloak_quarkus_host: localhost
+    keycloak_quarkus_port: 8443
+    keycloak_quarkus_log: file
+    keycloak_quarkus_proxy_mode: none
   roles:
-    -  { role: middleware_automation.keycloak_quarkus, tags: [ 'keycloak' ], when: "keycloak is defined" }
+    -  { role: middleware_automation.keycloak.keycloak_quarkus, tags: [ 'keycloak' ], when: "keycloak is defined" }
 
 - hosts: syncthing
   roles:
-    -  {  role: syncthing, tags: [ 'syncthing' ], when: "syncthing is defined" }
+    -  { role: syncthing, tags: [ 'syncthing' ], when: "syncthing is defined" }
+
+- name: nginx
+  hosts: 
+    - syncthing
+    - keycloak
+  tasks:
+    - name: Install NGINX
+      ansible.builtin.include_role:
+        name: nginxinc.nginx
+        apply:
+          become: yes
+          become_user: root
+      vars:
+        nginx_install_from: "os_repository"
+        nginx_logrotate_conf:
+          paths: /var/log/nginx/*.log
+          options:
+            - daily
+            - missingok
+            - rotate 14
+            - compress
+            - delaycompress
+            - notifempty
+            - sharedscripts
+    - name: Configure NGINX
+      become: true
+      become_user: root
+      ansible.builtin.copy:
+        src: ./nginx
+        dest: /etc/
+        owner: root
+        group: root
+    - name: Install certbot
+      become: true
+      become_user: root
+      ansible.builtin.package:
+        name:
+        - certbot
+        - letsencrypt
+        - python3-certbot-nginx
+        - python3-certbot-dns-digitalocean
+        state: present
+    - name: Add DigitalOcean credential
+      ansible.builtin.copy:
+        content: "{{ lookup('community.sops.sops', 'certbot/digitialocean.ini.enc', rstrip=false) }}"
+        dest: /tmp/digitalocean.ini.
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: 0600
+      no_log: true
+    - name: ACME certificate
+      become: true
+      become_user: root
+      ansible.builtin.command: sudo certbot certonly --dns-digitalocean --dns-digitalocean-credentials /tmp/digitalocean.ini -d *.mksybr.com -m mksybr@gmail.com --agree-tos --no-eff-email --preferred-challenges dns
+      args: 
+        creates: /etc/letsencrypt/live/mksybr.com/
+    - name: Enable NGINX sites
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        src: "/etc/nginx/sites-available/{{ item }}.conf"
+        dest: "/etc/nginx/sites-enabled/{{ item }}"
+        force: yes
+        owner: root
+        group: root
+        state: link
+      loop: [ keycloak ]
+    # - name: Restart NGINX service
+    #   ansible.builtin.systemd_service:
+    #     name: nginx
+    #     state: restarted

@@ -4,4 +4,13 @@
 
 - src: https://github.com/Aeyk/keycloak-ansible-role.git
   version: main
-  name: middleware_automation.keycloak_quarkus
+  name: middleware_automation.keycloak
+
+- src: nginxinc.nginx_config
+  name: nginxinc.nginx_config
+
+- src: nginxinc.nginx
+  name: nginxinc.nginx
+
+- src: community.sops
+  name: community.sops
