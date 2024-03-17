@@ -10,9 +10,38 @@
     -  { role: middleware_automation.keycloak.keycloak_quarkus, tags: [ 'keycloak' ], when: "keycloak is defined" }
 
 - hosts: syncthing
-  roles:
-    -  { role: syncthing, tags: [ 'syncthing' ], when: "syncthing is defined" }
-
+  vars:
+    user: syncthing
+    group: syncthing
+    config_directory: /home/{{ user }}/.config/syncthing
+    data_directory: /home/{{ user }}/.local/share/syncthing
+    packages:
+      syncthing
+  tasks:
+    - name: create service account
+      become: true
+      become_user: root
+      ansible.builtin.user:
+        name: "{{ user }}"
+    - name: enforces service directories
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        state: directory
+        path: "{{ item }}"
+        owner: "{{ user }}"
+        mode: 0750
+      loop:
+        - "{{ config_directory }}"
+        - "{{ data_directory }}"
+    - name: Install syncthing
+      ansible.builtin.package:
+        name: "{{ packages }}"
+    - name: Start and enable services
+      ansible.builtin.service:
+        name: "syncthing@{{ user }}"
+        state: started
+    
 - name: nginx
   hosts: 
     - syncthing
@@ -56,12 +85,16 @@
         state: present
     - name: Add DigitalOcean credential
       ansible.builtin.copy:
-        content: "{{ lookup('community.sops.sops', 'certbot/digitialocean.ini.enc', rstrip=false) }}"
-        dest: /tmp/digitalocean.ini.
+        content: "{{ lookup('community.sops.sops', './certbot/digitalocean.ini.enc', rstrip=false) }}"
+        dest: /tmp/digitalocean.ini
         owner: "{{ user }}"
         group: "{{ user }}"
         mode: 0600
+      args:
+        creates: /tmp/digitalocean.ini
       no_log: true
+      when:
+        - false
     - name: ACME certificate
       become: true
       become_user: root
@@ -73,12 +106,12 @@
       become_user: root
       ansible.builtin.file:
         src: "/etc/nginx/sites-available/{{ item }}.conf"
-        dest: "/etc/nginx/sites-enabled/{{ item }}"
+        dest: "/etc/nginx/sites-enabled/{{ item }}.conf"
         force: yes
         owner: root
         group: root
         state: link
-      loop: [ keycloak ]
+      loop: [ keycloak, syncthing ]
     # - name: Restart NGINX service
     #   ansible.builtin.systemd_service:
     #     name: nginx
