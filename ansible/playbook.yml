@@ -53,6 +53,16 @@
     - name: Install syncthing
       ansible.builtin.package:
         name: "{{ packages }}"
+    - name: Configure syncthing
+      ansible.builtin.copy:
+        content: "{{ lookup('community.sops.sops', './syncthing/config.xml.enc', rstrip=false) }}"
+        dest: /home/{{ user }}/.config/syncthing/config.xml
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: 0600
+      args:
+        creates: /home/{{ user }}/.config/syncthing/config.xml
+      no_log: true
     - name: Start and enable services
       ansible.builtin.service:
         name: "syncthing@{{ user }}"
