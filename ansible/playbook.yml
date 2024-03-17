@@ -82,11 +82,23 @@
       ansible.builtin.service:
         name: "syncthing@{{ user }}"
         state: started
-    
+- name: jenkins
+  hosts:
+    jenkins
+  become: true
+  vars:
+    jenkins_hostname: jenkins.mksybr.com
+    jenkins_http_port: 8081
+    java_packages:
+      - openjdk-21-jdk
+  roles:
+    - role: geerlingguy.java
+    - role: geerlingguy.jenkins
 - name: nginx
   hosts: 
     - syncthing
     - keycloak
+    - jenkins
   tasks:
     - name: Install NGINX
       ansible.builtin.include_role:
@@ -152,7 +164,7 @@
         owner: root
         group: root
         state: link
-      loop: [ keycloak, syncthing ]
+      loop: [ keycloak, syncthing, ansible ]
     # - name: Restart NGINX service
     #   ansible.builtin.systemd_service:
     #     name: nginx
