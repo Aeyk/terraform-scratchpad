@@ -7,7 +7,20 @@
     keycloak_quarkus_port: 443
     keycloak_quarkus_log: file
     keycloak_quarkus_proxy_mode: edge
-    
+  tasks:
+    - name: import realm
+      block:
+        - ansible.builtin.copy: 
+            content: "{{ lookup('community.sops.sops', '../kubernetes/keycloak/keycloak-realm.encrypted', rstrip=false) }}"
+            dest: /tmp/keycloak-realm.json
+            mode: 0600
+          no_log: true
+        - become: true
+          become_user: root
+          ansible.builtin.shell: |
+            systemctl stop keycloak
+            /opt/keycloak/keycloak-*/bin/kc.sh --verbose import --file /tmp/keycloak-realm.json
+            systemctl start keycloak
   roles:
     -  { role: middleware_automation.keycloak.keycloak_quarkus, tags: [ 'keycloak' ], when: "keycloak is defined" }
 
