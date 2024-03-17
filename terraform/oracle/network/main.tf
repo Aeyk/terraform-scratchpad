@@ -768,3 +768,37 @@ resource "oci_core_network_security_group_security_rule" "ipv4_ingress_bgp" {
 #     }
 #   }
 # }
+
+resource "oci_core_network_security_group_security_rule" "ipv4_syncthing_tailscale" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  source = "100.64.0.0/10"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    destination_port_range {
+      min = 22000
+      max = 22000
+    }
+  }   
+}
+
+resource "oci_core_network_security_group_security_rule" "ipv4_syncthing_discovery_tailscale" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.cloud_net_security_group.id
+  protocol = 17 # UDP
+  direction = "INGRESS"
+  source = "100.64.0.0/10"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    destination_port_range {
+      min = 21027
+      max = 21027
+    }
+  }   
+}

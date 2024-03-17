@@ -18,6 +18,22 @@
     packages:
       syncthing
   tasks:
+    - name: open firewall
+      become: true
+      become_user: root
+      block:
+        - ansible.builtin.iptables:
+            chain: INPUT
+            src_range: 100.64.0.0-100.127.255.255
+            protocol: tcp
+            destination_ports:
+              - 22000
+        - ansible.builtin.iptables:
+            chain: INPUT
+            src_range: 100.64.0.0-100.127.255.255
+            protocol: udp
+            destination_ports:
+              - 21027
     - name: create service account
       become: true
       become_user: root
