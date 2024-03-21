@@ -8,12 +8,11 @@ variable "internet_gateway_enabled" {
 
 variable "oke" {
   type = map(string)
-
   default = {
     name             = "oke"
     version          = "v1.28.2"
     shape            = "VM.Standard.A1.Flex"
-    nodes_per_subnet = 3
+    nodes_per_subnet = 1
   }
 }
 

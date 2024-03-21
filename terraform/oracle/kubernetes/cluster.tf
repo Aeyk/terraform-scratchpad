@@ -23,7 +23,6 @@ resource "oci_containerengine_cluster" "k8s_cluster" {
   }
 }
 
-
 data "oci_identity_availability_domains" "ads" {
   compartment_id = module.secrets.oci_compartment_id
 }
@@ -43,15 +42,18 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
   node_config_details {
     placement_configs {
       availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
-      subnet_id           = oci_core_subnet.private.id
+      subnet_id           = module.network.arm_public_subnet
+      # subnet_id           = oci_core_subnet.private.id
     }
     placement_configs {
       availability_domain = data.oci_identity_availability_domains.ads.availability_domains[1].name
-      subnet_id           = oci_core_subnet.private.id
+      subnet_id           = module.network.arm_public_subnet
+      # subnet_id           = oci_core_subnet.private.id
     }
     placement_configs {
       availability_domain = data.oci_identity_availability_domains.ads.availability_domains[2].name
-      subnet_id           = oci_core_subnet.private.id
+      subnet_id           = module.network.arm_public_subnet
+      # subnet_id           = oci_core_subnet.private.id
     }
     size = 3
   }
@@ -66,9 +68,37 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
   ssh_public_key = module.secrets.ssh_authorized_keys
 }
 
-output "node_public_ips" {
-  value = oci_containerengine_node_pool.k8s_node_pool.nodes[*].public_ip
-}
+# TODO finish
+# resource "oci_bastion_bastion" "demo_bastionsrv" {
+#   bastion_type     = "STANDARD"
+#   compartment_id   = var.compartment_ocid
+#   target_subnet_id           = oci_core_subnet.private.id
+#   client_cidr_block_allow_list = [
+#     var.local_laptop_id
+#   ]
+#   defined_tags = var.network_defined_tags
+#   name = "oke-bastion"
+# }
+
+# resource "oci_bastion_session" "demo_bastionsession" {
+#   bastion_id = oci_bastion_bastion.demo_bastionsrv.id
+#   defined_tags = var.network_defined_tags
+#   key_details {
+#     public_key_content = var.ssh_bastion_key
+#   }
+#   target_resource_details {
+#     session_type       = "MANAGED_SSH"
+#     target_resource_id = data.terraform_remote_state.compute_state.outputs.private_instance_id
+#     target_resource_operating_system_user_name = "opc"
+#     target_resource_port                       = "22"
+#   }
+#   session_ttl_in_seconds = 3600
+#   display_name = "bastionsession-private-host"
+# }
+
+# output "node_public_ips" {
+#   value = oci_containerengine_node_pool.k8s_node_pool.nodes[*].public_ip
+# }
 
 # https://www.terraform.io/docs/providers/oci/d/containerengine_cluster_kube_config.html
 data "oci_containerengine_cluster_kube_config" "cluster_kube_config" {
@@ -80,7 +110,7 @@ data "oci_containerengine_cluster_kube_config" "cluster_kube_config" {
 # https://www.terraform.io/docs/providers/local/r/file.html
 resource "local_file" "kubeconfig" {
   content  = data.oci_containerengine_cluster_kube_config.cluster_kube_config.content
-  filename = pathexpand("$HOME/.kube/ociconfig")
+  filename = pathexpand("~/.kube/ociconfig")
 }
 
 resource "digitalocean_record" "main" {
@@ -88,6 +118,6 @@ resource "digitalocean_record" "main" {
   name   = "*"
   domain = "mksybr.com"
   type   = "A"
-  value  = oci_containerengine_node_pool.k8s_node_pool.nodes[count.index].public_ip
+  value  = oci_containerengine_cluster.k8s_cluster.endpoints[index.count]public_endpoint
   ttl    = "30"
 }

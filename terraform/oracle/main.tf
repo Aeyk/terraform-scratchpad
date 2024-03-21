@@ -20,8 +20,15 @@ terraform {
   }
   backend "http" {
     update_method = "PUT"
+    address = "https://objectstorage.us-ashburn-1.oraclecloud.com/p/hVXK-nOJRhpgFgEbMQc35cfRgno05l1koEdjvOmPP14Vkcd_6c0Z543_G0E3yMHp/n/idt66ykl9mui/b/terraform/o/terraform.tfstate"
   }
 }
+
+# resource "oci_objectstorage_bucket" "terraform" {
+#     compartment_id = module.secrets.oci_compartment_id
+#     name = "terraform"
+#     namespace = "idt66ykl9mui"
+# }
 
 provider "aws" {
     region = "us-east-1"
@@ -62,3 +69,9 @@ module "secrets" {
   source = "./secrets"
   keepass_database_password = var.keepass_database_password
 }
+
+module "kubernetes" {
+  keepass_database_password = var.keepass_database_password
+  source = "./kubernetes"
+}
+

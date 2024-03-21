@@ -7,16 +7,16 @@ resources:
   - https://github.com/cert-manager/cert-manager/releases/download/v1.14.1/cert-manager.yaml
 # - ./metallb
   - ./clusterissuer.yaml
-  - ./archivebox
-  - ./datasette
+#  - ./archivebox
+#  - ./datasette
   - ./statping
   - ./stackgres
   - ./postgres
-  - ./keycloak
-  - ./paperless
+#  - ./keycloak
+#  - ./paperless
   - ./drone
   - ./argocd
-  - ./gitea
+#  - ./gitea
 patches:
   - patch: |-
       - op: replace

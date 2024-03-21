@@ -8,5 +8,5 @@ output "arm_public_subnet" {
 }
 
 output "arm_net_security_group" {
-  value = "${oci_core_network_security_group.cloud_net_security_group.id}"
+  value = "${oci_core_network_security_group.main.id}"
 }

@@ -22,8 +22,11 @@ provider "keepass" {
 }
 
 module "secrets" {
-  source                    = "../secrets"
+  source = "../secrets"
   keepass_database_password = var.keepass_database_password
-  keepass_database          = "../Cloud Tokens.kdbx"
 }
 
+module "network" {
+  source = "../network"
+  keepass_database_password = var.keepass_database_password
+}

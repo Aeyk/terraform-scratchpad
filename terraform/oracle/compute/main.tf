@@ -31,6 +31,11 @@ module "secrets" {
   keepass_database_password = var.keepass_database_password
 }
 
+module "kubernetes" {
+  keepass_database_password = var.keepass_database_password
+  source = "../kubernetes"
+}
+
 resource "oci_core_network_security_group" "me_net_security_group" {
   display_name = "me-mksybr-network-security-group"
   compartment_id = module.secrets.oci_compartment_id
@@ -85,6 +90,8 @@ resource "oci_core_instance" "arm-1vcpu-6gb-us-qas" {
     assign_public_ip = "true"
     subnet_id = module.network.arm_public_subnet
     nsg_ids = [module.network.arm_net_security_group]
+    # subnet_id = module.kubernetes.public_subnet_id
+    # nsg_ids = [module.kubernetes.public_nsg_id]
     # assign_ipv6ip = "true"
   }
   instance_options {
@@ -221,9 +228,11 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
     assign_private_dns_record = "false"
     assign_public_ip = "true"
     # assign_ipv6ip = "true"
-    subnet_id = module.network.arm_public_subnet
-    nsg_ids = [module.network.arm_net_security_group]
-    # nsg_ids = [oci_core_network_security_group.cloud_net_security_group.id]
+    subnet_id = module.kubernetes.public_subnet_id
+    nsg_ids = [module.kubernetes.public_nsg_id]
+    # subnet_id = module.network.arm_public_subnet
+    # nsg_ids = [module.network.arm_net_security_group]
+    # nsg_ids = [oci_core_network_security_group.main.id]
   }
   instance_options {
     are_legacy_imds_endpoints_disabled = "false"
@@ -284,59 +293,59 @@ resource "local_file" "ansible_inventory" {
   filename = "../../ansible/inventory.ini"
 }
 
-resource "local_file" "metallb_address_pool" {
-  content = templatefile("./templates/metallb-ip-address-pool.yml", {
-    # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
-    arm-1vcpu-6gb-us-qas-public_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
-  })
-  filename = "../../kubernetes/metallb/ip-address-pool.yml"
-}
+# TODO: check if 4 nodes == kubespray else use oci oke
+# resource "local_file" "metallb_address_pool" {
+#   content = templatefile("./templates/metallb-ip-address-pool.yml", {
+#     # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
+#     arm-1vcpu-6gb-us-qas-public_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
+#   })
+#   filename = "../../kubernetes/metallb/ip-address-pool.yml"
+# }
 
+# resource "local_file" "provision-script" {
+#   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+#   content = templatefile("./templates/provision-cluster.sh.tmpl", {
+#     # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
+#     arm-1vcpu-6gb-us-qas-private_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.private_ip
+#     arm-1vcpu-6gb-us-qas-public_ipv4  = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
+#   })
+#   filename = "/tmp/provision-cluster.sh"
+# }
 
-resource "local_file" "provision-script" {
-  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
-  content = templatefile("./templates/provision-cluster.sh.tmpl", {
-    # amd-1vcpu-1gb-us-qas-public_ipv4 = oci_core_instance.amd-1vcpu-1gb-us-qas.*.public_ip
-    arm-1vcpu-6gb-us-qas-private_ipv4 = oci_core_instance.arm-1vcpu-6gb-us-qas.*.private_ip
-    arm-1vcpu-6gb-us-qas-public_ipv4  = oci_core_instance.arm-1vcpu-6gb-us-qas.*.public_ip
-  })
-  filename = "/tmp/provision-cluster.sh"
-}
-
-resource "terraform_data" "run-provisioner-script" {
-  depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
-  provisioner "file" {
-    source      = "/tmp/provision-cluster.sh"
-    destination = "/tmp/cluster"
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(module.secrets.private_ssh_key)
-      host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
-    }
-  }
-  provisioner "remote-exec" {
-    inline = [
-      # "chmod a+x /tmp/install; . /tmp/install && remove_snaps && install_emacs",
-      "bash /tmp/cluster"
-    ]
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(module.secrets.private_ssh_key)
-      host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
-    }
-  }
-  provisioner "local-exec" {
-    command = "mkdir -p ~/.kube && scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${module.secrets.private_ssh_key} ubuntu@${oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip}:/tmp/kubespray/inventory/main/artifacts/admin.conf ~/.kube/ociconfig"
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(module.secrets.private_ssh_key)
-      host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
-    }
-  }
-}
+# resource "terraform_data" "run-provisioner-script" {
+#   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]
+#   provisioner "file" {
+#     source      = "/tmp/provision-cluster.sh"
+#     destination = "/tmp/cluster"
+#     connection {
+#       type        = "ssh"
+#       user        = "ubuntu"
+#       private_key = file(module.secrets.private_ssh_key)
+#       host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
+#     }
+#   }
+#   provisioner "remote-exec" {
+#     inline = [
+#       # "chmod a+x /tmp/install; . /tmp/install && remove_snaps && install_emacs",
+#       "bash /tmp/cluster"
+#     ]
+#     connection {
+#       type        = "ssh"
+#       user        = "ubuntu"
+#       private_key = file(module.secrets.private_ssh_key)
+#       host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
+#     }
+#   }
+#   provisioner "local-exec" {
+#     command = "mkdir -p ~/.kube && scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${module.secrets.private_ssh_key} ubuntu@${oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip}:/tmp/kubespray/inventory/main/artifacts/admin.conf ~/.kube/ociconfig"
+#     connection {
+#       type        = "ssh"
+#       user        = "ubuntu"
+#       private_key = file(module.secrets.private_ssh_key)
+#       host        = oci_core_instance.arm-1vcpu-6gb-us-qas[0].public_ip
+#     }
+#   }
+# }
 
 resource "terraform_data" "cluster" {
   depends_on = [oci_core_instance.arm-1vcpu-6gb-us-qas]

@@ -14,14 +14,13 @@ module "oke_vcn" {
   internet_gateway_route_rules = null
   local_peering_gateways       = null
   nat_gateway_route_rules      = null
-  vcn_name                     = "k8s-vcn"
-  vcn_dns_label                = "k8svcn"
+  vcn_name                     = "k8s"
+  vcn_dns_label                = "k8s"
   vcn_cidrs                    = ["10.0.0.0/16"]
   create_internet_gateway      = true
   create_nat_gateway           = true
   create_service_gateway       = true
 }
-
 
 variable "private_cidr_block" {
   default = "10.0.1.0/24"
@@ -30,14 +29,15 @@ variable "private_cidr_block" {
 variable "public_cidr_block" {
   default = "10.0.0.0/24"
 }
-# resource "oci_core_subnet" "public" {
-#   compartment_id    = module.secrets.oci_compartment_id
-#   vcn_id            = module.oke_vcn.vcn_id
-#   cidr_block        = "10.1.0.0/24"
-#   display_name      = "k8s_public_subnet"
-#   route_table_id    = module.oke_vcn.ig_route_id
-#   security_list_ids = [oci_core_security_list.public.id]
-# }
+
+resource "oci_core_subnet" "public" {
+  compartment_id    = module.secrets.oci_compartment_id
+  vcn_id            = module.oke_vcn.vcn_id
+  cidr_block        = "10.0.0.0/24" # TODO variable
+  display_name      = "public"
+  route_table_id    = module.oke_vcn.ig_route_id
+  security_list_ids = [oci_core_security_list.public.id]
+}
 
 resource "oci_core_security_list" "public" {
   compartment_id = module.secrets.oci_compartment_id
@@ -55,9 +55,36 @@ resource "oci_core_security_list" "public" {
     source_type = "CIDR_BLOCK"
     protocol    = "all"
   }
+}
+
+resource "oci_core_subnet" "private" {
+  compartment_id    = module.secrets.oci_compartment_id
+  vcn_id            = module.oke_vcn.vcn_id
+  cidr_block        = "10.0.1.0/24" # TODO variable
+  display_name      = "private"
+  route_table_id    = module.oke_vcn.ig_route_id
+  security_list_ids = [oci_core_security_list.private.id]
+}
+
+resource "oci_core_security_list" "private" {
+  compartment_id = module.secrets.oci_compartment_id
+  vcn_id         = module.oke_vcn.vcn_id
+  display_name   = "private"
+  egress_security_rules {
+    stateless        = false
+    destination      = "0.0.0.0/0"
+    destination_type = "CIDR_BLOCK"
+    protocol         = "all"
+  }
   ingress_security_rules {
     stateless   = false
-    source      = "0.0.0.0/0"
+    source      = "10.0.0.0/16"
+    source_type = "CIDR_BLOCK"
+    protocol    = "all"
+  }
+  ingress_security_rules {
+    stateless   = false
+    source      = "10.0.0.0/16"
     source_type = "CIDR_BLOCK"
     protocol    = "6"
     tcp_options {
@@ -65,7 +92,18 @@ resource "oci_core_security_list" "public" {
       max = 6443
     }
   }
+  # ingress_security_rules {
+  #   stateless   = false
+  #   source      = "0.0.0.0/0"
+  #   source_type = "CIDR_BLOCK"
+  #   protocol    = "6"
+  #   tcp_options {
+  #     min = 6443
+  #     max = 6443
+  #   }
+  # }
 }
+
 
 # https://www.terraform.io/docs/providers/oci/r/core_internet_gateway.html
 # resource "oci_core_internet_gateway" "oke_ig" {
