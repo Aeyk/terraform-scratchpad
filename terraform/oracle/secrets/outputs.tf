@@ -23,7 +23,7 @@ output "digitalocean_token" {
 }
 
 output "ssh_authorized_keys" {
-  value = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}${file(var.work_public_ssh_key)}"
+  value = "${data.keepass_entry.phone_public_ssh_key_contents.attributes.public_key}\n${file(var.public_ssh_key)}\n${file(var.work_public_ssh_key)}"
 }
 
 output "private_ssh_key" {
