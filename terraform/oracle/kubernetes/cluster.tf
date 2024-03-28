@@ -38,22 +38,21 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
     memory_in_gbs = "6"
     ocpus         = "1"
   }
-  # quantity_per_subnet = var.oke["nodes_per_subnet"]
   node_config_details {
     placement_configs {
       availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
-      subnet_id           = module.network.arm_public_subnet
-      # subnet_id           = oci_core_subnet.private.id
+      # subnet_id           = module.network.arm_public_subnet
+      subnet_id           = oci_core_subnet.private.id
     }
     placement_configs {
       availability_domain = data.oci_identity_availability_domains.ads.availability_domains[1].name
-      subnet_id           = module.network.arm_public_subnet
-      # subnet_id           = oci_core_subnet.private.id
+      # subnet_id           = module.network.arm_public_subnet
+      subnet_id           = oci_core_subnet.private.id
     }
     placement_configs {
       availability_domain = data.oci_identity_availability_domains.ads.availability_domains[2].name
-      subnet_id           = module.network.arm_public_subnet
-      # subnet_id           = oci_core_subnet.private.id
+      # subnet_id           = module.network.arm_public_subnet
+      subnet_id           = oci_core_subnet.private.id
     }
     size = 3
   }
@@ -61,10 +60,6 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
     source_type = "IMAGE"
     image_id    = var.image_id
   }
-  # subnet_ids = [
-  #   "${oci_core_subnet.private.id}",
-  #   "${oci_core_subnet.public.id}"
-  # ]
   ssh_public_key = module.secrets.ssh_authorized_keys
 }
 
@@ -113,11 +108,11 @@ resource "local_file" "kubeconfig" {
   filename = pathexpand("~/.kube/ociconfig")
 }
 
-resource "digitalocean_record" "main" {
-  count  = var.oke["nodes_per_subnet"]
-  name   = "*"
-  domain = "mksybr.com"
-  type   = "A"
-  value  = oci_containerengine_cluster.k8s_cluster.endpoints[index.count]public_endpoint
-  ttl    = "30"
-}
+# resource "digitalocean_record" "main" {
+#   count  = var.oke["nodes_per_subnet"]
+#   name   = "*"
+#   domain = "mksybr.com"
+#   type   = "A"
+#   value  = oci_containerengine_cluster.k8s_cluster.endpoints[index.count].public_endpoint
+#   ttl    = "30"
+# }

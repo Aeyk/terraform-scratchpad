@@ -128,7 +128,7 @@ resource "oci_core_subnet" "private_subnet" {
 resource "oci_core_network_security_group" "main" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
-  display_name = "-network-security-group"
+  display_name = "network-security-group"
   compartment_id = data.keepass_entry.oci_compartment_id.password
   vcn_id = oci_core_vcn.vcn.id
 }
@@ -150,23 +150,6 @@ resource "oci_core_network_security_group_security_rule" "ipv4_http_ingress" {
   }   
 }
 
-resource "oci_core_network_security_group_security_rule" "ipv6_http_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 6 # TCP
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  tcp_options {
-    destination_port_range {
-      min = 80
-      max = 80
-    }
-  }
-}
-
 resource "oci_core_network_security_group_security_rule" "ipv4_https_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -174,23 +157,6 @@ resource "oci_core_network_security_group_security_rule" "ipv4_https_ingress" {
   protocol = 6 # TCP
   direction = "INGRESS"
   source = "0.0.0.0/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  tcp_options {
-    destination_port_range {
-      min = 443
-      max = 443
-    }
-  }   
-}
-
-resource "oci_core_network_security_group_security_rule" "ipv6_https_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 6 # TCP
-  direction = "INGRESS"
-  source = "::/0"
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
   tcp_options {
@@ -217,24 +183,6 @@ resource "oci_core_network_security_group_security_rule" "ipv4_caprover_ingress"
     }
   }   
 }
-
-resource "oci_core_network_security_group_security_rule" "ipv6_caprover_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 6 # TCP
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  tcp_options {
-    destination_port_range {
-      min = 3000
-      max = 3000
-    }
-  }
-}
-
 resource "oci_core_network_security_group_security_rule" "ipv4_https_docker_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -251,24 +199,6 @@ resource "oci_core_network_security_group_security_rule" "ipv4_https_docker_ingr
     }
   }   
 }
-
-resource "oci_core_network_security_group_security_rule" "ipv6_https_docker_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 6 # TCP
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  tcp_options {
-    destination_port_range {
-      min = 996
-      max = 996
-    }
-  }
-}
-
 resource "oci_core_network_security_group_security_rule" "tcp4_container_network_discovery_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -319,24 +249,6 @@ resource "oci_core_network_security_group_security_rule" "tcp4_container_overlay
     }
   }   
 }
-
-resource "oci_core_network_security_group_security_rule" "tcp6_container_overlay_network_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 6 # TCP
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  tcp_options {
-    destination_port_range {
-      min = 4789
-      max = 4789
-    }
-  }
-}
-
 resource "oci_core_network_security_group_security_rule" "tcp4_docker_swarm_api_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -370,23 +282,6 @@ resource "oci_core_network_security_group_security_rule" "udp4_docker_swarm_api_
     }
   }
 }
-resource "oci_core_network_security_group_security_rule" "udp6_docker_swarm_api_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 17 # UDP
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  udp_options {
-    destination_port_range {
-      min = 2377
-      max = 2377
-    }
-  }
-}
-
 resource "oci_core_network_security_group_security_rule" "udp4_container_network_discovery_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -437,24 +332,6 @@ resource "oci_core_network_security_group_security_rule" "udp4_container_overlay
     }
   }   
 }
-
-resource "oci_core_network_security_group_security_rule" "udp6_container_overlay_network_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 17 # UDP
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  udp_options {
-    destination_port_range {
-      min = 4789
-      max = 4789
-    }
-  }
-}
-
 resource "oci_core_network_security_group_security_rule" "ipv4_docker_swarm_api_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -471,25 +348,6 @@ resource "oci_core_network_security_group_security_rule" "ipv4_docker_swarm_api_
     }
   }   
 }
-
-resource "oci_core_network_security_group_security_rule" "ipv6_docker_swarm_api_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 6 # TCP
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  tcp_options {
-    destination_port_range {
-      min = 2377
-      max = 2377
-    }
-  }
-}
-
-
 resource "oci_core_network_security_group_security_rule" "icmp_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -500,18 +358,6 @@ resource "oci_core_network_security_group_security_rule" "icmp_ingress" {
   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
   stateless = "true"
 }
-
-resource "oci_core_network_security_group_security_rule" "icmpv6_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 58 # ICMPv6
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-}
-
 resource "oci_core_network_security_group_security_rule" "identd_ingress" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -528,24 +374,6 @@ resource "oci_core_network_security_group_security_rule" "identd_ingress" {
     }
   }
 }
-
-resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 6 # ICMPv6
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  tcp_options {
-    destination_port_range {
-      min = 113
-      max = 113
-    }
-  }
-}
-
 # resource "oci_core_network_security_group_security_rule" "rdp_ingress" {
 #   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
 #                  oci_core_dhcp_options.dhcp]
@@ -596,24 +424,6 @@ resource "oci_core_network_security_group_security_rule" "ipv4_kubernetes_ingres
     }
   }   
 }
-
-resource "oci_core_network_security_group_security_rule" "ipv6_kubernetes_ingress" {
-  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
-                 oci_core_dhcp_options.dhcp]
-  network_security_group_id = oci_core_network_security_group.main.id
-  protocol = 6 # TCP
-  direction = "INGRESS"
-  source = "::/0"
-  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
-  stateless = "true"
-  tcp_options {
-    destination_port_range {
-      min = 6443
-      max = 6443
-    }
-  }
-}
-
 resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_internal_http" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
@@ -690,7 +500,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_keycloak_ingress_
   }   
 }
 
-resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd_2" {
+resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
   network_security_group_id = oci_core_network_security_group.main.id
@@ -709,7 +519,7 @@ resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd_2" {
   }   
 }
 
-resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd" {
+resource "oci_core_network_security_group_security_rule" "ipv4_ingress_kube" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
                  oci_core_dhcp_options.dhcp]
   network_security_group_id = oci_core_network_security_group.main.id
@@ -723,10 +533,30 @@ resource "oci_core_network_security_group_security_rule" "ipv4_ingress_etcd" {
   tcp_options {
     destination_port_range {
       min = 10250
-      max = 10255
+      max = 10259
     }
   }   
 }
+
+resource "oci_core_network_security_group_security_rule" "ipv4_ingress_kube_workers" {
+  depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+                 oci_core_dhcp_options.dhcp]
+  network_security_group_id = oci_core_network_security_group.main.id
+  count = 4
+  protocol = 6 # TCP
+  direction = "INGRESS"
+  # source = "${oci_core_instance.arm-1vcpu-6gb-us-qas[count.index].public_ip}/32"
+  source = "10.0.0.0/8"
+  source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+  stateless = "true"
+  tcp_options {
+    destination_port_range {
+      min = 30000
+      max = 32767
+    }
+  }   
+}
+
 
 resource "oci_core_network_security_group_security_rule" "ipv4_ingress_bgp" {
   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
@@ -798,3 +628,196 @@ resource "oci_core_network_security_group_security_rule" "ipv4_syncthing_discove
     }
   }   
 }
+
+# resource "oci_core_network_security_group_security_rule" "ipv6_http_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 6 # TCP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 80
+#       max = 80
+#     }
+#   }
+# }
+
+
+
+# resource "oci_core_network_security_group_security_rule" "ipv6_caprover_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 6 # TCP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 3000
+#       max = 3000
+#     }
+#   }
+# }
+
+
+# resource "oci_core_network_security_group_security_rule" "ipv6_https_docker_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 6 # TCP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 996
+#       max = 996
+#     }
+#   }
+# }
+
+
+# resource "oci_core_network_security_group_security_rule" "tcp6_container_overlay_network_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 6 # TCP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 4789
+#       max = 4789
+#     }
+#   }
+# }
+
+
+# resource "oci_core_network_security_group_security_rule" "udp6_docker_swarm_api_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 17 # UDP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   udp_options {
+#     destination_port_range {
+#       min = 2377
+#       max = 2377
+#     }
+#   }
+# }
+
+
+# resource "oci_core_network_security_group_security_rule" "udp6_container_overlay_network_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 17 # UDP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   udp_options {
+#     destination_port_range {
+#       min = 4789
+#       max = 4789
+#     }
+#   }
+# }
+
+
+# resource "oci_core_network_security_group_security_rule" "ipv6_docker_swarm_api_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 6 # TCP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 2377
+#       max = 2377
+#     }
+#   }
+# }
+
+
+
+# resource "oci_core_network_security_group_security_rule" "icmpv6_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 58 # ICMPv6
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+# }
+
+
+# resource "oci_core_network_security_group_security_rule" "identdv6_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 6 # ICMPv6
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 113
+#       max = 113
+#     }
+#   }
+# }
+
+
+# resource "oci_core_network_security_group_security_rule" "ipv6_kubernetes_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 6 # TCP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 6443
+#       max = 6443
+#     }
+#   }
+# }
+
+# resource "oci_core_network_security_group_security_rule" "ipv6_https_ingress" {
+#   depends_on =  [oci_core_vcn.vcn, oci_core_internet_gateway.igw,
+#                  oci_core_dhcp_options.dhcp]
+#   network_security_group_id = oci_core_network_security_group.main.id
+#   protocol = 6 # TCP
+#   direction = "INGRESS"
+#   source = "::/0"
+#   source_type = "CIDR_BLOCK" # todo replace with NETWORK_SECURITY_GROUP
+#   stateless = "true"
+#   tcp_options {
+#     destination_port_range {
+#       min = 443
+#       max = 443
+#     }
+#   }   
+# }
+

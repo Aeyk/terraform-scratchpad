@@ -31,16 +31,16 @@ module "secrets" {
   keepass_database_password = var.keepass_database_password
 }
 
-module "kubernetes" {
-  keepass_database_password = var.keepass_database_password
-  source = "../kubernetes"
-}
+# module "kubernetes" {
+#   keepass_database_password = var.keepass_database_password
+#   source = "../kubernetes"
+# }
 
-resource "oci_core_network_security_group" "me_net_security_group" {
-  display_name = "me-mksybr-network-security-group"
-  compartment_id = module.secrets.oci_compartment_id
-  vcn_id = module.network.vcn_id
-}
+# resource "oci_core_network_security_group" "me_net_security_group" {
+#   display_name = "me-mksybr-network-security-group"
+#   compartment_id = module.secrets.oci_compartment_id
+#   vcn_id = module.network.vcn_id
+# }
 
 resource "tls_private_key" "keys" {
   count     = var.arm-1vcpu-6gb-us-qas_count
@@ -228,10 +228,10 @@ resource "oci_core_instance" "amd-1vcpu-1gb-us-qas" {
     assign_private_dns_record = "false"
     assign_public_ip = "true"
     # assign_ipv6ip = "true"
-    subnet_id = module.kubernetes.public_subnet_id
-    nsg_ids = [module.kubernetes.public_nsg_id]
-    # subnet_id = module.network.arm_public_subnet
-    # nsg_ids = [module.network.arm_net_security_group]
+    # subnet_id = module.kubernetes.public_subnet_id
+    # nsg_ids = [module.kubernetes.public_nsg_id]
+    subnet_id = module.network.arm_public_subnet
+    nsg_ids = [module.network.arm_net_security_group]
     # nsg_ids = [oci_core_network_security_group.main.id]
   }
   instance_options {
